@@ -1,0 +1,23 @@
+[
+  { "rank": 1,  "title": "Man or a Muppet",              "movie": "The Muppets" },
+  { "rank": 2,  "title": "Shallow",                       "movie": "A Star Is Born" },
+  { "rank": 3,  "title": "Always Remember Us This Way",   "movie": "A Star Is Born" },
+  { "rank": 4,  "title": "Kiss the Girl",                 "movie": "The Little Mermaid" },
+  { "rank": 5,  "title": "Remember Me",                   "movie": "Coco" },
+  { "rank": 6,  "title": "Elephant Love Medley",          "movie": "Moulin Rouge!" },
+  { "rank": 7,  "title": "Come What May",                 "movie": "Moulin Rouge!" },
+  { "rank": 8,  "title": "You'll Be in My Heart",        "movie": "Tarzan" },
+  { "rank": 9,  "title": "City of Stars",                 "movie": "La La Land" },
+  { "rank": 10, "title": "That's How You Know",          "movie": "Enchanted" },
+  { "rank": 11, "title": "Sunflower",                     "movie": "Spider-Man: Into the Spider-Verse" },
+  { "rank": 12, "title": "Mrs. Robinson",                "movie": "The Graduate" },
+  { "rank": 13, "title": "Lose Yourself",                 "movie": "8 Mile" },
+  { "rank": 14, "title": "Rainbow Connection",            "movie": "The Muppet Movie" },
+  { "rank": 15, "title": "Danger Zone",                   "movie": "Top Gun" },
+  { "rank": 16, "title": "All the Stars",                 "movie": "Black Panther" },
+  { "rank": 17, "title": "Beauty and the Beast",          "movie": "Beauty and the Beast" },
+  { "rank": 18, "title": "I See the Light",               "movie": "Tangled" },
+  { "rank": 19, "title": "Can You Feel the Love Tonight", "movie": "The Lion King" },
+  { "rank": 20, "title": "Bella Notte",                   "movie": "Lady and the Tramp" },
+  { "rank": 21, "title": "Pure Imagination",              "movie": "Willy Wonka & the Chocolate Factory" }
+]

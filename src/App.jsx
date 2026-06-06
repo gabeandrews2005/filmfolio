@@ -6,6 +6,7 @@ import Movies from './pages/Movies'
 import MyList from './pages/MyList'
 import Recommendations from './pages/Recommendations'
 import About from './pages/About'
+import Universe from './pages/Universe'
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
           <Route path="/movies" element={<Movies />} />
           <Route path="/my-list" element={<MyList />} />
           <Route path="/recommendations" element={<Recommendations />} />
+          <Route path="/universe" element={<Universe />} />
           <Route path="/about" element={<About />} />
         </Routes>
       </FilmProvider>

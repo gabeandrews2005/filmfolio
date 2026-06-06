@@ -1,0 +1,12 @@
+[
+  { "rank": 1,  "title": "Elf",                                      "year": 2003, "director": "Jon Favreau",             "season": "Christmas",           "rt_score": 85, "overall_rating": 10.0, "avg_score": 9.4 },
+  { "rank": 2,  "title": "It's a Wonderful Life",                   "year": 1946, "director": "Frank Capra",             "season": "Christmas",           "rt_score": 94, "overall_rating": 9.0,  "avg_score": 8.1 },
+  { "rank": 3,  "title": "Feast of the Seven Fishes",                "year": 2019, "director": "Robert Tinnell",          "season": "Christmas",           "rt_score": 88, "overall_rating": 9.0,  "avg_score": 8.9 },
+  { "rank": 4,  "title": "The Nightmare Before Christmas",           "year": 1993, "director": "Henry Selick",            "season": "Christmas/Halloween", "rt_score": 95, "overall_rating": 9.0,  "avg_score": 9.1 },
+  { "rank": 5,  "title": "A Christmas Story",                        "year": 1983, "director": "Bob Clark",               "season": "Christmas",           "rt_score": 90, "overall_rating": 8.0,  "avg_score": 7.6 },
+  { "rank": 6,  "title": "Home Alone 2: Lost in New York",           "year": 1992, "director": "Chris Columbus",          "season": "Christmas",           "rt_score": 35, "overall_rating": 7.0,  "avg_score": 6.7 },
+  { "rank": 7,  "title": "Addams Family Values",                     "year": 1993, "director": "Barry Sonnenfeld",        "season": "Halloween",           "rt_score": 76, "overall_rating": 7.0,  "avg_score": 7.2 },
+  { "rank": 8,  "title": "National Lampoon's Christmas Vacation",   "year": 1989, "director": "Jeremiah S. Chechik",     "season": "Christmas",           "rt_score": 67, "overall_rating": 7.0,  "avg_score": 7.0 },
+  { "rank": 9,  "title": "How the Grinch Stole Christmas",          "year": 2000, "director": "Ron Howard",              "season": "Christmas",           "rt_score": 49, "overall_rating": 6.0,  "avg_score": 6.6 },
+  { "rank": 10, "title": "Four Christmases",                         "year": 2008, "director": "Seth Gordon",             "season": "Christmas",           "rt_score": 25, "overall_rating": 6.0,  "avg_score": 5.9 }
+]

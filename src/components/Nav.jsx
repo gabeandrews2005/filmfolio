@@ -41,6 +41,14 @@ export default function Nav() {
           </li>
           <li>
             <NavLink
+              to="/universe"
+              className={({ isActive }) => isActive ? styles.active : ''}
+            >
+              Universe
+            </NavLink>
+          </li>
+          <li>
+            <NavLink
               to="/about"
               className={({ isActive }) => isActive ? styles.active : ''}
             >

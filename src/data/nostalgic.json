@@ -1,0 +1,12 @@
+[
+  { "rank": 1,  "title": "The Goonies",              "year": 1985, "director": "Richard Donner",      "rt_score": 77, "overall_rating": 9.0, "nostalgia_rating": 10.0, "avg_score": 8.4 },
+  { "rank": 2,  "title": "The Sandlot",              "year": 1993, "director": "David Mickey Evans",   "rt_score": 64, "overall_rating": 9.0, "nostalgia_rating": 7.0,  "avg_score": 7.3 },
+  { "rank": 3,  "title": "Real Steel",               "year": 2011, "director": "Shawn Levy",          "rt_score": 60, "overall_rating": 7.0, "nostalgia_rating": 10.0, "avg_score": 7.8 },
+  { "rank": 4,  "title": "Mr. Popper's Penguins",   "year": 2011, "director": "Mark Waters",          "rt_score": 47, "overall_rating": 7.0, "nostalgia_rating": 10.0, "avg_score": 6.3 },
+  { "rank": 5,  "title": "Pitch Perfect",            "year": 2012, "director": "Jason Moore",          "rt_score": 81, "overall_rating": 9.0, "nostalgia_rating": 10.0, "avg_score": 8.4 },
+  { "rank": 6,  "title": "Mean Girls",               "year": 2004, "director": "Mark Waters",          "rt_score": 84, "overall_rating": 8.0, "nostalgia_rating": 9.0,  "avg_score": 7.9 },
+  { "rank": 7,  "title": "Megamind",                 "year": 2010, "director": "Tom McGrath",          "rt_score": 72, "overall_rating": 7.0, "nostalgia_rating": 8.0,  "avg_score": 7.8 },
+  { "rank": 8,  "title": "Now You See Me 2",         "year": 2016, "director": "Jon M. Chu",           "rt_score": 33, "overall_rating": 5.0, "nostalgia_rating": 9.0,  "avg_score": 5.9 },
+  { "rank": 9,  "title": "Flushed Away",             "year": 2006, "director": "David Bowers",        "rt_score": 73, "overall_rating": 8.0, "nostalgia_rating": 9.0,  "avg_score": 7.6 },
+  { "rank": 10, "title": "Enchanted",                "year": 2007, "director": "Kevin Lima",           "rt_score": 93, "overall_rating": 9.0, "nostalgia_rating": 9.0,  "avg_score": 8.6 }
+]

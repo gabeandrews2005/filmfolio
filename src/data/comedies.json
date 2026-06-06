@@ -1,0 +1,19 @@
+[
+  { "rank": 1,  "title": "Borat",                               "year": 2006, "director": "Larry Charles",         "rt_score": 90, "overall_rating": 10.0, "avg_score": 8.0 },
+  { "rank": 2,  "title": "Step Brothers",                       "year": 2008, "director": "Adam McKay",            "rt_score": 55, "overall_rating": 10.0, "avg_score": 8.2 },
+  { "rank": 3,  "title": "The Hangover",                        "year": 2009, "director": "Todd Phillips",         "rt_score": 79, "overall_rating": 10.0, "avg_score": 8.5 },
+  { "rank": 4,  "title": "Knocked Up",                          "year": 2007, "director": "Judd Apatow",          "rt_score": 89, "overall_rating": 10.0, "avg_score": 7.7 },
+  { "rank": 5,  "title": "Old School",                          "year": 2003, "director": "Todd Phillips",         "rt_score": 60, "overall_rating": 10.0, "avg_score": 6.6 },
+  { "rank": 6,  "title": "Popstar: Never Stop Never Stopping",  "year": 2016, "director": "Jorma Taccone",        "rt_score": 79, "overall_rating": 10.0, "avg_score": 7.1 },
+  { "rank": 7,  "title": "This Is the End",                     "year": 2013, "director": "Seth Rogen",            "rt_score": 83, "overall_rating": 10.0, "avg_score": 8.0 },
+  { "rank": 8,  "title": "Semi-Pro",                            "year": 2008, "director": "Kent Alterman",        "rt_score": 22, "overall_rating": 10.0, "avg_score": 7.4 },
+  { "rank": 9,  "title": "Wedding Crashers",                    "year": 2005, "director": "David Dobkin",         "rt_score": 75, "overall_rating": 10.0, "avg_score": 7.6 },
+  { "rank": 10, "title": "Hot Rod",                             "year": 2007, "director": "Akiva Schaffer",       "rt_score": 39, "overall_rating": 10.0, "avg_score": 7.7 },
+  { "rank": 11, "title": "I Love You, Man",                    "year": 2009, "director": "John Hamburg",         "rt_score": 83, "overall_rating": 10.0, "avg_score": 8.7 },
+  { "rank": 12, "title": "Land of the Lost",                    "year": 2009, "director": "Brad Silberling",      "rt_score": 26, "overall_rating": 9.0,  "avg_score": 6.9 },
+  { "rank": 13, "title": "Jay and Silent Bob Strike Back",       "year": 2001, "director": "Kevin Smith",          "rt_score": 51, "overall_rating": 9.0,  "avg_score": 7.4 },
+  { "rank": 14, "title": "The 40-Year-Old Virgin",             "year": 2005, "director": "Judd Apatow",          "rt_score": 85, "overall_rating": 9.0,  "avg_score": 8.3 },
+  { "rank": 15, "title": "Anchorman 2: The Legend Continues",   "year": 2013, "director": "Adam McKay",           "rt_score": 75, "overall_rating": 9.0,  "avg_score": 7.7 },
+  { "rank": 16, "title": "Talladega Nights: The Ballad of Ricky Bobby", "year": 2006, "director": "Adam McKay",  "rt_score": 71, "overall_rating": 9.0,  "avg_score": 8.2 },
+  { "rank": 17, "title": "Why Him?",                            "year": 2016, "director": "John Hamburg",         "rt_score": 39, "overall_rating": 8.0,  "avg_score": 8.2 }
+]
