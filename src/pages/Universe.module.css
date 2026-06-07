@@ -1,187 +1,98 @@
 .page {
-  padding-top: calc(var(--nav-height) + 48px);
-  padding-bottom: 80px;
+  padding-top: var(--nav-height);
   min-height: 100vh;
+  padding-bottom: 80px;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 40px;
+.heroSection {
+  padding: 48px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 48px;
 }
 
-.title {
+.heroTitle {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-size: clamp(2rem, 5vw, 3rem);
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.heroSubtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.stats {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.statNum {
+  font-family: var(--font-mono);
+  font-size: 2rem;
   font-weight: 700;
+  color: var(--accent-gold);
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.sections {
+  padding-bottom: 40px;
+}
+
+.empty {
+  max-width: 480px;
+  margin: 80px auto;
+  text-align: center;
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  color: var(--text-muted);
+  margin-bottom: 20px;
+}
+
+.emptyTitle {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
   color: var(--text-primary);
   margin-bottom: 12px;
 }
 
-.subtitle {
-  font-size: 1.05rem;
+.emptyDesc {
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  max-width: 520px;
-  margin: 0 auto;
+  line-height: 1.65;
+  margin-bottom: 28px;
 }
 
-/* Tabs */
-.tabs {
+.emptyLinks {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 32px;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 16px;
-}
-
-.tab {
-  padding: 8px 18px;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--bg-secondary);
-  border: 1px solid var(--border);
-  transition: var(--transition);
-  white-space: nowrap;
-}
-
-.tab:hover {
-  color: var(--text-primary);
-  border-color: var(--text-muted);
-}
-
-.tabActive {
-  color: var(--accent-gold) !important;
-  border-color: var(--accent-gold) !important;
-  background: transparent !important;
-}
-
-/* Table */
-.tableWrap {
-  overflow-x: auto;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-
-.table thead {
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border);
-}
-
-.table th {
-  padding: 12px 16px;
-  text-align: left;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.table tbody tr {
-  border-bottom: 1px solid var(--border);
-  transition: background var(--transition);
-}
-
-.table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.table tbody tr:hover {
-  background: var(--bg-secondary);
-}
-
-.table td {
-  padding: 12px 16px;
-  vertical-align: middle;
-}
-
-.rankCell {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--accent-gold);
-  font-weight: 600;
-  width: 36px;
-  text-align: center;
-}
-
-.titleCell {
-  font-weight: 500;
-  color: var(--text-primary);
-  min-width: 160px;
-}
-
-.metaCell {
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  min-width: 120px;
-}
-
-.scoreCell {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  text-align: center;
-  white-space: nowrap;
-}
-
-.episodeCell {
-  color: var(--text-secondary);
-  font-size: 0.78rem;
-  min-width: 200px;
-  max-width: 280px;
-}
-
-.avgCell {
-  min-width: 140px;
-}
-
-.avgWrap {
-  display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 10px;
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
+  align-items: center;
+}
+
+.emptyLink {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.emptyLink:hover {
   color: var(--text-primary);
-}
-
-.ratingBar {
-  flex: 1;
-  height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  overflow: hidden;
-  min-width: 60px;
-}
-
-.ratingFill {
-  height: 100%;
-  background: var(--accent-gold);
-  border-radius: 2px;
-  transition: width 0.3s ease;
-}
-
-@media (max-width: 768px) {
-  .tabs {
-    gap: 6px;
-  }
-
-  .tab {
-    padding: 6px 12px;
-    font-size: 0.78rem;
-  }
-
-  .table th,
-  .table td {
-    padding: 10px 12px;
-  }
 }

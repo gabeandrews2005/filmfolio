@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { buildRecommendations } from '../api/tmdb'
+import { buildRecommendationsEnhanced } from '../api/tmdb'
 import RecommendationCard from '../components/RecommendationCard'
+import StarSignal from '../components/StarSignal'
 import styles from './Recommendations.module.css'
 
 export default function Recommendations() {
-  const { myTop10, movies } = useFilm()
+  const { myList, movies, actorsList, directorsList } = useFilm()
   const [queue, setQueue] = useState([])
   const [displayed, setDisplayed] = useState([])
   const [loading, setLoading] = useState(false)
@@ -14,15 +15,25 @@ export default function Recommendations() {
 
   const DISPLAY_COUNT = 20
 
+  // Build actor/director person ID arrays for enhanced algorithm
+  const actorPersonIds = actorsList.map((a) => a.person_id)
+  const directorPersonIds = directorsList.map((d) => d.person_id)
+  const hasSignals = actorPersonIds.length > 0 || directorPersonIds.length > 0
+
   useEffect(() => {
-    if (myTop10.length === 0) return
+    if (myList.length === 0) return
     let cancelled = false
 
     async function load() {
       setLoading(true)
       setError(null)
       try {
-        const recs = await buildRecommendations(myTop10, movies)
+        const recs = await buildRecommendationsEnhanced(
+          myList,
+          movies,
+          actorPersonIds,
+          directorPersonIds
+        )
         if (!cancelled) {
           setQueue(recs)
           setDisplayed(recs.slice(0, DISPLAY_COUNT))
@@ -36,26 +47,26 @@ export default function Recommendations() {
 
     load()
     return () => { cancelled = true }
-  }, [myTop10, movies])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myList, movies])
 
   function handleNotInterested(tmdbId) {
     setDisplayed((prev) => {
       const nextDisplayed = prev.filter((m) => m.tmdb_id !== tmdbId)
-      // Pull the next one from the queue that isn't already displayed or removed
       const shownIds = new Set(nextDisplayed.map((m) => m.tmdb_id))
       const next = queue.find((m) => m.tmdb_id !== tmdbId && !shownIds.has(m.tmdb_id))
       return next ? [...nextDisplayed, next] : nextDisplayed
     })
   }
 
-  if (myTop10.length === 0) {
+  if (myList.length === 0) {
     return (
       <div className={styles.page}>
         <div className="container">
           <div className={styles.empty}>
-            <h2 className={styles.emptyTitle}>No top 10 yet</h2>
+            <h2 className={styles.emptyTitle}>No list yet</h2>
             <p className={styles.emptyText}>
-              Build your top 10 first and we'll find films you'll love.
+              Build your Top 10 first and we'll find films you'll love.
             </p>
             <Link to="/my-list" className={styles.buildBtn}>Build My Top 10</Link>
           </div>
@@ -70,16 +81,18 @@ export default function Recommendations() {
         <div className={styles.header}>
           <h1 className={styles.title}>Picks For You</h1>
           <p className={styles.subtitle}>
-            Based on your top {myTop10.length} films, we asked TMDB what's most related.
-            Films recommended by more of your picks score higher.
+            Based on your top {Math.min(myList.length, 10)} films, scored by how often they appear across all recommendation sets.
+            {hasSignals && (
+              <> Films featuring your favorite actors or directors receive a <span className={styles.goldText}>★ bonus</span>.</>
+            )}
           </p>
         </div>
 
-        {/* Top 10 summary */}
+        {/* Top films summary */}
         <div className={styles.top10Summary}>
-          <p className={styles.summaryLabel}>Your Top 10</p>
+          <p className={styles.summaryLabel}>Based on</p>
           <div className={styles.summaryList}>
-            {myTop10.map((m, i) => (
+            {myList.slice(0, 10).map((m, i) => (
               <span key={m.tmdb_id} className={styles.summaryItem}>
                 <span className={styles.summaryRank}>{i + 1}.</span> {m.title}
               </span>
@@ -88,10 +101,19 @@ export default function Recommendations() {
           <Link to="/my-list" className={styles.editLink}>Edit list</Link>
         </div>
 
+        {hasSignals && (
+          <div className={styles.signalNote}>
+            <span className={styles.signalStar}>★</span>
+            <span className={styles.signalText}>
+              Gold star = bonus match with your{actorPersonIds.length > 0 ? ' actors' : ''}{actorPersonIds.length > 0 && directorPersonIds.length > 0 ? ' or' : ''}{directorPersonIds.length > 0 ? ' directors' : ''} list
+            </span>
+          </div>
+        )}
+
         {loading && (
           <div className={styles.loading}>
             <div className={styles.spinner} />
-            <p>Fetching recommendations from {myTop10.length} films…</p>
+            <p>Fetching recommendations from {Math.min(myList.length, 10)} films…</p>
           </div>
         )}
 
@@ -99,7 +121,7 @@ export default function Recommendations() {
 
         {!loading && displayed.length === 0 && !error && (
           <p className={styles.noResults}>
-            No recommendations found. This can happen if your TMDB API key isn't set or the films don't have related results.
+            No recommendations found. This can happen if your API key isn't set or the films don't have related results.
           </p>
         )}
 
@@ -108,11 +130,17 @@ export default function Recommendations() {
             <p className={styles.resultsCount}>{displayed.length} recommendations</p>
             <div className={styles.grid}>
               {displayed.map((movie) => (
-                <RecommendationCard
-                  key={movie.tmdb_id}
-                  movie={movie}
-                  onNotInterested={handleNotInterested}
-                />
+                <div key={movie.tmdb_id} className={styles.recWrap}>
+                  {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+                    <div className={styles.bonusSignal}>
+                      <StarSignal actors={movie.bonusActors ?? []} directors={movie.bonusDirectors ?? []} />
+                    </div>
+                  )}
+                  <RecommendationCard
+                    movie={movie}
+                    onNotInterested={handleNotInterested}
+                  />
+                </div>
               ))}
             </div>
           </>

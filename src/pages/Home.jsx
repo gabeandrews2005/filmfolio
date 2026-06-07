@@ -57,8 +57,8 @@ export default function Home() {
           <h1 className={styles.heroTitle}>FilmFolio</h1>
           <p className={styles.heroTagline}>Discover Your Perfect Movie Picks</p>
           <div className={styles.heroCtas}>
-            <Link to="/movies" className={styles.ctaPrimary}>
-              Explore My Top 100
+            <Link to="/explore" className={styles.ctaPrimary}>
+              Explore Films
             </Link>
             <Link to="/my-list" className={styles.ctaSecondary}>
               Build Your Top 10
@@ -112,7 +112,7 @@ export default function Home() {
         </div>
         <div className={styles.strip}>
           {featuredMovies.map((movie) => (
-            <Link to="/movies" key={movie.rank} className={styles.stripCard}>
+            <Link to="/explore" key={movie.rank} className={styles.stripCard}>
               <img
                 src={movie.posterUrl || PLACEHOLDER_POSTER}
                 alt={movie.title}
@@ -128,7 +128,7 @@ export default function Home() {
         </div>
         <div className="container">
           <div className={styles.featuredFooter}>
-            <Link to="/movies" className={styles.viewAll}>
+            <Link to="/explore" className={styles.viewAll}>
               View all 100 films →
             </Link>
           </div>

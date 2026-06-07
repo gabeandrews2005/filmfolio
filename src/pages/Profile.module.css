@@ -1,0 +1,101 @@
+.page {
+  padding-top: var(--nav-height);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.heroSection {
+  padding: 40px 0 36px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 40px;
+  background: var(--bg-secondary);
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.avatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 3px solid var(--accent-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--accent-gold);
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.profileInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.username {
+  font-family: var(--font-display);
+  font-size: 1.8rem;
+  color: var(--text-primary);
+}
+
+.profileStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+.universeLink {
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color var(--transition);
+  margin-top: 4px;
+  display: inline-block;
+}
+
+.universeLink:hover {
+  color: var(--text-primary);
+}
+
+.sections {
+  padding-bottom: 40px;
+}
+
+.empty {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.emptyText {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.emptyLink {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color var(--transition);
+}
+
+.emptyLink:hover {
+  color: var(--text-primary);
+}

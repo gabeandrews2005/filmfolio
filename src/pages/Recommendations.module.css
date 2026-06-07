@@ -161,3 +161,38 @@
 .buildBtn:hover {
   opacity: 0.9;
 }
+
+.goldText {
+  color: var(--accent-gold);
+}
+
+.signalNote {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(201,168,76,0.08);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 6px;
+  margin-bottom: 20px;
+}
+
+.signalStar {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+}
+
+.signalText {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.recWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.bonusSignal {
+  padding: 0 0 4px;
+}

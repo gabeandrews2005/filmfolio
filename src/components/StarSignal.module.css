@@ -1,0 +1,40 @@
+.compact {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 3;
+  font-size: 0.75rem;
+  color: var(--accent-gold);
+  background: rgba(13, 13, 13, 0.85);
+  border: 1px solid var(--accent-gold);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: rgba(201, 168, 76, 0.1);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.star {
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.label {
+  font-size: 0.8rem;
+  color: var(--accent-gold);
+  line-height: 1.3;
+}
