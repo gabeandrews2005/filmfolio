@@ -1,11 +1,9 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useFilm } from '../context/FilmContext'
 import HamburgerMenu from './HamburgerMenu'
 import styles from './Nav.module.css'
 
 export default function Nav() {
-  const { myTop10, seenList } = useFilm()
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
@@ -30,10 +28,7 @@ export default function Nav() {
                 to="/my-list"
                 className={({ isActive }) => isActive ? styles.active : ''}
               >
-                My Top 10
-                {myTop10.length > 0 && (
-                  <span className={styles.badge}>{myTop10.length}</span>
-                )}
+                My List
               </NavLink>
             </li>
             <li>
@@ -47,9 +42,6 @@ export default function Nav() {
           </ul>
 
           <div className={styles.right}>
-            <span className={styles.seen}>
-              {seenList.size}<span className={styles.seenLabel}> seen</span>
-            </span>
             <button
               className={styles.hamburger}
               onClick={() => setMenuOpen(true)}

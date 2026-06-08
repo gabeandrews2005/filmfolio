@@ -100,6 +100,131 @@
   gap: 20px;
 }
 
+/* Card wrapper with checkbox + not-interested overlay */
+.cardWrap {
+  position: relative;
+}
+
+.checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid rgba(240,236,228,0.5);
+  background: transparent;
+  color: var(--bg-primary);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background var(--transition), border-color var(--transition);
+  backdrop-filter: blur(4px);
+}
+
+.checkbox:hover {
+  border-color: var(--accent-gold);
+  background: rgba(201,168,76,0.15);
+}
+
+.checkboxChecked {
+  background: var(--accent-gold) !important;
+  border-color: var(--accent-gold) !important;
+  color: var(--bg-primary) !important;
+  font-weight: 700;
+}
+
+.notInterestedBtn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(13,13,13,0.7);
+  border: 1px solid rgba(240,236,228,0.2);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--transition), color var(--transition);
+  backdrop-filter: blur(4px);
+}
+
+.cardWrap:hover .notInterestedBtn {
+  opacity: 1;
+}
+
+.notInterestedBtn:hover {
+  color: var(--text-primary);
+}
+
+/* Confirm dialog */
+.confirmOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.confirmBox {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 28px;
+  max-width: 360px;
+  width: 100%;
+}
+
+.confirmText {
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 12px;
+}
+
+.confirmYes {
+  flex: 1;
+  padding: 10px;
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: opacity var(--transition);
+}
+
+.confirmYes:hover { opacity: 0.85; }
+
+.confirmNo {
+  flex: 1;
+  padding: 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  transition: color var(--transition);
+}
+
+.confirmNo:hover { color: var(--text-primary); }
+
 /* ── Skeleton ───────────────────────────────────────────────────────────── */
 .skeleton {
   display: flex;

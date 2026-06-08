@@ -144,6 +144,9 @@ export function FilmProvider({ children }) {
   // ── Generic list operations ────────────────────────────────────────────────
   const getItemId = (item) => item.tmdb_id ?? item.person_id ?? null
 
+  // Movie list names that auto-add to seen on add
+  const MOVIE_LISTS = new Set(['myList', 'horrorList', 'comediesList', 'animatedList', 'seasonalList'])
+
   const addToList = useCallback((listName, item) => {
     const config = LIST_SETTERS[listName]
     if (!config) return
@@ -155,6 +158,16 @@ export function FilmProvider({ children }) {
     const next = [...currentList, item]
     setter(next)
     saveLS(lsKey, next)
+    // Auto-add to seen for movie lists
+    if (MOVIE_LISTS.has(listName) && item.tmdb_id) {
+      setSeenList((prev) => {
+        if (prev.has(item.tmdb_id)) return prev
+        const next = new Set(prev)
+        next.add(item.tmdb_id)
+        saveLS(LS_SEEN, [...next])
+        return next
+      })
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [LIST_SETTERS])
 
@@ -187,6 +200,16 @@ export function FilmProvider({ children }) {
       saveLS(LS_MYLIST, next)
       return next
     })
+    // Auto-add to seen
+    if (movie.tmdb_id) {
+      setSeenList((prev) => {
+        if (prev.has(movie.tmdb_id)) return prev
+        const next = new Set(prev)
+        next.add(movie.tmdb_id)
+        saveLS(LS_SEEN, [...next])
+        return next
+      })
+    }
   }, [])
 
   const removeFromTop10 = useCallback((tmdbId) => {

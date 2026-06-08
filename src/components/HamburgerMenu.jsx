@@ -5,21 +5,23 @@ import styles from './HamburgerMenu.module.css'
 
 const OVERFLOW_LINKS = [
   { to: '/lists/actors',    label: 'Actors' },
-  { to: '/lists/shows',     label: 'Shows' },
   { to: '/lists/directors', label: 'Directors' },
+  { to: '/lists/shows',     label: 'Shows' },
   { to: '/lists/animated',  label: 'Animated' },
   { to: '/lists/horror',    label: 'Horror' },
   { to: '/lists/comedies',  label: 'Comedies' },
   { to: '/lists/seasonal',  label: 'Seasonal' },
+  { to: '/seen',            label: 'Seen Films' },
+  { to: '/watchlist',       label: 'Watchlist' },
   { to: '/universe',        label: 'Universe' },
   { to: '/friends',         label: 'Friends' },
+  { to: '/statistics',      label: 'Statistics' },
   { to: '/about',           label: 'About' },
 ]
 
 export default function HamburgerMenu({ isOpen, onClose }) {
   const { user } = useFilm()
 
-  // Lock body scroll when open
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -29,7 +31,6 @@ export default function HamburgerMenu({ isOpen, onClose }) {
     return () => { document.body.style.overflow = '' }
   }, [isOpen])
 
-  // Close on Escape
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
@@ -38,14 +39,12 @@ export default function HamburgerMenu({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={`${styles.backdrop} ${isOpen ? styles.backdropVisible : ''}`}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
       <div
         className={`${styles.drawer} ${isOpen ? styles.drawerOpen : ''}`}
         role="dialog"

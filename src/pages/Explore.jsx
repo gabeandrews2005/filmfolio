@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useFilm } from '../context/FilmContext'
-import { getPopularMovies, getTopRatedMovies, getPosterUrl } from '../api/tmdb'
+import {
+  getPopularMovies, getTopRatedMovies, getDiscoverMovies,
+  getPosterUrl, getMovieExternalIds,
+} from '../api/tmdb'
+import { getOmdbRatings } from '../api/omdb'
 import FilmCard from '../components/FilmCard'
 import styles from './Explore.module.css'
 
-// Skeleton card for loading state
 function SkeletonCard() {
   return (
     <div className={styles.skeleton}>
@@ -31,6 +34,15 @@ function normalizePoolMovie(tmdbMovie) {
   }
 }
 
+function shuffle(arr) {
+  const a = [...arr]
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]]
+  }
+  return a
+}
+
 const DEFAULT_FILTERS = {
   genre: '',
   decade: '',
@@ -39,47 +51,44 @@ const DEFAULT_FILTERS = {
 }
 
 export default function Explore() {
-  const { movies: gabeMovies, seenList, actorsList, directorsList } = useFilm()
+  const { movies: gabeMovies, seenList, actorsList, directorsList, myList, addToList, addToTop10, notInterested, addNotInterested } = useFilm()
   const [poolMovies, setPoolMovies] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
+  const [confirmFilm, setConfirmFilm] = useState(null)
 
-  // Build actor/director ID sets for star signal detection
-  const actorIdSet = useMemo(
-    () => new Set(actorsList.map((a) => a.person_id)),
-    [actorsList]
-  )
-  const directorIdSet = useMemo(
-    () => new Set(directorsList.map((d) => d.person_id)),
-    [directorsList]
-  )
-
+  const actorIdSet = useMemo(() => new Set(actorsList.map((a) => a.person_id)), [actorsList])
+  const directorIdSet = useMemo(() => new Set(directorsList.map((d) => d.person_id)), [directorsList])
   const gabeIds = useMemo(() => new Set(gabeMovies.map((m) => m.tmdb_id)), [gabeMovies])
+  const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
+  const notInterestedIds = useMemo(() => new Set(notInterested), [notInterested])
 
-  // Fetch TMDB popular + top_rated pages
   async function fetchPage(page) {
-    const [pop, top] = await Promise.all([
+    const [pop, top, awards, revenue] = await Promise.all([
       getPopularMovies(page),
       getTopRatedMovies(page),
+      getDiscoverMovies({ sort_by: 'vote_average.desc', 'vote_count.gte': 1000 }, page),
+      getDiscoverMovies({ sort_by: 'revenue.desc' }, page),
     ])
     const combined = [
       ...(pop?.results ?? []),
       ...(top?.results ?? []),
+      ...(awards?.results ?? []),
+      ...(revenue?.results ?? []),
     ]
-    // Deduplicate by id and filter out Gabe's picks (they're already in the pool as Featured)
     const seen = new Set()
-    return combined.filter((m) => {
+    const filtered = combined.filter((m) => {
       if (gabeIds.has(m.id)) return false
       if (seen.has(m.id)) return false
       seen.add(m.id)
       return true
     }).map(normalizePoolMovie)
+    return shuffle(filtered)
   }
 
-  // Initial load
   useEffect(() => {
     setPoolLoading(true)
     fetchPage(1).then((movies) => {
@@ -104,7 +113,6 @@ export default function Explore() {
     })
   }
 
-  // Merge Gabe's picks (Featured) with TMDB pool
   const allMovies = useMemo(() => {
     const featured = gabeMovies
       .filter((m) => m.tmdb_id)
@@ -112,7 +120,6 @@ export default function Explore() {
     return [...featured, ...poolMovies]
   }, [gabeMovies, poolMovies])
 
-  // Collect genres and decades for filter dropdowns
   const genres = useMemo(() => {
     const set = new Set()
     gabeMovies.forEach((m) => m.genres?.forEach((g) => set.add(g)))
@@ -128,10 +135,8 @@ export default function Explore() {
     return [...set].sort((a, b) => b - a)
   }, [allMovies])
 
-  // Apply filters
   const filtered = useMemo(() => {
-    let list = [...allMovies]
-
+    let list = allMovies.filter((m) => !notInterestedIds.has(m.tmdb_id))
     if (filters.featured) list = list.filter((m) => m.isFeatured)
     if (filters.genre)    list = list.filter((m) => m.genres?.includes(filters.genre))
     if (filters.decade) {
@@ -143,9 +148,8 @@ export default function Explore() {
     }
     if (filters.seen === 'seen')   list = list.filter((m) => seenList.has(m.tmdb_id))
     if (filters.seen === 'unseen') list = list.filter((m) => !seenList.has(m.tmdb_id))
-
     return list
-  }, [allMovies, filters, seenList])
+  }, [allMovies, filters, seenList, notInterestedIds])
 
   function getSignals(movie) {
     if (actorIdSet.size === 0 && directorIdSet.size === 0) return { actors: [], directors: [] }
@@ -159,18 +163,53 @@ export default function Explore() {
     return { actors, directors }
   }
 
+  function handleCheckbox(movie, e) {
+    e.stopPropagation()
+    if (myListIds.has(movie.tmdb_id)) return
+    if (myList.length >= 10) {
+      setConfirmFilm(movie)
+      return
+    }
+    if (myList.length < 10) addToTop10(movie)
+    else addToList('myList', movie)
+  }
+
+  function handleConfirmExtend(movie) {
+    addToList('myList', movie)
+    setConfirmFilm(null)
+  }
+
   function setFilter(key, value) {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
   return (
     <div className={styles.page}>
+      {/* Confirm dialog for extending list */}
+      {confirmFilm && (
+        <div className={styles.confirmOverlay}>
+          <div className={styles.confirmBox}>
+            <p className={styles.confirmText}>
+              Your top 10 is full. Add <strong>{confirmFilm.title}</strong> to your extended list?
+            </p>
+            <div className={styles.confirmActions}>
+              <button className={styles.confirmYes} onClick={() => handleConfirmExtend(confirmFilm)}>
+                Add to Extended List
+              </button>
+              <button className={styles.confirmNo} onClick={() => setConfirmFilm(null)}>
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="container">
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Explore Films</h1>
             <p className={styles.subtitle}>
-              Gabe's picks, TMDB's best — discover your next favorite.
+              Top rated, popular, award-winning, and blockbuster films — all in one place.
             </p>
           </div>
           <span className={styles.count}>{filtered.length} films</span>
@@ -182,7 +221,7 @@ export default function Explore() {
             className={`${styles.featuredToggle} ${filters.featured ? styles.featuredActive : ''}`}
             onClick={() => setFilter('featured', !filters.featured)}
           >
-            ★ Gabe's Picks
+            ★ Featured
           </button>
 
           <select
@@ -222,46 +261,80 @@ export default function Explore() {
 
         {/* Grid */}
         <div className={styles.grid}>
-          {/* Gabe's picks always rendered immediately */}
           {filtered
             .filter((m) => m.isFeatured)
             .map((movie) => {
               const signals = getSignals(movie)
+              const inList = myListIds.has(movie.tmdb_id)
               return (
-                <FilmCard
-                  key={`f-${movie.tmdb_id}`}
-                  movie={movie}
-                  isFeatured
-                  actorMatches={signals.actors}
-                  directorMatches={signals.directors}
-                  showAddToList
-                />
+                <div key={`f-${movie.tmdb_id}`} className={styles.cardWrap}>
+                  <button
+                    className={`${styles.checkbox} ${inList ? styles.checkboxChecked : ''}`}
+                    onClick={(e) => handleCheckbox(movie, e)}
+                    aria-label={inList ? 'In your list' : 'Add to My List'}
+                  >
+                    {inList ? '✓' : ''}
+                  </button>
+                  <button
+                    className={styles.notInterestedBtn}
+                    onClick={() => addNotInterested(movie.tmdb_id)}
+                    title="Not interested"
+                    aria-label="Not interested"
+                  >
+                    ✕
+                  </button>
+                  <FilmCard
+                    movie={movie}
+                    isFeatured
+                    actorMatches={signals.actors}
+                    directorMatches={signals.directors}
+                    showAddToList
+                    showNotInterested
+                    onNotInterested={() => addNotInterested(movie.tmdb_id)}
+                  />
+                </div>
               )
             })}
 
-          {/* Pool movies */}
           {!filters.featured && filtered
             .filter((m) => !m.isFeatured)
             .map((movie) => {
               const signals = getSignals(movie)
+              const inList = myListIds.has(movie.tmdb_id)
               return (
-                <FilmCard
-                  key={`p-${movie.tmdb_id}`}
-                  movie={movie}
-                  actorMatches={signals.actors}
-                  directorMatches={signals.directors}
-                  showAddToList
-                />
+                <div key={`p-${movie.tmdb_id}`} className={styles.cardWrap}>
+                  <button
+                    className={`${styles.checkbox} ${inList ? styles.checkboxChecked : ''}`}
+                    onClick={(e) => handleCheckbox(movie, e)}
+                    aria-label={inList ? 'In your list' : 'Add to My List'}
+                  >
+                    {inList ? '✓' : ''}
+                  </button>
+                  <button
+                    className={styles.notInterestedBtn}
+                    onClick={() => addNotInterested(movie.tmdb_id)}
+                    title="Not interested"
+                    aria-label="Not interested"
+                  >
+                    ✕
+                  </button>
+                  <FilmCard
+                    movie={movie}
+                    actorMatches={signals.actors}
+                    directorMatches={signals.directors}
+                    showAddToList
+                    showNotInterested
+                    onNotInterested={() => addNotInterested(movie.tmdb_id)}
+                  />
+                </div>
               )
             })}
 
-          {/* Loading skeletons */}
           {poolLoading && Array.from({ length: 20 }).map((_, i) => (
             <SkeletonCard key={`sk-${i}`} />
           ))}
         </div>
 
-        {/* Load More */}
         {!filters.featured && !poolLoading && hasMore && (
           <div className={styles.loadMoreWrap}>
             <button

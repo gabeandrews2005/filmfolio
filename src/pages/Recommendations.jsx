@@ -1,62 +1,136 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { buildRecommendationsEnhanced } from '../api/tmdb'
-import RecommendationCard from '../components/RecommendationCard'
-import StarSignal from '../components/StarSignal'
+import { buildRecommendationsEnhanced, getMovieExternalIds } from '../api/tmdb'
+import { getOmdbRatings } from '../api/omdb'
+import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
 
+const TIER_MUST    = { label: '🔥 Must Watch',       min: 80, color: '#c9a84c' }
+const TIER_GREAT   = { label: '⭐ Great Match',       min: 65, color: '#a09a8e' }
+const TIER_WORTH   = { label: '👍 Worth the Watch',  min: 50, color: '#8b6a3e' }
+const TIERS = [TIER_MUST, TIER_GREAT, TIER_WORTH]
+
+function matchPct(score, maxScore) {
+  const base = Math.min(100, Math.round((score / Math.max(maxScore, 1)) * 100))
+  return Math.min(100, base)
+}
+
+function RecCard({ movie, matchPct: pct, tier, onNotInterested, onSeen }) {
+  const [ratings, setRatings] = useState(null)
+  const [loadingRatings, setLoadingRatings] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    async function load() {
+      const extIds = await getMovieExternalIds(movie.tmdb_id)
+      if (cancelled || !extIds?.imdb_id) {
+        setLoadingRatings(false)
+        return
+      }
+      const r = await getOmdbRatings(extIds.imdb_id)
+      if (!cancelled) {
+        setRatings(r)
+        setLoadingRatings(false)
+      }
+    }
+    load()
+    return () => { cancelled = true }
+  }, [movie.tmdb_id])
+
+  const tierColor = tier.color
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.cardPosterWrap}>
+        <img
+          src={movie.posterUrl}
+          alt={movie.title}
+          className={styles.cardPoster}
+          loading="lazy"
+        />
+        <div className={styles.matchBadge} style={{ background: tierColor, color: '#0d0d0d' }}>
+          {pct}% Match
+        </div>
+        {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+          <div className={styles.starBadge}>★</div>
+        )}
+      </div>
+      <div className={styles.cardBody}>
+        <h3 className={styles.cardTitle}>{movie.title}</h3>
+        <p className={styles.cardYear}>{movie.year}</p>
+        {!loadingRatings && (
+          <RatingDisplay
+            rtScore={ratings?.rtScore}
+            imdbRating={ratings?.imdbRating}
+            tmdbScore={movie.vote_average}
+          />
+        )}
+        {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+          <p className={styles.bonusText}>
+            ★ {[...movie.bonusActors, ...movie.bonusDirectors].filter(Boolean).slice(0,2).join(', ')}
+          </p>
+        )}
+        <div className={styles.cardActions}>
+          <button className={styles.seenBtn} onClick={() => onSeen(movie.tmdb_id)}>
+            Seen It
+          </button>
+          <button className={styles.notBtn} onClick={() => onNotInterested(movie.tmdb_id)}>
+            Not Interested
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Recommendations() {
-  const { myList, movies, actorsList, directorsList } = useFilm()
-  const [queue, setQueue] = useState([])
-  const [displayed, setDisplayed] = useState([])
+  const { myList, movies, actorsList, directorsList, toggleSeen, addNotInterested } = useFilm()
+  const [allRecs, setAllRecs] = useState([])
+  const [dismissed, setDismissed] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const DISPLAY_COUNT = 20
-
-  // Build actor/director person ID arrays for enhanced algorithm
   const actorPersonIds = actorsList.map((a) => a.person_id)
   const directorPersonIds = directorsList.map((d) => d.person_id)
-  const hasSignals = actorPersonIds.length > 0 || directorPersonIds.length > 0
 
   useEffect(() => {
     if (myList.length === 0) return
     let cancelled = false
-
     async function load() {
       setLoading(true)
       setError(null)
       try {
         const recs = await buildRecommendationsEnhanced(
-          myList,
-          movies,
-          actorPersonIds,
-          directorPersonIds
+          myList, movies, actorPersonIds, directorPersonIds
         )
-        if (!cancelled) {
-          setQueue(recs)
-          setDisplayed(recs.slice(0, DISPLAY_COUNT))
-        }
+        if (!cancelled) setAllRecs(recs)
       } catch {
         if (!cancelled) setError('Could not load recommendations. Check your API key.')
       } finally {
         if (!cancelled) setLoading(false)
       }
     }
-
     load()
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myList, movies])
 
+  const maxScore = allRecs.length > 0 ? allRecs[0].score : 1
+
+  const visibleRecs = allRecs
+    .filter((m) => !dismissed.has(m.tmdb_id))
+    .map((m) => ({ ...m, pct: matchPct(m.score, maxScore) }))
+    .filter((m) => m.pct >= 50)
+
   function handleNotInterested(tmdbId) {
-    setDisplayed((prev) => {
-      const nextDisplayed = prev.filter((m) => m.tmdb_id !== tmdbId)
-      const shownIds = new Set(nextDisplayed.map((m) => m.tmdb_id))
-      const next = queue.find((m) => m.tmdb_id !== tmdbId && !shownIds.has(m.tmdb_id))
-      return next ? [...nextDisplayed, next] : nextDisplayed
-    })
+    setDismissed((prev) => new Set([...prev, tmdbId]))
+    addNotInterested(tmdbId)
+  }
+
+  function handleSeen(tmdbId) {
+    setDismissed((prev) => new Set([...prev, tmdbId]))
+    toggleSeen(tmdbId)
   }
 
   if (myList.length === 0) {
@@ -66,9 +140,9 @@ export default function Recommendations() {
           <div className={styles.empty}>
             <h2 className={styles.emptyTitle}>No list yet</h2>
             <p className={styles.emptyText}>
-              Build your Top 10 first and we'll find films you'll love.
+              Build your film list first and we'll find films you'll love.
             </p>
-            <Link to="/my-list" className={styles.buildBtn}>Build My Top 10</Link>
+            <Link to="/my-list" className={styles.buildBtn}>Build My List</Link>
           </div>
         </div>
       </div>
@@ -80,35 +154,7 @@ export default function Recommendations() {
       <div className="container">
         <div className={styles.header}>
           <h1 className={styles.title}>Picks For You</h1>
-          <p className={styles.subtitle}>
-            Based on your top {Math.min(myList.length, 10)} films, scored by how often they appear across all recommendation sets.
-            {hasSignals && (
-              <> Films featuring your favorite actors or directors receive a <span className={styles.goldText}>★ bonus</span>.</>
-            )}
-          </p>
         </div>
-
-        {/* Top films summary */}
-        <div className={styles.top10Summary}>
-          <p className={styles.summaryLabel}>Based on</p>
-          <div className={styles.summaryList}>
-            {myList.slice(0, 10).map((m, i) => (
-              <span key={m.tmdb_id} className={styles.summaryItem}>
-                <span className={styles.summaryRank}>{i + 1}.</span> {m.title}
-              </span>
-            ))}
-          </div>
-          <Link to="/my-list" className={styles.editLink}>Edit list</Link>
-        </div>
-
-        {hasSignals && (
-          <div className={styles.signalNote}>
-            <span className={styles.signalStar}>★</span>
-            <span className={styles.signalText}>
-              Gold star = bonus match with your{actorPersonIds.length > 0 ? ' actors' : ''}{actorPersonIds.length > 0 && directorPersonIds.length > 0 ? ' or' : ''}{directorPersonIds.length > 0 ? ' directors' : ''} list
-            </span>
-          </div>
-        )}
 
         {loading && (
           <div className={styles.loading}>
@@ -119,32 +165,37 @@ export default function Recommendations() {
 
         {error && <p className={styles.error}>{error}</p>}
 
-        {!loading && displayed.length === 0 && !error && (
+        {!loading && visibleRecs.length === 0 && !error && (
           <p className={styles.noResults}>
-            No recommendations found. This can happen if your API key isn't set or the films don't have related results.
+            No recommendations found. Try adding more films to your list.
           </p>
         )}
 
-        {displayed.length > 0 && (
-          <>
-            <p className={styles.resultsCount}>{displayed.length} recommendations</p>
-            <div className={styles.grid}>
-              {displayed.map((movie) => (
-                <div key={movie.tmdb_id} className={styles.recWrap}>
-                  {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
-                    <div className={styles.bonusSignal}>
-                      <StarSignal actors={movie.bonusActors ?? []} directors={movie.bonusDirectors ?? []} />
-                    </div>
-                  )}
-                  <RecommendationCard
+        {!loading && visibleRecs.length > 0 && TIERS.map((tier) => {
+          const tierRecs = visibleRecs.filter((m) => {
+            if (tier === TIER_MUST)  return m.pct >= 80
+            if (tier === TIER_GREAT) return m.pct >= 65 && m.pct < 80
+            return m.pct >= 50 && m.pct < 65
+          })
+          if (tierRecs.length === 0) return null
+          return (
+            <section key={tier.label} className={styles.tier}>
+              <h2 className={styles.tierTitle}>{tier.label}</h2>
+              <div className={styles.grid}>
+                {tierRecs.map((movie) => (
+                  <RecCard
+                    key={movie.tmdb_id}
                     movie={movie}
+                    matchPct={movie.pct}
+                    tier={tier}
                     onNotInterested={handleNotInterested}
+                    onSeen={handleSeen}
                   />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </section>
+          )
+        })}
       </div>
     </div>
   )

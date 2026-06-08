@@ -24,18 +24,6 @@ export default function Universe() {
 
   const hasAnything = filledSections.length > 0
 
-  // Stats
-  const totalFilms =
-    (ctx.myList.length || 0) +
-    (ctx.horrorList.length || 0) +
-    (ctx.comediesList.length || 0) +
-    (ctx.animatedList.length || 0) +
-    (ctx.seasonalList.length || 0)
-
-  const totalPeople =
-    (ctx.actorsList.length || 0) +
-    (ctx.directorsList.length || 0)
-
   return (
     <div className={styles.page}>
       <div className={styles.heroSection}>
@@ -44,32 +32,6 @@ export default function Universe() {
           <p className={styles.heroSubtitle}>
             Every list, every ranking — your complete film identity.
           </p>
-          {hasAnything && (
-            <div className={styles.stats}>
-              {totalFilms > 0 && (
-                <div className={styles.stat}>
-                  <span className={styles.statNum}>{totalFilms}</span>
-                  <span className={styles.statLabel}>Films Ranked</span>
-                </div>
-              )}
-              {totalPeople > 0 && (
-                <div className={styles.stat}>
-                  <span className={styles.statNum}>{totalPeople}</span>
-                  <span className={styles.statLabel}>People Ranked</span>
-                </div>
-              )}
-              {ctx.showsList.length > 0 && (
-                <div className={styles.stat}>
-                  <span className={styles.statNum}>{ctx.showsList.length}</span>
-                  <span className={styles.statLabel}>Shows Ranked</span>
-                </div>
-              )}
-              <div className={styles.stat}>
-                <span className={styles.statNum}>{ctx.seenList.size}</span>
-                <span className={styles.statLabel}>Films Seen</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -94,7 +56,7 @@ export default function Universe() {
               Start building your lists and they'll appear here — one big picture of your taste.
             </p>
             <div className={styles.emptyLinks}>
-              <Link to="/my-list" className={styles.emptyLink}>Build Top 10 →</Link>
+              <Link to="/my-list" className={styles.emptyLink}>Build My List →</Link>
               <Link to="/explore" className={styles.emptyLink}>Explore Films →</Link>
               <Link to="/lists/actors" className={styles.emptyLink}>Add Actors →</Link>
             </div>

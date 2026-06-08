@@ -1,13 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { useFilm } from '../context/FilmContext'
 import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import styles from './MyList.module.css'
 
-// ── Poster grid view (shown when list is complete) ────────────────────────
-function ListGridView({ list, onEdit }) {
+// ── Poster grid view (shown when list has films) ──────────────────────────
+function ListGridView({ list, onExpand }) {
   const { removeFromList, reorderList } = useFilm()
 
   function handleDragEnd(result) {
@@ -22,7 +21,9 @@ function ListGridView({ list, onEdit }) {
     <div>
       <div className={styles.gridHeader}>
         <p className={styles.gridHint}>Drag to reorder · Click a poster for details</p>
-        <button className={styles.editBtn} onClick={onEdit}>Edit List</button>
+        {list.length < 100 && (
+          <button className={styles.editBtn} onClick={onExpand}>Expand List</button>
+        )}
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
@@ -66,14 +67,13 @@ function ListGridView({ list, onEdit }) {
 
 // ── List builder (search + drag to rank) ─────────────────────────────────
 function ListBuilder({ list, maxSlots, onDone }) {
-  const { movies, addToTop10, addToList, removeFromList, reorderList } = useFilm()
+  const { addToTop10, addToList, removeFromList, reorderList } = useFilm()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [debounceTimer, setDebounceTimer] = useState(null)
 
   const listIds = new Set(list.map((m) => m.tmdb_id))
-  const gabePoolMovies = movies.filter((m) => !listIds.has(m.tmdb_id))
 
   function handleSearch(value) {
     setQuery(value)
@@ -97,6 +97,7 @@ function ListBuilder({ list, maxSlots, onDone }) {
   }
 
   function addSearchResult(r) {
+    if (listIds.has(r.id)) return
     const movie = {
       tmdb_id: r.id,
       title: r.title,
@@ -106,12 +107,8 @@ function ListBuilder({ list, maxSlots, onDone }) {
       vote_average: r.vote_average,
       director: '',
     }
-    // Use addToTop10 for slots 1-10, addToList for 11-100
-    if (list.length < 10) addToTop10(movie)
-    else addToList('myList', movie)
-  }
-
-  function addFromPool(movie) {
+    setQuery('')
+    setSearchResults([])
     if (list.length < 10) addToTop10(movie)
     else addToList('myList', movie)
   }
@@ -120,7 +117,7 @@ function ListBuilder({ list, maxSlots, onDone }) {
 
   return (
     <div className={styles.builder}>
-      {/* Left: search + pool */}
+      {/* Left: search */}
       <div className={styles.left}>
         <div className={styles.searchBox}>
           <input
@@ -129,6 +126,7 @@ function ListBuilder({ list, maxSlots, onDone }) {
             placeholder="Search any film…"
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
+            autoFocus
           />
           {searching && <span className={styles.spinner}>⟳</span>}
         </div>
@@ -158,39 +156,23 @@ function ListBuilder({ list, maxSlots, onDone }) {
           </div>
         )}
 
-        <div className={styles.pool}>
-          <p className={styles.sectionLabel}>From Gabe's Top 100 — click to add</p>
-          <div className={styles.poolScroll}>
-            {gabePoolMovies.map((movie) => (
-              <div
-                key={movie.rank}
-                className={`${styles.poolRow} ${isFull ? styles.poolFull : ''}`}
-                onClick={() => !isFull && addFromPool(movie)}
-              >
-                <span className={styles.poolRank}>#{movie.rank}</span>
-                <img src={movie.posterUrl || PLACEHOLDER_POSTER} alt={movie.title} className={styles.thumb} />
-                <div className={styles.resultInfo}>
-                  <span className={styles.resultTitle}>{movie.title}</span>
-                  <span className={styles.resultYear}>{movie.year}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {!query && (
+          <p className={styles.searchHint}>
+            Search for any film to add it to your list.
+          </p>
+        )}
       </div>
 
       {/* Right: ranked list */}
       <div className={styles.right}>
         <div className={styles.listHeader}>
-          <h2 className={styles.listTitle}>
-            My List
-          </h2>
+          <h2 className={styles.listTitle}>My Film List</h2>
           <span className={styles.listCount}>{list.length} / {maxSlots}</span>
         </div>
 
         {list.length === 0 ? (
           <div className={styles.emptyList}>
-            <p>Add films from the left to build your list</p>
+            <p>Search for films on the left to build your list</p>
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
@@ -250,80 +232,43 @@ function ListBuilder({ list, maxSlots, onDone }) {
 // ── Main page ─────────────────────────────────────────────────────────────
 export default function MyList() {
   const { myList } = useFilm()
-  const navigate = useNavigate()
   const [viewMode, setViewMode] = useState(() => myList.length >= 10 ? 'grid' : 'builder')
-  const [maxSlots, setMaxSlots] = useState(10)
-  const [showExpanded, setShowExpanded] = useState(myList.length > 10)
+  const [maxSlots, setMaxSlots] = useState(() => myList.length > 10 ? 100 : 10)
 
-  const top10 = myList.slice(0, 10)
-  const hasTop10 = top10.length >= 10
+  // Auto-navigate to grid once top 10 is complete
+  useEffect(() => {
+    if (myList.length >= 10 && viewMode === 'builder' && maxSlots === 10) {
+      setViewMode('grid')
+    }
+  }, [myList.length, viewMode, maxSlots])
 
-  function handleExpandTo100() {
+  function handleExpand() {
     setMaxSlots(100)
-    setShowExpanded(true)
     setViewMode('builder')
   }
+
+  const title = myList.length > 10 ? 'My Film List' : myList.length > 0 ? 'Build Your Film List' : 'Build Your Film List'
+  const subtitle = maxSlots > 10
+    ? 'Rank your all-time favorites, one film at a time.'
+    : 'Pick any films, rank them your way, and get personalized recommendations.'
 
   return (
     <div className={styles.page}>
       <div className="container">
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>
-              {showExpanded ? 'My Top 100' : 'Build Your Top 10'}
-            </h1>
-            <p className={styles.subtitle}>
-              {showExpanded
-                ? 'Rank your all-time favorites, one film at a time.'
-                : 'Pick any 10 films, rank them your way, and get personalized recommendations.'}
-            </p>
+            <h1 className={styles.title}>{title}</h1>
+            <p className={styles.subtitle}>{subtitle}</p>
           </div>
-          {top10.length >= 3 && (
-            <button
-              className={styles.recommendBtn}
-              onClick={() => navigate('/recommendations')}
-            >
-              Picks For You →
-            </button>
-          )}
         </div>
 
-        {viewMode === 'grid' && hasTop10 ? (
-          <>
-            <ListGridView list={myList} onEdit={() => setViewMode('builder')} />
-
-            {/* Expand to Top 100 */}
-            {!showExpanded && (
-              <div className={styles.expandSection}>
-                <div className={styles.expandContent}>
-                  <h3 className={styles.expandTitle}>Go further</h3>
-                  <p className={styles.expandDesc}>
-                    Expand your list to 100 films. More picks means better recommendations and a richer profile.
-                  </p>
-                  <button className={styles.expandBtn} onClick={handleExpandTo100}>
-                    Expand to Top 100
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Recommendations footer */}
-            {top10.length >= 3 && (
-              <div className={styles.footer}>
-                <button className={styles.recommendBtnLg} onClick={() => navigate('/recommendations')}>
-                  Get My Recommendations →
-                </button>
-                <p className={styles.footerHint}>
-                  Based on your {myList.length} selected film{myList.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            )}
-          </>
+        {viewMode === 'grid' ? (
+          <ListGridView list={myList} onExpand={handleExpand} />
         ) : (
           <ListBuilder
             list={myList}
             maxSlots={maxSlots}
-            onDone={hasTop10 ? () => setViewMode('grid') : null}
+            onDone={myList.length >= 10 ? () => setViewMode('grid') : null}
           />
         )}
       </div>

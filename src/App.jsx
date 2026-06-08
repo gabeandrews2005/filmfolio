@@ -12,18 +12,19 @@ import Universe from './pages/Universe'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import About from './pages/About'
+import SeenFilms from './pages/SeenFilms'
+import Watchlist from './pages/Watchlist'
+import Statistics from './pages/Statistics'
 import GenreList from './pages/lists/GenreList'
 import PersonList from './pages/lists/PersonList'
 import ShowsList from './pages/lists/ShowsList'
 
-// Profile gate: show setup modal on first visit (once per session)
 function ProfileGate({ children }) {
   const { user, setUser } = useFilm()
   const [showModal, setShowModal] = useState(false)
   const [checked, setChecked] = useState(false)
 
   useEffect(() => {
-    // Show modal once if no profile and haven't dismissed this session
     if (!user && !sessionStorage.getItem('ff_profile_dismissed')) {
       const timer = setTimeout(() => setShowModal(true), 1500)
       return () => clearTimeout(timer)
@@ -53,7 +54,6 @@ function AppRoutes() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<Explore />} />
-        {/* Legacy redirect */}
         <Route path="/movies" element={<Navigate to="/explore" replace />} />
         <Route path="/my-list" element={<MyList />} />
         <Route path="/recommendations" element={<Recommendations />} />
@@ -62,35 +62,34 @@ function AppRoutes() {
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/about" element={<About />} />
-        {/* Genre list pages */}
+        <Route path="/seen" element={<SeenFilms />} />
+        <Route path="/watchlist" element={<Watchlist />} />
+        <Route path="/statistics" element={<Statistics />} />
         <Route
           path="/lists/horror"
-          element={<GenreList listType="horror" title="My Horror List" maxItems={50} />}
+          element={<GenreList listType="horror" title="Horror" maxItems={50} />}
         />
         <Route
           path="/lists/comedies"
-          element={<GenreList listType="comedies" title="My Comedies" maxItems={50} />}
+          element={<GenreList listType="comedies" title="Comedies" maxItems={50} />}
         />
         <Route
           path="/lists/animated"
-          element={<GenreList listType="animated" title="My Animated Films" maxItems={50} />}
+          element={<GenreList listType="animated" title="Animated" maxItems={50} />}
         />
         <Route
           path="/lists/seasonal"
-          element={<GenreList listType="seasonal" title="My Seasonal Picks" maxItems={25} />}
+          element={<GenreList listType="seasonal" title="Seasonal" maxItems={25} />}
         />
-        {/* Person list pages */}
         <Route
           path="/lists/actors"
-          element={<PersonList listType="actors" title="My Actors" maxItems={50} />}
+          element={<PersonList listType="actors" title="Actors" maxItems={50} />}
         />
         <Route
           path="/lists/directors"
-          element={<PersonList listType="directors" title="My Directors" maxItems={25} />}
+          element={<PersonList listType="directors" title="Directors" maxItems={25} />}
         />
-        {/* Shows */}
         <Route path="/lists/shows" element={<ShowsList />} />
-        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ProfileGate>

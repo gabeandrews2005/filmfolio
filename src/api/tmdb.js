@@ -46,7 +46,7 @@ async function fetchTMDB(path, params = {}) {
   }
 }
 
-async function getMovieDetails(tmdbId) {
+export async function getMovieDetails(tmdbId) {
   const key = `ff_tmdb_d_${tmdbId}`;
   const cached = getCached(key);
   if (cached) return cached;
@@ -55,7 +55,7 @@ async function getMovieDetails(tmdbId) {
   return data;
 }
 
-async function getMovieCredits(tmdbId) {
+export async function getMovieCredits(tmdbId) {
   const key = `ff_tmdb_c_${tmdbId}`;
   const cached = getCached(key);
   if (cached) return cached;
@@ -63,8 +63,6 @@ async function getMovieCredits(tmdbId) {
   if (data) setCache(key, data);
   return data;
 }
-
-export { getMovieCredits };
 
 export async function getMovieRecommendations(tmdbId) {
   const key = `ff_tmdb_r_${tmdbId}`;
@@ -109,6 +107,52 @@ export async function getTopRatedMovies(page = 1) {
   const data = await fetchTMDB('/movie/top_rated', { page });
   if (data) setCache(key, data);
   return data;
+}
+
+export async function getDiscoverMovies(params = {}, page = 1) {
+  const cacheKey = `ff_tmdb_disc_${JSON.stringify(params)}_${page}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+  const data = await fetchTMDB('/discover/movie', { ...params, page });
+  if (data) setCache(cacheKey, data);
+  return data;
+}
+
+export async function getMovieExternalIds(tmdbId) {
+  const key = `ff_tmdb_ext_${tmdbId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/movie/${tmdbId}/external_ids`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+export async function getPersonDetails(personId) {
+  const key = `ff_tmdb_person_${personId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/person/${personId}`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+export async function getPersonMovieCredits(personId) {
+  const key = `ff_tmdb_pmcred_${personId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/person/${personId}/movie_credits`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+export async function searchMoviesByGenre(query, genreId) {
+  if (!query.trim()) return [];
+  const data = await fetchTMDB('/search/movie', {
+    query: query.trim(),
+    page: 1,
+    with_genres: genreId,
+  });
+  return data?.results ?? [];
 }
 
 export function getPosterUrl(path) {
