@@ -360,11 +360,45 @@
   line-height: 1.3;
 }
 
+/* ── Section dividers ─────────────────────────────────────────────────────── */
+.sectionDivider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 28px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.sectionLabel {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent-gold);
+}
+
+.sectionHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sectionCount {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 /* ── Grid view ────────────────────────────────────────────────────────────── */
 .posterGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+}
+
+/* Derived grid has no drag handles — static */
+.derivedGrid {
+  margin-bottom: 4px;
 }
 
 .gridItem {
@@ -460,9 +494,14 @@
   font-size: 0.88rem;
 }
 
+/* ── Derived list item (no drag handle) ──────────────────────────────────── */
+.derivedItem {
+  cursor: default;
+}
+
 @media (max-width: 480px) {
   .posterGrid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 12px;
   }
 }

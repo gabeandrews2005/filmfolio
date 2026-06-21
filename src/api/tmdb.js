@@ -176,15 +176,17 @@ export async function enrichMovie(baseMovie) {
     getMovieCredits(baseMovie.tmdb_id),
   ]);
 
-  // Title mismatch validation
+  // Poster mismatch validation — use PLACEHOLDER_POSTER if titles don't match
+  let posterMismatch = false;
   if (details && baseMovie.title) {
-    const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const norm = (s) => s.toLowerCase().replace(/(?:^|\s)(?:the|a|an)\s+/g, ' ').replace(/[^a-z0-9]/g, '');
     const expected = norm(baseMovie.title);
     const received = norm(details.title ?? '');
     if (expected.length > 4 && received.length > 4) {
       const match = received.includes(expected.slice(0, 8)) || expected.includes(received.slice(0, 8));
       if (!match) {
-        console.warn(`[FilmFolio] TMDB ID mismatch? Expected "${baseMovie.title}" but got "${details.title}" (id: ${baseMovie.tmdb_id})`);
+        console.warn(`[FilmFolio] Poster mismatch: expected "${baseMovie.title}" got "${details.title}" for tmdb_id ${baseMovie.tmdb_id}`);
+        posterMismatch = true;
       }
     }
   }
@@ -197,7 +199,7 @@ export async function enrichMovie(baseMovie) {
 
   return {
     ...baseMovie,
-    poster_path: details?.poster_path ?? null,
+    poster_path: posterMismatch ? null : (details?.poster_path ?? null),
     backdrop_path: details?.backdrop_path ?? null,
     overview: details?.overview ?? '',
     vote_average: details?.vote_average ?? null,
@@ -206,7 +208,7 @@ export async function enrichMovie(baseMovie) {
     directorId,
     cast,
     castIds,
-    posterUrl: getPosterUrl(details?.poster_path),
+    posterUrl: posterMismatch ? PLACEHOLDER_POSTER : getPosterUrl(details?.poster_path),
     backdropUrl: getBackdropUrl(details?.backdrop_path),
     enriched: !!details,
   };

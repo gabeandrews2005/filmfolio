@@ -5,10 +5,10 @@ import StarSignal from './StarSignal'
 import styles from './FilmCard.module.css'
 
 function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, showAddToList }) {
-  const { seenList, toggleSeen, myTop10, addToTop10, removeFromTop10 } = useFilm()
+  const { seenList, toggleSeen, myList, addToList, removeFromList } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
-  const inTop10 = myTop10.some((m) => m.tmdb_id === movie.tmdb_id)
-  const top10Full = myTop10.length >= 10
+  const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
+  const listFull = myList.length >= 100
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -20,10 +20,10 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
     if (e.target === e.currentTarget) onClose()
   }
 
-  function handleTop10(e) {
+  function handleMyList(e) {
     e.stopPropagation()
-    if (inTop10) removeFromTop10(movie.tmdb_id)
-    else if (!top10Full) addToTop10(movie)
+    if (inList) removeFromList('myList', movie.tmdb_id)
+    else if (!listFull) addToList('myList', movie)
   }
 
   return (
@@ -84,11 +84,12 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
 
               {showAddToList && (
                 <button
-                  className={`${styles.top10Btn} ${inTop10 ? styles.inTop10 : ''} ${!inTop10 && top10Full ? styles.btnDisabled : ''}`}
-                  onClick={handleTop10}
-                  disabled={!inTop10 && top10Full}
+                  className={`${styles.top10Btn} ${inList ? styles.inTop10 : ''} ${!inList && listFull ? styles.btnDisabled : ''}`}
+                  onClick={handleMyList}
+                  disabled={!inList && listFull}
+                  title={!inList && listFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
                 >
-                  {inTop10 ? '✓ In My Top 10' : top10Full ? 'List Full' : '+ My Top 10'}
+                  {inList ? '✓ In My List' : listFull ? 'List Full (100/100)' : '+ My List'}
                 </button>
               )}
             </div>

@@ -1,12 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useFilm } from '../context/FilmContext'
 import {
-  getPopularMovies, getTopRatedMovies, getDiscoverMovies,
-  getPosterUrl, getMovieExternalIds,
+  getDiscoverMovies,
+  getPosterUrl,
 } from '../api/tmdb'
-import { getOmdbRatings } from '../api/omdb'
 import FilmCard from '../components/FilmCard'
 import styles from './Explore.module.css'
+
+const DISCOVER_PARAMS = {
+  sort_by: 'vote_average.desc',
+  'vote_count.gte': 1000,
+  'vote_average.gte': 7.0,
+}
+const INITIAL_PAGES = 25
 
 function SkeletonCard() {
   return (
@@ -34,15 +40,6 @@ function normalizePoolMovie(tmdbMovie) {
   }
 }
 
-function shuffle(arr) {
-  const a = [...arr]
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]]
-  }
-  return a
-}
-
 const DEFAULT_FILTERS = {
   genre: '',
   decade: '',
@@ -51,66 +48,61 @@ const DEFAULT_FILTERS = {
 }
 
 export default function Explore() {
-  const { movies: gabeMovies, seenList, actorsList, directorsList, myList, addToList, addToTop10, notInterested, addNotInterested } = useFilm()
+  const { movies: gabeMovies, seenList, toggleSeen, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
   const [poolMovies, setPoolMovies] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(INITIAL_PAGES)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
-  const [confirmFilm, setConfirmFilm] = useState(null)
 
   const actorIdSet = useMemo(() => new Set(actorsList.map((a) => a.person_id)), [actorsList])
   const directorIdSet = useMemo(() => new Set(directorsList.map((d) => d.person_id)), [directorsList])
   const gabeIds = useMemo(() => new Set(gabeMovies.map((m) => m.tmdb_id)), [gabeMovies])
-  const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
   const notInterestedIds = useMemo(() => new Set(notInterested), [notInterested])
 
-  async function fetchPage(page) {
-    const [pop, top, awards, revenue] = await Promise.all([
-      getPopularMovies(page),
-      getTopRatedMovies(page),
-      getDiscoverMovies({ sort_by: 'vote_average.desc', 'vote_count.gte': 1000 }, page),
-      getDiscoverMovies({ sort_by: 'revenue.desc' }, page),
-    ])
-    const combined = [
-      ...(pop?.results ?? []),
-      ...(top?.results ?? []),
-      ...(awards?.results ?? []),
-      ...(revenue?.results ?? []),
-    ]
-    const seen = new Set()
-    const filtered = combined.filter((m) => {
-      if (gabeIds.has(m.id)) return false
-      if (seen.has(m.id)) return false
-      seen.add(m.id)
-      return true
-    }).map(normalizePoolMovie)
-    return shuffle(filtered)
-  }
-
+  // Pre-fetch 25 pages of Discover to give ~500 unique films up front
   useEffect(() => {
     setPoolLoading(true)
-    fetchPage(1).then((movies) => {
-      setPoolMovies(movies)
-      setPoolLoading(false)
-    })
+    const pages = Array.from({ length: INITIAL_PAGES }, (_, i) => i + 1)
+    Promise.all(pages.map((p) => getDiscoverMovies(DISCOVER_PARAMS, p)))
+      .then((responses) => {
+        const seen = new Set()
+        const movies = []
+        for (const res of responses) {
+          for (const m of (res?.results ?? [])) {
+            if (gabeIds.has(m.id) || seen.has(m.id)) continue
+            seen.add(m.id)
+            movies.push(normalizePoolMovie(m))
+          }
+        }
+        setPoolMovies(movies)
+        setPoolLoading(false)
+      })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gabeIds])
 
   function handleLoadMore() {
     const nextPage = currentPage + 1
     setLoadingMore(true)
-    fetchPage(nextPage).then((movies) => {
-      setPoolMovies((prev) => {
-        const existingIds = new Set(prev.map((m) => m.tmdb_id))
-        const fresh = movies.filter((m) => !existingIds.has(m.tmdb_id))
-        return [...prev, ...fresh]
+    getDiscoverMovies(DISCOVER_PARAMS, nextPage)
+      .then((res) => {
+        const results = res?.results ?? []
+        if (results.length === 0) {
+          setHasMore(false)
+          return
+        }
+        setPoolMovies((prev) => {
+          const existingIds = new Set(prev.map((m) => m.tmdb_id))
+          const fresh = results
+            .filter((m) => !gabeIds.has(m.id) && !existingIds.has(m.id))
+            .map(normalizePoolMovie)
+          if (fresh.length === 0) setHasMore(false)
+          return [...prev, ...fresh]
+        })
+        setCurrentPage(nextPage)
       })
-      setCurrentPage(nextPage)
-      if (movies.length === 0) setHasMore(false)
-      setLoadingMore(false)
-    })
+      .finally(() => setLoadingMore(false))
   }
 
   const allMovies = useMemo(() => {
@@ -163,20 +155,10 @@ export default function Explore() {
     return { actors, directors }
   }
 
+  // Checkbox toggles Seen state directly from the card
   function handleCheckbox(movie, e) {
     e.stopPropagation()
-    if (myListIds.has(movie.tmdb_id)) return
-    if (myList.length >= 10) {
-      setConfirmFilm(movie)
-      return
-    }
-    if (myList.length < 10) addToTop10(movie)
-    else addToList('myList', movie)
-  }
-
-  function handleConfirmExtend(movie) {
-    addToList('myList', movie)
-    setConfirmFilm(null)
+    toggleSeen(movie.tmdb_id)
   }
 
   function setFilter(key, value) {
@@ -185,31 +167,12 @@ export default function Explore() {
 
   return (
     <div className={styles.page}>
-      {/* Confirm dialog for extending list */}
-      {confirmFilm && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmBox}>
-            <p className={styles.confirmText}>
-              Your top 10 is full. Add <strong>{confirmFilm.title}</strong> to your extended list?
-            </p>
-            <div className={styles.confirmActions}>
-              <button className={styles.confirmYes} onClick={() => handleConfirmExtend(confirmFilm)}>
-                Add to Extended List
-              </button>
-              <button className={styles.confirmNo} onClick={() => setConfirmFilm(null)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="container">
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Explore Films</h1>
             <p className={styles.subtitle}>
-              Top rated, popular, award-winning, and blockbuster films — all in one place.
+              Top rated, award-winning films — curated and community-ranked.
             </p>
           </div>
           <span className={styles.count}>{filtered.length} films</span>
@@ -265,15 +228,15 @@ export default function Explore() {
             .filter((m) => m.isFeatured)
             .map((movie) => {
               const signals = getSignals(movie)
-              const inList = myListIds.has(movie.tmdb_id)
+              const isSeen = seenList.has(movie.tmdb_id)
               return (
                 <div key={`f-${movie.tmdb_id}`} className={styles.cardWrap}>
                   <button
-                    className={`${styles.checkbox} ${inList ? styles.checkboxChecked : ''}`}
+                    className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
                     onClick={(e) => handleCheckbox(movie, e)}
-                    aria-label={inList ? 'In your list' : 'Add to My List'}
+                    aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
                   >
-                    {inList ? '✓' : ''}
+                    {isSeen ? '✓' : ''}
                   </button>
                   <button
                     className={styles.notInterestedBtn}
@@ -300,15 +263,15 @@ export default function Explore() {
             .filter((m) => !m.isFeatured)
             .map((movie) => {
               const signals = getSignals(movie)
-              const inList = myListIds.has(movie.tmdb_id)
+              const isSeen = seenList.has(movie.tmdb_id)
               return (
                 <div key={`p-${movie.tmdb_id}`} className={styles.cardWrap}>
                   <button
-                    className={`${styles.checkbox} ${inList ? styles.checkboxChecked : ''}`}
+                    className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
                     onClick={(e) => handleCheckbox(movie, e)}
-                    aria-label={inList ? 'In your list' : 'Add to My List'}
+                    aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
                   >
-                    {inList ? '✓' : ''}
+                    {isSeen ? '✓' : ''}
                   </button>
                   <button
                     className={styles.notInterestedBtn}
@@ -335,15 +298,19 @@ export default function Explore() {
           ))}
         </div>
 
-        {!filters.featured && !poolLoading && hasMore && (
+        {!filters.featured && !poolLoading && (
           <div className={styles.loadMoreWrap}>
-            <button
-              className={styles.loadMoreBtn}
-              onClick={handleLoadMore}
-              disabled={loadingMore}
-            >
-              {loadingMore ? 'Loading…' : 'Load More Films'}
-            </button>
+            {hasMore ? (
+              <button
+                className={styles.loadMoreBtn}
+                onClick={handleLoadMore}
+                disabled={loadingMore}
+              >
+                {loadingMore ? 'Loading…' : 'Load More Films'}
+              </button>
+            ) : (
+              <p className={styles.noMoreText}>No more films to load</p>
+            )}
           </div>
         )}
       </div>
