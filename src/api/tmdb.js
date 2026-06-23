@@ -176,8 +176,7 @@ export async function enrichMovie(baseMovie) {
     getMovieCredits(baseMovie.tmdb_id),
   ]);
 
-  // Poster mismatch validation — use PLACEHOLDER_POSTER if titles don't match
-  let posterMismatch = false;
+  // Drift detection — log if TMDB title doesn't match what we expect (IDs verified 2026-06-22)
   if (details && baseMovie.title) {
     const norm = (s) => s.toLowerCase().replace(/(?:^|\s)(?:the|a|an)\s+/g, ' ').replace(/[^a-z0-9]/g, '');
     const expected = norm(baseMovie.title);
@@ -185,8 +184,7 @@ export async function enrichMovie(baseMovie) {
     if (expected.length > 4 && received.length > 4) {
       const match = received.includes(expected.slice(0, 8)) || expected.includes(received.slice(0, 8));
       if (!match) {
-        console.warn(`[FilmFolio] Poster mismatch: expected "${baseMovie.title}" got "${details.title}" for tmdb_id ${baseMovie.tmdb_id}`);
-        posterMismatch = true;
+        console.warn(`[FilmFolio] tmdb_id drift detected: expected "${baseMovie.title}" but tmdb_id ${baseMovie.tmdb_id} returns "${details.title}" — run verify-tmdb-ids.mjs`);
       }
     }
   }
@@ -199,7 +197,7 @@ export async function enrichMovie(baseMovie) {
 
   return {
     ...baseMovie,
-    poster_path: posterMismatch ? null : (details?.poster_path ?? null),
+    poster_path: details?.poster_path ?? null,
     backdrop_path: details?.backdrop_path ?? null,
     overview: details?.overview ?? '',
     vote_average: details?.vote_average ?? null,
@@ -208,7 +206,7 @@ export async function enrichMovie(baseMovie) {
     directorId,
     cast,
     castIds,
-    posterUrl: posterMismatch ? PLACEHOLDER_POSTER : getPosterUrl(details?.poster_path),
+    posterUrl: getPosterUrl(details?.poster_path),
     backdropUrl: getBackdropUrl(details?.backdrop_path),
     enriched: !!details,
   };

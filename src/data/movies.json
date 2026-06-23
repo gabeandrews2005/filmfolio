@@ -1,102 +1,1467 @@
 [
-  { "rank": 1,   "title": "A Star Is Born",                           "year": 2018, "tmdb_id": 332562,  "director": "Bradley Cooper",                      "genres": ["Romance", "Drama", "Music"],              "rt_score": 90,  "overall_rating": 10.0, "avg_score": 8.2 },
-  { "rank": 2,   "title": "Lost in Translation",                       "year": 2003, "tmdb_id": 153,     "director": "Sofia Coppola",                        "genres": ["Romance", "Drama"],                       "rt_score": 95,  "overall_rating": 10.0, "avg_score": 8.6 },
-  { "rank": 3,   "title": "Groundhog Day",                             "year": 1993, "tmdb_id": 137,     "director": "Harold Ramis",                         "genres": ["Comedy", "Fantasy", "Romance"],           "rt_score": 94,  "overall_rating": 10.0, "avg_score": 9.2 },
-  { "rank": 4,   "title": "The Shape of Water",                        "year": 2017, "tmdb_id": 399055,  "director": "Guillermo del Toro",                   "genres": ["Romance", "Fantasy", "Drama"],            "rt_score": 92,  "overall_rating": 10.0, "avg_score": 9.0 },
-  { "rank": 5,   "title": "Dazed and Confused",                        "year": 1993, "tmdb_id": 9470,    "director": "Richard Linklater",                    "genres": ["Comedy", "Drama"],                        "rt_score": 92,  "overall_rating": 10.0, "avg_score": 7.6 },
-  { "rank": 6,   "title": "Midnight in Paris",                         "year": 2011, "tmdb_id": 84892,   "director": "Woody Allen",                          "genres": ["Romance", "Fantasy", "Comedy"],           "rt_score": 93,  "overall_rating": 10.0, "avg_score": 9.1 },
-  { "rank": 7,   "title": "(500) Days of Summer",                      "year": 2009, "tmdb_id": 19913,   "director": "Marc Webb",                            "genres": ["Romance", "Drama", "Comedy"],             "rt_score": 86,  "overall_rating": 10.0, "avg_score": 9.1 },
-  { "rank": 8,   "title": "The Peanut Butter Falcon",                  "year": 2019, "tmdb_id": 551064,  "director": "Tyler Nilson",                         "genres": ["Adventure", "Comedy", "Drama"],           "rt_score": 95,  "overall_rating": 10.0, "avg_score": 8.5 },
-  { "rank": 9,   "title": "La La Land",                                "year": 2016, "tmdb_id": 313369,  "director": "Damien Chazelle",                      "genres": ["Music", "Romance", "Drama"],              "rt_score": 91,  "overall_rating": 10.0, "avg_score": 8.7 },
-  { "rank": 10,  "title": "The Lord of the Rings: The Fellowship of the Ring", "year": 2001, "tmdb_id": 120, "director": "Peter Jackson",               "genres": ["Fantasy", "Adventure", "Action"],         "rt_score": 91,  "overall_rating": 10.0, "avg_score": 7.9 },
-  { "rank": 11,  "title": "Call Me by Your Name",                      "year": 2017, "tmdb_id": 398978,  "director": "Luca Guadagnino",                      "genres": ["Romance", "Drama"],                       "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.4 },
-  { "rank": 12,  "title": "Eternal Sunshine of the Spotless Mind",     "year": 2004, "tmdb_id": 38,      "director": "Michel Gondry",                        "genres": ["Romance", "Science Fiction", "Drama"],   "rt_score": 92,  "overall_rating": 10.0, "avg_score": 8.7 },
-  { "rank": 13,  "title": "Juno",                                       "year": 2007, "tmdb_id": 8194,    "director": "Jason Reitman",                        "genres": ["Drama", "Romance", "Comedy"],             "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.7 },
-  { "rank": 14,  "title": "Moonlight",                                  "year": 2016, "tmdb_id": 376867,  "director": "Barry Jenkins",                        "genres": ["Drama"],                                  "rt_score": 98,  "overall_rating": 10.0, "avg_score": 8.3 },
-  { "rank": 15,  "title": "The Dark Knight",                            "year": 2008, "tmdb_id": 155,     "director": "Christopher Nolan",                    "genres": ["Action", "Crime", "Drama"],               "rt_score": 94,  "overall_rating": 10.0, "avg_score": 7.8 },
-  { "rank": 16,  "title": "Guardians of the Galaxy",                    "year": 2014, "tmdb_id": 76338,   "director": "James Gunn",                           "genres": ["Action", "Science Fiction", "Adventure"], "rt_score": 92,  "overall_rating": 10.0, "avg_score": 9.3 },
-  { "rank": 17,  "title": "Almost Famous",                              "year": 2000, "tmdb_id": 687,     "director": "Cameron Crowe",                        "genres": ["Drama", "Music"],                         "rt_score": 89,  "overall_rating": 10.0, "avg_score": 8.3 },
-  { "rank": 18,  "title": "Spider-Man: Into the Spider-Verse",          "year": 2018, "tmdb_id": 324857,  "director": "Peter Ramsey",                         "genres": ["Action", "Animation", "Adventure"],       "rt_score": 97,  "overall_rating": 10.0, "avg_score": 9.6 },
-  { "rank": 19,  "title": "Sideways",                                   "year": 2004, "tmdb_id": 9291,    "director": "Alexander Payne",                      "genres": ["Comedy", "Romance", "Drama"],             "rt_score": 97,  "overall_rating": 10.0, "avg_score": 9.6 },
-  { "rank": 20,  "title": "Moulin Rouge!",                              "year": 2001, "tmdb_id": 1621,    "director": "Baz Luhrmann",                         "genres": ["Music", "Romance", "Drama"],              "rt_score": 76,  "overall_rating": 10.0, "avg_score": 8.3 },
-  { "rank": 21,  "title": "Raising Arizona",                            "year": 1987, "tmdb_id": 1412,    "director": "Coen Brothers",                        "genres": ["Comedy", "Crime"],                        "rt_score": 91,  "overall_rating": 10.0, "avg_score": 8.5 },
-  { "rank": 22,  "title": "Urban Cowboy",                               "year": 1980, "tmdb_id": 17421,   "director": "James Bridges",                        "genres": ["Romance", "Drama"],                       "rt_score": 73,  "overall_rating": 10.0, "avg_score": 8.6 },
-  { "rank": 23,  "title": "Good Will Hunting",                          "year": 1997, "tmdb_id": 1682,    "director": "Gus Van Sant",                         "genres": ["Drama", "Romance"],                       "rt_score": 98,  "overall_rating": 10.0, "avg_score": 8.5 },
-  { "rank": 24,  "title": "Silver Linings Playbook",                    "year": 2012, "tmdb_id": 116745,  "director": "David O. Russell",                     "genres": ["Romance", "Drama", "Comedy"],             "rt_score": 92,  "overall_rating": 10.0, "avg_score": 8.3 },
-  { "rank": 25,  "title": "Léon: The Professional",                    "year": 1994, "tmdb_id": 101,     "director": "Luc Besson",                           "genres": ["Action", "Drama", "Crime", "Thriller"],  "rt_score": 73,  "overall_rating": 10.0, "avg_score": 9.1 },
-  { "rank": 26,  "title": "12 Years a Slave",                           "year": 2013, "tmdb_id": 76203,   "director": "Steve McQueen",                        "genres": ["Drama", "History"],                       "rt_score": 95,  "overall_rating": 10.0, "avg_score": 7.4 },
-  { "rank": 27,  "title": "Edward Scissorhands",                        "year": 1990, "tmdb_id": 5491,    "director": "Tim Burton",                           "genres": ["Fantasy", "Romance", "Drama"],            "rt_score": 90,  "overall_rating": 10.0, "avg_score": 8.4 },
-  { "rank": 28,  "title": "Pan's Labyrinth",                           "year": 2006, "tmdb_id": 1378,    "director": "Guillermo del Toro",                   "genres": ["Fantasy", "War", "Drama"],                "rt_score": 95,  "overall_rating": 10.0, "avg_score": 7.6 },
-  { "rank": 29,  "title": "Titanic",                                    "year": 1997, "tmdb_id": 597,     "director": "James Cameron",                        "genres": ["Romance", "Drama"],                       "rt_score": 89,  "overall_rating": 10.0, "avg_score": 8.9 },
-  { "rank": 30,  "title": "RRR",                                        "year": 2022, "tmdb_id": 759003,  "director": "S. S. Rajamouli",                      "genres": ["Action", "Drama", "Adventure"],           "rt_score": 95,  "overall_rating": 10.0, "avg_score": 9.3 },
-  { "rank": 31,  "title": "Mad Max: Fury Road",                         "year": 2015, "tmdb_id": 76341,   "director": "George Miller",                        "genres": ["Action", "Science Fiction", "Adventure"], "rt_score": 97,  "overall_rating": 10.0, "avg_score": 8.1 },
-  { "rank": 32,  "title": "Forrest Gump",                               "year": 1994, "tmdb_id": 13,      "director": "Robert Zemeckis",                      "genres": ["Drama", "Romance", "Comedy"],             "rt_score": 71,  "overall_rating": 10.0, "avg_score": 8.8 },
-  { "rank": 33,  "title": "Star Wars: A New Hope",                      "year": 1977, "tmdb_id": 11,      "director": "George Lucas",                         "genres": ["Science Fiction", "Action", "Adventure"], "rt_score": 92,  "overall_rating": 10.0, "avg_score": 7.6 },
-  { "rank": 34,  "title": "The Shining",                                "year": 1980, "tmdb_id": 694,     "director": "Stanley Kubrick",                      "genres": ["Horror", "Mystery", "Thriller"],          "rt_score": 82,  "overall_rating": 10.0, "avg_score": 7.8 },
-  { "rank": 35,  "title": "American Sniper",                            "year": 2014, "tmdb_id": 242582,  "director": "Clint Eastwood",                       "genres": ["War", "Drama"],                           "rt_score": 72,  "overall_rating": 10.0, "avg_score": 7.8 },
-  { "rank": 36,  "title": "The Godfather",                              "year": 1972, "tmdb_id": 238,     "director": "Francis Ford Coppola",                 "genres": ["Crime", "Drama"],                         "rt_score": 97,  "overall_rating": 10.0, "avg_score": 7.1 },
-  { "rank": 37,  "title": "Ferris Bueller's Day Off",                  "year": 1986, "tmdb_id": 9377,    "director": "John Hughes",                          "genres": ["Comedy", "Drama"],                        "rt_score": 80,  "overall_rating": 10.0, "avg_score": 7.4 },
-  { "rank": 38,  "title": "Fantastic Mr. Fox",                          "year": 2009, "tmdb_id": 10315,   "director": "Wes Anderson",                         "genres": ["Animation", "Comedy", "Adventure"],       "rt_score": 93,  "overall_rating": 10.0, "avg_score": 9.4 },
-  { "rank": 39,  "title": "CODA",                                       "year": 2021, "tmdb_id": 776503,  "director": "Sian Heder",                           "genres": ["Drama", "Music"],                         "rt_score": 94,  "overall_rating": 10.0, "avg_score": 9.1 },
-  { "rank": 40,  "title": "Wonder Boys",                                "year": 2000, "tmdb_id": 10210,   "director": "Curtis Hanson",                        "genres": ["Drama", "Comedy"],                        "rt_score": 81,  "overall_rating": 10.0, "avg_score": 8.4 },
-  { "rank": 41,  "title": "About a Boy",                                "year": 2002, "tmdb_id": 2288,    "director": "Paul Weitz",                           "genres": ["Romance", "Comedy", "Drama"],             "rt_score": 93,  "overall_rating": 10.0, "avg_score": 7.2 },
-  { "rank": 42,  "title": "Prisoners",                                  "year": 2013, "tmdb_id": 146233,  "director": "Denis Villeneuve",                     "genres": ["Thriller", "Crime", "Drama", "Mystery"],  "rt_score": 81,  "overall_rating": 10.0, "avg_score": 6.8 },
-  { "rank": 43,  "title": "When Harry Met Sally",                       "year": 1989, "tmdb_id": 639,     "director": "Rob Reiner",                           "genres": ["Romance", "Comedy"],                      "rt_score": 91,  "overall_rating": 10.0, "avg_score": 8.2 },
-  { "rank": 44,  "title": "War for the Planet of the Apes",             "year": 2017, "tmdb_id": 281338,  "director": "Matt Reeves",                          "genres": ["Science Fiction", "Action", "Drama"],     "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.0 },
-  { "rank": 45,  "title": "Bram Stoker's Dracula",                     "year": 1992, "tmdb_id": 2059,    "director": "Francis Ford Coppola",                 "genres": ["Drama", "Fantasy", "Horror", "Romance"],  "rt_score": null, "overall_rating": null, "avg_score": null },
-  { "rank": 46,  "title": "Gladiator",                                  "year": 2000, "tmdb_id": 98,      "director": "Ridley Scott",                         "genres": ["Action", "Drama", "Adventure"],           "rt_score": 80,  "overall_rating": 10.0, "avg_score": 7.5 },
-  { "rank": 47,  "title": "Django Unchained",                           "year": 2012, "tmdb_id": 68718,   "director": "Quentin Tarantino",                    "genres": ["Western", "Action", "Drama"],             "rt_score": 87,  "overall_rating": 10.0, "avg_score": 7.5 },
-  { "rank": 48,  "title": "Superbad",                                   "year": 2007, "tmdb_id": 8363,    "director": "Greg Mottola",                         "genres": ["Comedy"],                                 "rt_score": 88,  "overall_rating": 10.0, "avg_score": 7.3 },
-  { "rank": 49,  "title": "Whiplash",                                   "year": 2014, "tmdb_id": 244786,  "director": "Damien Chazelle",                      "genres": ["Drama", "Music"],                         "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.2 },
-  { "rank": 50,  "title": "Brokeback Mountain",                         "year": 2005, "tmdb_id": 73,      "director": "Ang Lee",                              "genres": ["Romance", "Drama"],                       "rt_score": 87,  "overall_rating": 10.0, "avg_score": 8.0 },
-  { "rank": 51,  "title": "The Martian",                                "year": 2015, "tmdb_id": 286217,  "director": "Ridley Scott",                         "genres": ["Science Fiction", "Drama"],                "rt_score": 91,  "overall_rating": 10.0, "avg_score": 7.5 },
-  { "rank": 52,  "title": "Deadpool",                                   "year": 2016, "tmdb_id": 293660,  "director": "Tim Miller",                           "genres": ["Action", "Adventure", "Comedy"],          "rt_score": 85,  "overall_rating": 10.0, "avg_score": 9.0 },
-  { "rank": 53,  "title": "WALL-E",                                     "year": 2008, "tmdb_id": 10681,   "director": "Andrew Stanton",                       "genres": ["Animation", "Science Fiction", "Family"], "rt_score": 95,  "overall_rating": 10.0, "avg_score": 8.9 },
-  { "rank": 54,  "title": "The Suicide Squad",                          "year": 2021, "tmdb_id": 436969,  "director": "James Gunn",                           "genres": ["Action", "Adventure", "Comedy"],          "rt_score": 91,  "overall_rating": 10.0, "avg_score": 8.8 },
-  { "rank": 55,  "title": "The Edge of Seventeen",                      "year": 2016, "tmdb_id": 338967,  "director": "Kelly Fremon Craig",                   "genres": ["Drama", "Comedy"],                        "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.4 },
-  { "rank": 56,  "title": "Ready Player One",                           "year": 2018, "tmdb_id": 333339,  "director": "Steven Spielberg",                     "genres": ["Science Fiction", "Action", "Adventure"], "rt_score": 72,  "overall_rating": 10.0, "avg_score": 8.7 },
-  { "rank": 57,  "title": "Booksmart",                                  "year": 2019, "tmdb_id": 553604,  "director": "Olivia Wilde",                         "genres": ["Comedy"],                                 "rt_score": 96,  "overall_rating": 10.0, "avg_score": 8.2 },
-  { "rank": 58,  "title": "Dead Poets Society",                         "year": 1989, "tmdb_id": 207,     "director": "Peter Weir",                           "genres": ["Drama"],                                  "rt_score": 84,  "overall_rating": 10.0, "avg_score": 7.2 },
-  { "rank": 59,  "title": "Lady Bird",                                  "year": 2017, "tmdb_id": 391713,  "director": "Greta Gerwig",                         "genres": ["Drama", "Comedy"],                        "rt_score": 99,  "overall_rating": 10.0, "avg_score": 8.5 },
-  { "rank": 60,  "title": "Forgetting Sarah Marshall",                  "year": 2008, "tmdb_id": 12134,   "director": "Nicholas Stoller",                     "genres": ["Comedy", "Romance"],                      "rt_score": 83,  "overall_rating": 10.0, "avg_score": 8.9 },
-  { "rank": 61,  "title": "Enchanted",                                  "year": 2007, "tmdb_id": 4011,    "director": "Kevin Lima",                           "genres": ["Animation", "Comedy", "Family", "Fantasy"],"rt_score": 93,  "overall_rating": 10.0, "avg_score": 8.5 },
-  { "rank": 62,  "title": "The Holdovers",                              "year": 2023, "tmdb_id": 840430,  "director": "Alexander Payne",                      "genres": ["Comedy", "Drama"],                        "rt_score": 97,  "overall_rating": 10.0, "avg_score": 8.2 },
-  { "rank": 63,  "title": "Se7en",                                      "year": 1995, "tmdb_id": 807,     "director": "David Fincher",                        "genres": ["Crime", "Drama", "Thriller", "Mystery"],  "rt_score": 82,  "overall_rating": 10.0, "avg_score": 7.8 },
-  { "rank": 64,  "title": "Spotlight",                                  "year": 2015, "tmdb_id": 314365,  "director": "Tom McCarthy",                         "genres": ["Drama", "History", "Thriller"],           "rt_score": 97,  "overall_rating": 10.0, "avg_score": 7.2 },
-  { "rank": 65,  "title": "Get Out",                                    "year": 2017, "tmdb_id": 419430,  "director": "Jordan Peele",                         "genres": ["Horror", "Thriller", "Mystery"],          "rt_score": 98,  "overall_rating": 10.0, "avg_score": 7.5 },
-  { "rank": 66,  "title": "Logan",                                      "year": 2017, "tmdb_id": 263115,  "director": "James Mangold",                        "genres": ["Action", "Science Fiction", "Drama"],     "rt_score": 93,  "overall_rating": 10.0, "avg_score": 7.2 },
-  { "rank": 67,  "title": "Ratatouille",                                "year": 2007, "tmdb_id": 2062,    "director": "Brad Bird",                            "genres": ["Animation", "Family", "Comedy"],          "rt_score": 96,  "overall_rating": 10.0, "avg_score": 7.1 },
-  { "rank": 68,  "title": "Little Miss Sunshine",                       "year": 2006, "tmdb_id": 773,     "director": "Jonathan Dayton",                      "genres": ["Drama", "Comedy", "Adventure"],           "rt_score": 91,  "overall_rating": 10.0, "avg_score": 8.3 },
-  { "rank": 69,  "title": "Captain Fantastic",                          "year": 2016, "tmdb_id": 334541,  "director": "Matt Ross",                            "genres": ["Drama", "Comedy", "Adventure"],           "rt_score": 83,  "overall_rating": 10.0, "avg_score": 9.0 },
-  { "rank": 70,  "title": "Zombieland",                                 "year": 2009, "tmdb_id": 19908,   "director": "Ruben Fleischer",                      "genres": ["Horror", "Comedy", "Action"],             "rt_score": 89,  "overall_rating": 10.0, "avg_score": 7.5 },
-  { "rank": 71,  "title": "Boogie Nights",                              "year": 1997, "tmdb_id": 2758,    "director": "Paul Thomas Anderson",                 "genres": ["Drama"],                                  "rt_score": 94,  "overall_rating": 10.0, "avg_score": 8.1 },
-  { "rank": 72,  "title": "Rocky",                                      "year": 1976, "tmdb_id": 1366,    "director": "John G. Avildsen",                     "genres": ["Drama"],                                  "rt_score": 93,  "overall_rating": 10.0, "avg_score": 8.1 },
-  { "rank": 73,  "title": "The Shawshank Redemption",                   "year": 1994, "tmdb_id": 278,     "director": "Frank Darabont",                       "genres": ["Drama", "Crime"],                         "rt_score": 91,  "overall_rating": 10.0, "avg_score": 7.3 },
-  { "rank": 74,  "title": "The Batman",                                 "year": 2022, "tmdb_id": 414906,  "director": "Matt Reeves",                          "genres": ["Action", "Crime", "Mystery", "Thriller"], "rt_score": 85,  "overall_rating": 10.0, "avg_score": 9.0 },
-  { "rank": 75,  "title": "Avatar",                                     "year": 2009, "tmdb_id": 19995,   "director": "James Cameron",                        "genres": ["Science Fiction", "Action", "Adventure"], "rt_score": 81,  "overall_rating": 9.0,  "avg_score": 8.4 },
-  { "rank": 76,  "title": "Joker",                                      "year": 2019, "tmdb_id": 475557,  "director": "Todd Phillips",                        "genres": ["Crime", "Drama", "Thriller"],             "rt_score": 68,  "overall_rating": 9.0,  "avg_score": 7.7 },
-  { "rank": 77,  "title": "The Breakfast Club",                         "year": 1985, "tmdb_id": 2119,    "director": "John Hughes",                          "genres": ["Drama", "Comedy"],                        "rt_score": 89,  "overall_rating": 9.0,  "avg_score": 8.2 },
-  { "rank": 78,  "title": "Love Actually",                              "year": 2003, "tmdb_id": 508,     "director": "Richard Curtis",                       "genres": ["Romance", "Drama", "Comedy"],             "rt_score": 64,  "overall_rating": 9.0,  "avg_score": 8.9 },
-  { "rank": 79,  "title": "The Grand Budapest Hotel",                   "year": 2014, "tmdb_id": 120467,  "director": "Wes Anderson",                         "genres": ["Comedy", "Adventure", "Crime"],           "rt_score": 92,  "overall_rating": 9.0,  "avg_score": 8.2 },
-  { "rank": 80,  "title": "The Nice Guys",                              "year": 2016, "tmdb_id": 290250,  "director": "Shane Black",                          "genres": ["Comedy", "Action", "Crime"],              "rt_score": 91,  "overall_rating": 9.0,  "avg_score": 7.9 },
-  { "rank": 81,  "title": "Bohemian Rhapsody",                          "year": 2018, "tmdb_id": 424694,  "director": "Bryan Singer",                         "genres": ["Music", "Drama", "History"],              "rt_score": 60,  "overall_rating": 9.0,  "avg_score": 7.5 },
-  { "rank": 82,  "title": "Us",                                         "year": 2019, "tmdb_id": 570670,  "director": "Jordan Peele",                         "genres": ["Horror", "Mystery", "Thriller"],          "rt_score": 93,  "overall_rating": 9.0,  "avg_score": 7.4 },
-  { "rank": 83,  "title": "Jerry Maguire",                              "year": 1996, "tmdb_id": 1213,    "director": "Cameron Crowe",                        "genres": ["Romance", "Drama"],                       "rt_score": 84,  "overall_rating": 9.0,  "avg_score": 7.9 },
-  { "rank": 84,  "title": "My Neighbor Totoro",                         "year": 1988, "tmdb_id": 8392,    "director": "Hayao Miyazaki",                       "genres": ["Animation", "Fantasy", "Family"],         "rt_score": 95,  "overall_rating": 9.0,  "avg_score": 7.9 },
-  { "rank": 85,  "title": "Willy Wonka & the Chocolate Factory",        "year": 1971, "tmdb_id": 252,     "director": "Mel Stuart",                           "genres": ["Fantasy", "Family", "Comedy"],            "rt_score": 91,  "overall_rating": 9.0,  "avg_score": 8.0 },
-  { "rank": 86,  "title": "The Big Lebowski",                           "year": 1998, "tmdb_id": 115,     "director": "Coen Brothers",                        "genres": ["Comedy", "Crime"],                        "rt_score": 83,  "overall_rating": 9.0,  "avg_score": 8.7 },
-  { "rank": 87,  "title": "I Am Sam",                                   "year": 2001, "tmdb_id": 10491,   "director": "Jessie Nelson",                        "genres": ["Drama"],                                  "rt_score": 35,  "overall_rating": 9.0,  "avg_score": 7.2 },
-  { "rank": 88,  "title": "The Truman Show",                            "year": 1998, "tmdb_id": 37165,   "director": "Peter Weir",                           "genres": ["Science Fiction", "Drama", "Comedy"],     "rt_score": 95,  "overall_rating": 9.0,  "avg_score": 8.0 },
-  { "rank": 89,  "title": "Parasite",                                   "year": 2019, "tmdb_id": 496243,  "director": "Bong Joon-ho",                         "genres": ["Thriller", "Comedy", "Drama"],            "rt_score": 98,  "overall_rating": 9.0,  "avg_score": 7.8 },
-  { "rank": 90,  "title": "Marriage Story",                             "year": 2019, "tmdb_id": 492188,  "director": "Noah Baumbach",                        "genres": ["Romance", "Drama"],                       "rt_score": 94,  "overall_rating": 9.0,  "avg_score": 6.9 },
-  { "rank": 91,  "title": "Sweeney Todd: The Demon Barber of Fleet Street", "year": 2007, "tmdb_id": 4948, "director": "Tim Burton",                        "genres": ["Music", "Horror", "Drama", "Crime"],      "rt_score": 86,  "overall_rating": 9.0,  "avg_score": 7.9 },
-  { "rank": 92,  "title": "American Beauty",                            "year": 1999, "tmdb_id": 14,      "director": "Sam Mendes",                           "genres": ["Romance", "Drama"],                       "rt_score": 87,  "overall_rating": 9.0,  "avg_score": 8.4 },
-  { "rank": 93,  "title": "Moneyball",                                  "year": 2011, "tmdb_id": 60308,   "director": "Bennett Miller",                       "genres": ["Drama"],                                  "rt_score": 94,  "overall_rating": 9.0,  "avg_score": 6.9 },
-  { "rank": 94,  "title": "Lady and the Tramp",                         "year": 1955, "tmdb_id": 11360,   "director": "Clyde Geronimi",                       "genres": ["Animation", "Music", "Family", "Romance"],"rt_score": 93,  "overall_rating": 9.0,  "avg_score": 9.2 },
-  { "rank": 95,  "title": "Babe",                                       "year": 1995, "tmdb_id": 9598,    "director": "Chris Noonan",                         "genres": ["Family", "Comedy", "Drama"],              "rt_score": 97,  "overall_rating": 9.0,  "avg_score": 6.9 },
-  { "rank": 96,  "title": "Snowpiercer",                                "year": 2013, "tmdb_id": 144331,  "director": "Bong Joon-ho",                         "genres": ["Action", "Science Fiction", "Drama"],     "rt_score": 94,  "overall_rating": 9.0,  "avg_score": 6.9 },
-  { "rank": 97,  "title": "The Fighter",                                "year": 2010, "tmdb_id": 45317,   "director": "David O. Russell",                     "genres": ["Drama"],                                  "rt_score": 91,  "overall_rating": 9.0,  "avg_score": 8.1 },
-  { "rank": 98,  "title": "Beauty and the Beast",                       "year": 1991, "tmdb_id": 10020,   "director": "Gary Trousdale",                       "genres": ["Animation", "Music", "Fantasy", "Family", "Romance"], "rt_score": 94, "overall_rating": 9.0, "avg_score": 8.9 },
-  { "rank": 99,  "title": "Coco",                                       "year": 2017, "tmdb_id": 354912,  "director": "Lee Unkrich",                          "genres": ["Animation", "Family", "Fantasy", "Music"],"rt_score": 97,  "overall_rating": 9.0,  "avg_score": 8.5 },
-  { "rank": 100, "title": "Saving Private Ryan",                        "year": 1998, "tmdb_id": 857,     "director": "Steven Spielberg",                     "genres": ["War", "Drama", "History"],                "rt_score": 93,  "overall_rating": 9.0,  "avg_score": 7.3 }
+  {
+    "rank": 1,
+    "title": "A Star Is Born",
+    "year": 2018,
+    "tmdb_id": 332562,
+    "director": "Bradley Cooper",
+    "genres": [
+      "Romance",
+      "Drama",
+      "Music"
+    ],
+    "rt_score": 90,
+    "overall_rating": 10,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 2,
+    "title": "Lost in Translation",
+    "year": 2003,
+    "tmdb_id": 153,
+    "director": "Sofia Coppola",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 8.6
+  },
+  {
+    "rank": 3,
+    "title": "Groundhog Day",
+    "year": 1993,
+    "tmdb_id": 137,
+    "director": "Harold Ramis",
+    "genres": [
+      "Comedy",
+      "Fantasy",
+      "Romance"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 9.2
+  },
+  {
+    "rank": 4,
+    "title": "The Shape of Water",
+    "year": 2017,
+    "tmdb_id": 399055,
+    "director": "Guillermo del Toro",
+    "genres": [
+      "Romance",
+      "Fantasy",
+      "Drama"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 9
+  },
+  {
+    "rank": 5,
+    "title": "Dazed and Confused",
+    "year": 1993,
+    "tmdb_id": 9571,
+    "director": "Richard Linklater",
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 7.6
+  },
+  {
+    "rank": 6,
+    "title": "Midnight in Paris",
+    "year": 2011,
+    "tmdb_id": 59436,
+    "director": "Woody Allen",
+    "genres": [
+      "Romance",
+      "Fantasy",
+      "Comedy"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 9.1
+  },
+  {
+    "rank": 7,
+    "title": "(500) Days of Summer",
+    "year": 2009,
+    "tmdb_id": 19913,
+    "director": "Marc Webb",
+    "genres": [
+      "Romance",
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 86,
+    "overall_rating": 10,
+    "avg_score": 9.1
+  },
+  {
+    "rank": 8,
+    "title": "The Peanut Butter Falcon",
+    "year": 2019,
+    "tmdb_id": 463257,
+    "director": "Tyler Nilson",
+    "genres": [
+      "Adventure",
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 9,
+    "title": "La La Land",
+    "year": 2016,
+    "tmdb_id": 313369,
+    "director": "Damien Chazelle",
+    "genres": [
+      "Music",
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 8.7
+  },
+  {
+    "rank": 10,
+    "title": "The Lord of the Rings: The Fellowship of the Ring",
+    "year": 2001,
+    "tmdb_id": 120,
+    "director": "Peter Jackson",
+    "genres": [
+      "Fantasy",
+      "Adventure",
+      "Action"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 7.9
+  },
+  {
+    "rank": 11,
+    "title": "Call Me by Your Name",
+    "year": 2017,
+    "tmdb_id": 398818,
+    "director": "Luca Guadagnino",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 12,
+    "title": "Eternal Sunshine of the Spotless Mind",
+    "year": 2004,
+    "tmdb_id": 38,
+    "director": "Michel Gondry",
+    "genres": [
+      "Romance",
+      "Science Fiction",
+      "Drama"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 8.7
+  },
+  {
+    "rank": 13,
+    "title": "Juno",
+    "year": 2007,
+    "tmdb_id": 8194,
+    "director": "Jason Reitman",
+    "genres": [
+      "Drama",
+      "Romance",
+      "Comedy"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8.7
+  },
+  {
+    "rank": 14,
+    "title": "Moonlight",
+    "year": 2016,
+    "tmdb_id": 376867,
+    "director": "Barry Jenkins",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 98,
+    "overall_rating": 10,
+    "avg_score": 8.3
+  },
+  {
+    "rank": 15,
+    "title": "The Dark Knight",
+    "year": 2008,
+    "tmdb_id": 155,
+    "director": "Christopher Nolan",
+    "genres": [
+      "Action",
+      "Crime",
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 7.8
+  },
+  {
+    "rank": 16,
+    "title": "Guardians of the Galaxy",
+    "year": 2014,
+    "tmdb_id": 118340,
+    "director": "James Gunn",
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Adventure"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 9.3
+  },
+  {
+    "rank": 17,
+    "title": "Almost Famous",
+    "year": 2000,
+    "tmdb_id": 786,
+    "director": "Cameron Crowe",
+    "genres": [
+      "Drama",
+      "Music"
+    ],
+    "rt_score": 89,
+    "overall_rating": 10,
+    "avg_score": 8.3
+  },
+  {
+    "rank": 18,
+    "title": "Spider-Man: Into the Spider-Verse",
+    "year": 2018,
+    "tmdb_id": 324857,
+    "director": "Peter Ramsey",
+    "genres": [
+      "Action",
+      "Animation",
+      "Adventure"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 9.6
+  },
+  {
+    "rank": 19,
+    "title": "Sideways",
+    "year": 2004,
+    "tmdb_id": 9675,
+    "director": "Alexander Payne",
+    "genres": [
+      "Comedy",
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 9.6
+  },
+  {
+    "rank": 20,
+    "title": "Moulin Rouge!",
+    "year": 2001,
+    "tmdb_id": 824,
+    "director": "Baz Luhrmann",
+    "genres": [
+      "Music",
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 76,
+    "overall_rating": 10,
+    "avg_score": 8.3
+  },
+  {
+    "rank": 21,
+    "title": "Raising Arizona",
+    "year": 1987,
+    "tmdb_id": 378,
+    "director": "Coen Brothers",
+    "genres": [
+      "Comedy",
+      "Crime"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 22,
+    "title": "Urban Cowboy",
+    "year": 1980,
+    "tmdb_id": 17496,
+    "director": "James Bridges",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 73,
+    "overall_rating": 10,
+    "avg_score": 8.6
+  },
+  {
+    "rank": 23,
+    "title": "Good Will Hunting",
+    "year": 1997,
+    "tmdb_id": 489,
+    "director": "Gus Van Sant",
+    "genres": [
+      "Drama",
+      "Romance"
+    ],
+    "rt_score": 98,
+    "overall_rating": 10,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 24,
+    "title": "Silver Linings Playbook",
+    "year": 2012,
+    "tmdb_id": 82693,
+    "director": "David O. Russell",
+    "genres": [
+      "Romance",
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 8.3
+  },
+  {
+    "rank": 25,
+    "title": "Léon: The Professional",
+    "year": 1994,
+    "tmdb_id": 101,
+    "director": "Luc Besson",
+    "genres": [
+      "Action",
+      "Drama",
+      "Crime",
+      "Thriller"
+    ],
+    "rt_score": 73,
+    "overall_rating": 10,
+    "avg_score": 9.1
+  },
+  {
+    "rank": 26,
+    "title": "12 Years a Slave",
+    "year": 2013,
+    "tmdb_id": 76203,
+    "director": "Steve McQueen",
+    "genres": [
+      "Drama",
+      "History"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 7.4
+  },
+  {
+    "rank": 27,
+    "title": "Edward Scissorhands",
+    "year": 1990,
+    "tmdb_id": 162,
+    "director": "Tim Burton",
+    "genres": [
+      "Fantasy",
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 90,
+    "overall_rating": 10,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 28,
+    "title": "Pan's Labyrinth",
+    "year": 2006,
+    "tmdb_id": 1417,
+    "director": "Guillermo del Toro",
+    "genres": [
+      "Fantasy",
+      "War",
+      "Drama"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 7.6
+  },
+  {
+    "rank": 29,
+    "title": "Titanic",
+    "year": 1997,
+    "tmdb_id": 597,
+    "director": "James Cameron",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 89,
+    "overall_rating": 10,
+    "avg_score": 8.9
+  },
+  {
+    "rank": 30,
+    "title": "RRR",
+    "year": 2022,
+    "tmdb_id": 759003,
+    "director": "S. S. Rajamouli",
+    "genres": [
+      "Action",
+      "Drama",
+      "Adventure"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 9.3
+  },
+  {
+    "rank": 31,
+    "title": "Mad Max: Fury Road",
+    "year": 2015,
+    "tmdb_id": 76341,
+    "director": "George Miller",
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Adventure"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 8.1
+  },
+  {
+    "rank": 32,
+    "title": "Forrest Gump",
+    "year": 1994,
+    "tmdb_id": 13,
+    "director": "Robert Zemeckis",
+    "genres": [
+      "Drama",
+      "Romance",
+      "Comedy"
+    ],
+    "rt_score": 71,
+    "overall_rating": 10,
+    "avg_score": 8.8
+  },
+  {
+    "rank": 33,
+    "title": "Star Wars: A New Hope",
+    "year": 1977,
+    "tmdb_id": 11,
+    "director": "George Lucas",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "rt_score": 92,
+    "overall_rating": 10,
+    "avg_score": 7.6
+  },
+  {
+    "rank": 34,
+    "title": "The Shining",
+    "year": 1980,
+    "tmdb_id": 694,
+    "director": "Stanley Kubrick",
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Thriller"
+    ],
+    "rt_score": 82,
+    "overall_rating": 10,
+    "avg_score": 7.8
+  },
+  {
+    "rank": 35,
+    "title": "American Sniper",
+    "year": 2014,
+    "tmdb_id": 190859,
+    "director": "Clint Eastwood",
+    "genres": [
+      "War",
+      "Drama"
+    ],
+    "rt_score": 72,
+    "overall_rating": 10,
+    "avg_score": 7.8
+  },
+  {
+    "rank": 36,
+    "title": "The Godfather",
+    "year": 1972,
+    "tmdb_id": 238,
+    "director": "Francis Ford Coppola",
+    "genres": [
+      "Crime",
+      "Drama"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 7.1
+  },
+  {
+    "rank": 37,
+    "title": "Ferris Bueller's Day Off",
+    "year": 1986,
+    "tmdb_id": 9377,
+    "director": "John Hughes",
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 80,
+    "overall_rating": 10,
+    "avg_score": 7.4
+  },
+  {
+    "rank": 38,
+    "title": "Fantastic Mr. Fox",
+    "year": 2009,
+    "tmdb_id": 10315,
+    "director": "Wes Anderson",
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Adventure"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 9.4
+  },
+  {
+    "rank": 39,
+    "title": "CODA",
+    "year": 2021,
+    "tmdb_id": 776503,
+    "director": "Sian Heder",
+    "genres": [
+      "Drama",
+      "Music"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 9.1
+  },
+  {
+    "rank": 40,
+    "title": "Wonder Boys",
+    "year": 2000,
+    "tmdb_id": 11004,
+    "director": "Curtis Hanson",
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 81,
+    "overall_rating": 10,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 41,
+    "title": "About a Boy",
+    "year": 2002,
+    "tmdb_id": 245,
+    "director": "Paul Weitz",
+    "genres": [
+      "Romance",
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 7.2
+  },
+  {
+    "rank": 42,
+    "title": "Prisoners",
+    "year": 2013,
+    "tmdb_id": 146233,
+    "director": "Denis Villeneuve",
+    "genres": [
+      "Thriller",
+      "Crime",
+      "Drama",
+      "Mystery"
+    ],
+    "rt_score": 81,
+    "overall_rating": 10,
+    "avg_score": 6.8
+  },
+  {
+    "rank": 43,
+    "title": "When Harry Met Sally",
+    "year": 1989,
+    "tmdb_id": 639,
+    "director": "Rob Reiner",
+    "genres": [
+      "Romance",
+      "Comedy"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 44,
+    "title": "War for the Planet of the Apes",
+    "year": 2017,
+    "tmdb_id": 281338,
+    "director": "Matt Reeves",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8
+  },
+  {
+    "rank": 45,
+    "title": "Bram Stoker's Dracula",
+    "year": 1992,
+    "tmdb_id": 6114,
+    "director": "Francis Ford Coppola",
+    "genres": [
+      "Drama",
+      "Fantasy",
+      "Horror",
+      "Romance"
+    ],
+    "rt_score": null,
+    "overall_rating": null,
+    "avg_score": null
+  },
+  {
+    "rank": 46,
+    "title": "Gladiator",
+    "year": 2000,
+    "tmdb_id": 98,
+    "director": "Ridley Scott",
+    "genres": [
+      "Action",
+      "Drama",
+      "Adventure"
+    ],
+    "rt_score": 80,
+    "overall_rating": 10,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 47,
+    "title": "Django Unchained",
+    "year": 2012,
+    "tmdb_id": 68718,
+    "director": "Quentin Tarantino",
+    "genres": [
+      "Western",
+      "Action",
+      "Drama"
+    ],
+    "rt_score": 87,
+    "overall_rating": 10,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 48,
+    "title": "Superbad",
+    "year": 2007,
+    "tmdb_id": 8363,
+    "director": "Greg Mottola",
+    "genres": [
+      "Comedy"
+    ],
+    "rt_score": 88,
+    "overall_rating": 10,
+    "avg_score": 7.3
+  },
+  {
+    "rank": 49,
+    "title": "Whiplash",
+    "year": 2014,
+    "tmdb_id": 244786,
+    "director": "Damien Chazelle",
+    "genres": [
+      "Drama",
+      "Music"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 50,
+    "title": "Brokeback Mountain",
+    "year": 2005,
+    "tmdb_id": 142,
+    "director": "Ang Lee",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 87,
+    "overall_rating": 10,
+    "avg_score": 8
+  },
+  {
+    "rank": 51,
+    "title": "The Martian",
+    "year": 2015,
+    "tmdb_id": 286217,
+    "director": "Ridley Scott",
+    "genres": [
+      "Science Fiction",
+      "Drama"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 52,
+    "title": "Deadpool",
+    "year": 2016,
+    "tmdb_id": 293660,
+    "director": "Tim Miller",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy"
+    ],
+    "rt_score": 85,
+    "overall_rating": 10,
+    "avg_score": 9
+  },
+  {
+    "rank": 53,
+    "title": "WALL-E",
+    "year": 2008,
+    "tmdb_id": 10681,
+    "director": "Andrew Stanton",
+    "genres": [
+      "Animation",
+      "Science Fiction",
+      "Family"
+    ],
+    "rt_score": 95,
+    "overall_rating": 10,
+    "avg_score": 8.9
+  },
+  {
+    "rank": 54,
+    "title": "The Suicide Squad",
+    "year": 2021,
+    "tmdb_id": 436969,
+    "director": "James Gunn",
+    "genres": [
+      "Action",
+      "Adventure",
+      "Comedy"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 8.8
+  },
+  {
+    "rank": 55,
+    "title": "The Edge of Seventeen",
+    "year": 2016,
+    "tmdb_id": 376660,
+    "director": "Kelly Fremon Craig",
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 56,
+    "title": "Ready Player One",
+    "year": 2018,
+    "tmdb_id": 333339,
+    "director": "Steven Spielberg",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "rt_score": 72,
+    "overall_rating": 10,
+    "avg_score": 8.7
+  },
+  {
+    "rank": 57,
+    "title": "Booksmart",
+    "year": 2019,
+    "tmdb_id": 505600,
+    "director": "Olivia Wilde",
+    "genres": [
+      "Comedy"
+    ],
+    "rt_score": 96,
+    "overall_rating": 10,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 58,
+    "title": "Dead Poets Society",
+    "year": 1989,
+    "tmdb_id": 207,
+    "director": "Peter Weir",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 84,
+    "overall_rating": 10,
+    "avg_score": 7.2
+  },
+  {
+    "rank": 59,
+    "title": "Lady Bird",
+    "year": 2017,
+    "tmdb_id": 391713,
+    "director": "Greta Gerwig",
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 99,
+    "overall_rating": 10,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 60,
+    "title": "Forgetting Sarah Marshall",
+    "year": 2008,
+    "tmdb_id": 9870,
+    "director": "Nicholas Stoller",
+    "genres": [
+      "Comedy",
+      "Romance"
+    ],
+    "rt_score": 83,
+    "overall_rating": 10,
+    "avg_score": 8.9
+  },
+  {
+    "rank": 61,
+    "title": "Enchanted",
+    "year": 2007,
+    "tmdb_id": 4523,
+    "director": "Kevin Lima",
+    "genres": [
+      "Animation",
+      "Comedy",
+      "Family",
+      "Fantasy"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 62,
+    "title": "The Holdovers",
+    "year": 2023,
+    "tmdb_id": 840430,
+    "director": "Alexander Payne",
+    "genres": [
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 63,
+    "title": "Se7en",
+    "year": 1995,
+    "tmdb_id": 807,
+    "director": "David Fincher",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Thriller",
+      "Mystery"
+    ],
+    "rt_score": 82,
+    "overall_rating": 10,
+    "avg_score": 7.8
+  },
+  {
+    "rank": 64,
+    "title": "Spotlight",
+    "year": 2015,
+    "tmdb_id": 314365,
+    "director": "Tom McCarthy",
+    "genres": [
+      "Drama",
+      "History",
+      "Thriller"
+    ],
+    "rt_score": 97,
+    "overall_rating": 10,
+    "avg_score": 7.2
+  },
+  {
+    "rank": 65,
+    "title": "Get Out",
+    "year": 2017,
+    "tmdb_id": 419430,
+    "director": "Jordan Peele",
+    "genres": [
+      "Horror",
+      "Thriller",
+      "Mystery"
+    ],
+    "rt_score": 98,
+    "overall_rating": 10,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 66,
+    "title": "Logan",
+    "year": 2017,
+    "tmdb_id": 263115,
+    "director": "James Mangold",
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Drama"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 7.2
+  },
+  {
+    "rank": 67,
+    "title": "Ratatouille",
+    "year": 2007,
+    "tmdb_id": 2062,
+    "director": "Brad Bird",
+    "genres": [
+      "Animation",
+      "Family",
+      "Comedy"
+    ],
+    "rt_score": 96,
+    "overall_rating": 10,
+    "avg_score": 7.1
+  },
+  {
+    "rank": 68,
+    "title": "Little Miss Sunshine",
+    "year": 2006,
+    "tmdb_id": 773,
+    "director": "Jonathan Dayton",
+    "genres": [
+      "Drama",
+      "Comedy",
+      "Adventure"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 8.3
+  },
+  {
+    "rank": 69,
+    "title": "Captain Fantastic",
+    "year": 2016,
+    "tmdb_id": 334533,
+    "director": "Matt Ross",
+    "genres": [
+      "Drama",
+      "Comedy",
+      "Adventure"
+    ],
+    "rt_score": 83,
+    "overall_rating": 10,
+    "avg_score": 9
+  },
+  {
+    "rank": 70,
+    "title": "Zombieland",
+    "year": 2009,
+    "tmdb_id": 19908,
+    "director": "Ruben Fleischer",
+    "genres": [
+      "Horror",
+      "Comedy",
+      "Action"
+    ],
+    "rt_score": 89,
+    "overall_rating": 10,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 71,
+    "title": "Boogie Nights",
+    "year": 1997,
+    "tmdb_id": 4995,
+    "director": "Paul Thomas Anderson",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 10,
+    "avg_score": 8.1
+  },
+  {
+    "rank": 72,
+    "title": "Rocky",
+    "year": 1976,
+    "tmdb_id": 1366,
+    "director": "John G. Avildsen",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 93,
+    "overall_rating": 10,
+    "avg_score": 8.1
+  },
+  {
+    "rank": 73,
+    "title": "The Shawshank Redemption",
+    "year": 1994,
+    "tmdb_id": 278,
+    "director": "Frank Darabont",
+    "genres": [
+      "Drama",
+      "Crime"
+    ],
+    "rt_score": 91,
+    "overall_rating": 10,
+    "avg_score": 7.3
+  },
+  {
+    "rank": 74,
+    "title": "The Batman",
+    "year": 2022,
+    "tmdb_id": 414906,
+    "director": "Matt Reeves",
+    "genres": [
+      "Action",
+      "Crime",
+      "Mystery",
+      "Thriller"
+    ],
+    "rt_score": 85,
+    "overall_rating": 10,
+    "avg_score": 9
+  },
+  {
+    "rank": 75,
+    "title": "Avatar",
+    "year": 2009,
+    "tmdb_id": 19995,
+    "director": "James Cameron",
+    "genres": [
+      "Science Fiction",
+      "Action",
+      "Adventure"
+    ],
+    "rt_score": 81,
+    "overall_rating": 9,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 76,
+    "title": "Joker",
+    "year": 2019,
+    "tmdb_id": 475557,
+    "director": "Todd Phillips",
+    "genres": [
+      "Crime",
+      "Drama",
+      "Thriller"
+    ],
+    "rt_score": 68,
+    "overall_rating": 9,
+    "avg_score": 7.7
+  },
+  {
+    "rank": 77,
+    "title": "The Breakfast Club",
+    "year": 1985,
+    "tmdb_id": 2108,
+    "director": "John Hughes",
+    "genres": [
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 89,
+    "overall_rating": 9,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 78,
+    "title": "Love Actually",
+    "year": 2003,
+    "tmdb_id": 508,
+    "director": "Richard Curtis",
+    "genres": [
+      "Romance",
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 64,
+    "overall_rating": 9,
+    "avg_score": 8.9
+  },
+  {
+    "rank": 79,
+    "title": "The Grand Budapest Hotel",
+    "year": 2014,
+    "tmdb_id": 120467,
+    "director": "Wes Anderson",
+    "genres": [
+      "Comedy",
+      "Adventure",
+      "Crime"
+    ],
+    "rt_score": 92,
+    "overall_rating": 9,
+    "avg_score": 8.2
+  },
+  {
+    "rank": 80,
+    "title": "The Nice Guys",
+    "year": 2016,
+    "tmdb_id": 290250,
+    "director": "Shane Black",
+    "genres": [
+      "Comedy",
+      "Action",
+      "Crime"
+    ],
+    "rt_score": 91,
+    "overall_rating": 9,
+    "avg_score": 7.9
+  },
+  {
+    "rank": 81,
+    "title": "Bohemian Rhapsody",
+    "year": 2018,
+    "tmdb_id": 424694,
+    "director": "Bryan Singer",
+    "genres": [
+      "Music",
+      "Drama",
+      "History"
+    ],
+    "rt_score": 60,
+    "overall_rating": 9,
+    "avg_score": 7.5
+  },
+  {
+    "rank": 82,
+    "title": "Us",
+    "year": 2019,
+    "tmdb_id": 570670,
+    "director": "Jordan Peele",
+    "genres": [
+      "Horror",
+      "Mystery",
+      "Thriller"
+    ],
+    "rt_score": 93,
+    "overall_rating": 9,
+    "avg_score": 7.4
+  },
+  {
+    "rank": 83,
+    "title": "Jerry Maguire",
+    "year": 1996,
+    "tmdb_id": 9390,
+    "director": "Cameron Crowe",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 84,
+    "overall_rating": 9,
+    "avg_score": 7.9
+  },
+  {
+    "rank": 84,
+    "title": "My Neighbor Totoro",
+    "year": 1988,
+    "tmdb_id": 8392,
+    "director": "Hayao Miyazaki",
+    "genres": [
+      "Animation",
+      "Fantasy",
+      "Family"
+    ],
+    "rt_score": 95,
+    "overall_rating": 9,
+    "avg_score": 7.9
+  },
+  {
+    "rank": 85,
+    "title": "Willy Wonka & the Chocolate Factory",
+    "year": 1971,
+    "tmdb_id": 252,
+    "director": "Mel Stuart",
+    "genres": [
+      "Fantasy",
+      "Family",
+      "Comedy"
+    ],
+    "rt_score": 91,
+    "overall_rating": 9,
+    "avg_score": 8
+  },
+  {
+    "rank": 86,
+    "title": "The Big Lebowski",
+    "year": 1998,
+    "tmdb_id": 115,
+    "director": "Coen Brothers",
+    "genres": [
+      "Comedy",
+      "Crime"
+    ],
+    "rt_score": 83,
+    "overall_rating": 9,
+    "avg_score": 8.7
+  },
+  {
+    "rank": 87,
+    "title": "I Am Sam",
+    "year": 2001,
+    "tmdb_id": 10950,
+    "director": "Jessie Nelson",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 35,
+    "overall_rating": 9,
+    "avg_score": 7.2
+  },
+  {
+    "rank": 88,
+    "title": "The Truman Show",
+    "year": 1998,
+    "tmdb_id": 37165,
+    "director": "Peter Weir",
+    "genres": [
+      "Science Fiction",
+      "Drama",
+      "Comedy"
+    ],
+    "rt_score": 95,
+    "overall_rating": 9,
+    "avg_score": 8
+  },
+  {
+    "rank": 89,
+    "title": "Parasite",
+    "year": 2019,
+    "tmdb_id": 496243,
+    "director": "Bong Joon-ho",
+    "genres": [
+      "Thriller",
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 98,
+    "overall_rating": 9,
+    "avg_score": 7.8
+  },
+  {
+    "rank": 90,
+    "title": "Marriage Story",
+    "year": 2019,
+    "tmdb_id": 492188,
+    "director": "Noah Baumbach",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 9,
+    "avg_score": 6.9
+  },
+  {
+    "rank": 91,
+    "title": "Sweeney Todd: The Demon Barber of Fleet Street",
+    "year": 2007,
+    "tmdb_id": 13885,
+    "director": "Tim Burton",
+    "genres": [
+      "Music",
+      "Horror",
+      "Drama",
+      "Crime"
+    ],
+    "rt_score": 86,
+    "overall_rating": 9,
+    "avg_score": 7.9
+  },
+  {
+    "rank": 92,
+    "title": "American Beauty",
+    "year": 1999,
+    "tmdb_id": 14,
+    "director": "Sam Mendes",
+    "genres": [
+      "Romance",
+      "Drama"
+    ],
+    "rt_score": 87,
+    "overall_rating": 9,
+    "avg_score": 8.4
+  },
+  {
+    "rank": 93,
+    "title": "Moneyball",
+    "year": 2011,
+    "tmdb_id": 60308,
+    "director": "Bennett Miller",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 9,
+    "avg_score": 6.9
+  },
+  {
+    "rank": 94,
+    "title": "Lady and the Tramp",
+    "year": 1955,
+    "tmdb_id": 10340,
+    "director": "Clyde Geronimi",
+    "genres": [
+      "Animation",
+      "Music",
+      "Family",
+      "Romance"
+    ],
+    "rt_score": 93,
+    "overall_rating": 9,
+    "avg_score": 9.2
+  },
+  {
+    "rank": 95,
+    "title": "Babe",
+    "year": 1995,
+    "tmdb_id": 9598,
+    "director": "Chris Noonan",
+    "genres": [
+      "Family",
+      "Comedy",
+      "Drama"
+    ],
+    "rt_score": 97,
+    "overall_rating": 9,
+    "avg_score": 6.9
+  },
+  {
+    "rank": 96,
+    "title": "Snowpiercer",
+    "year": 2013,
+    "tmdb_id": 110415,
+    "director": "Bong Joon-ho",
+    "genres": [
+      "Action",
+      "Science Fiction",
+      "Drama"
+    ],
+    "rt_score": 94,
+    "overall_rating": 9,
+    "avg_score": 6.9
+  },
+  {
+    "rank": 97,
+    "title": "The Fighter",
+    "year": 2010,
+    "tmdb_id": 45317,
+    "director": "David O. Russell",
+    "genres": [
+      "Drama"
+    ],
+    "rt_score": 91,
+    "overall_rating": 9,
+    "avg_score": 8.1
+  },
+  {
+    "rank": 98,
+    "title": "Beauty and the Beast",
+    "year": 1991,
+    "tmdb_id": 10020,
+    "director": "Gary Trousdale",
+    "genres": [
+      "Animation",
+      "Music",
+      "Fantasy",
+      "Family",
+      "Romance"
+    ],
+    "rt_score": 94,
+    "overall_rating": 9,
+    "avg_score": 8.9
+  },
+  {
+    "rank": 99,
+    "title": "Coco",
+    "year": 2017,
+    "tmdb_id": 354912,
+    "director": "Lee Unkrich",
+    "genres": [
+      "Animation",
+      "Family",
+      "Fantasy",
+      "Music"
+    ],
+    "rt_score": 97,
+    "overall_rating": 9,
+    "avg_score": 8.5
+  },
+  {
+    "rank": 100,
+    "title": "Saving Private Ryan",
+    "year": 1998,
+    "tmdb_id": 857,
+    "director": "Steven Spielberg",
+    "genres": [
+      "War",
+      "Drama",
+      "History"
+    ],
+    "rt_score": 93,
+    "overall_rating": 9,
+    "avg_score": 7.3
+  }
 ]
