@@ -1,10 +1,10 @@
 import { useState, useMemo, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { useFilm } from '../../context/FilmContext'
-import { searchPerson, getProfileUrl, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
+import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
 import styles from './PersonList.module.css'
 
-const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='185' height='278' viewBox='0 0 185 278'%3E%3Crect width='185' height='278' fill='%23141414'/%3E%3Ccircle cx='92' cy='95' r='40' fill='%232a2520'/%3E%3Cellipse cx='92' cy='200' rx='60' ry='40' fill='%232a2520'/%3E%3C/svg%3E`
+const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ccircle cx='250' cy='260' r='110' fill='%232a2520'/%3E%3Cellipse cx='250' cy='540' rx='160' ry='110' fill='%232a2520'/%3E%3C/svg%3E`
 
 function PersonModal({ person, myList, onClose }) {
   const [bio, setBio] = useState(null)
@@ -12,6 +12,12 @@ function PersonModal({ person, myList, onClose }) {
   const [loading, setLoading] = useState(true)
 
   const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
+
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
 
   useEffect(() => {
     let cancelled = false
@@ -25,7 +31,7 @@ function PersonModal({ person, myList, onClose }) {
         setBio(details?.biography ?? null)
         const films = (credits?.cast ?? [])
           .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))
-          .slice(0, 3)
+          .slice(0, 5)
         setTopFilms(films)
         setLoading(false)
       }
@@ -35,18 +41,21 @@ function PersonModal({ person, myList, onClose }) {
   }, [person.person_id])
 
   const inMyList = topFilms.filter((f) => myListIds.has(f.id))
+  const imgUrl = person.headshot_path ? getProfileUrlLarge(person.headshot_path) : PLACEHOLDER_PERSON
 
-  const headshotUrl = person.headshot_path
-    ? getProfileUrl(person.headshot_path)
-    : PLACEHOLDER_PERSON
+  function handleBackdrop(e) {
+    if (e.target === e.currentTarget) onClose()
+  }
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-        <button className={styles.modalClose} onClick={onClose}>×</button>
+    <div className={styles.modalBackdrop} onClick={handleBackdrop}>
+      <div className={styles.modal}>
+        <button className={styles.modalClose} onClick={onClose} aria-label="Close">×</button>
         <div className={styles.modalContent}>
-          <img src={headshotUrl} alt={person.name} className={styles.modalHeadshot} />
-          <div className={styles.modalInfo}>
+          <div className={styles.modalImageCol}>
+            <img src={imgUrl} alt={person.name} className={styles.modalImage} />
+          </div>
+          <div className={styles.modalInfoCol}>
             <h2 className={styles.modalName}>{person.name}</h2>
             {loading ? (
               <p className={styles.modalLoading}>Loading…</p>
@@ -54,7 +63,7 @@ function PersonModal({ person, myList, onClose }) {
               <>
                 {bio && (
                   <p className={styles.modalBio}>
-                    {bio.slice(0, 280)}{bio.length > 280 ? '…' : ''}
+                    {bio.slice(0, 320)}{bio.length > 320 ? '…' : ''}
                   </p>
                 )}
                 {topFilms.length > 0 && (
@@ -63,7 +72,7 @@ function PersonModal({ person, myList, onClose }) {
                     {topFilms.map((f) => (
                       <div key={f.id} className={styles.modalFilmRow}>
                         <span className={styles.modalFilmTitle}>{f.title}</span>
-                        <span className={styles.modalFilmYear}>{f.release_date?.slice(0,4)}</span>
+                        <span className={styles.modalFilmYear}>{f.release_date?.slice(0, 4)}</span>
                       </div>
                     ))}
                   </div>
@@ -94,7 +103,6 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const [selectedPerson, setSelectedPerson] = useState(null)
 
   const isActors = listType === 'actors'
-  const themeClass = isActors ? styles.themeShakespeare : styles.themeCinema
 
   const listIds = useMemo(() => new Set(userList.map((p) => p.person_id)), [userList])
 
@@ -122,7 +130,6 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
       name: result.name,
       headshot_path: result.profile_path ?? null,
     })
-    // Auto-clear search on add
     setQuery('')
     setSearchResults([])
   }
@@ -138,7 +145,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const isFull = userList.length >= maxItems
 
   return (
-    <div className={`${styles.page} ${themeClass}`}>
+    <div className={styles.page}>
       {selectedPerson && (
         <PersonModal
           person={selectedPerson}
@@ -149,7 +156,12 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
 
       <div className="container">
         <div className={styles.header}>
-          <h1 className={styles.title}>{title}</h1>
+          <div>
+            <h1 className={styles.title}>{title}</h1>
+          </div>
+          {userList.length > 0 && (
+            <span className={styles.countBadge}>{userList.length} / {maxItems}</span>
+          )}
         </div>
 
         {/* Search bar */}
@@ -168,12 +180,13 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
           <div className={styles.results}>
             {searchResults.map((r) => {
               const inList = listIds.has(r.id)
-              const imgUrl = r.profile_path
-                ? getProfileUrl(r.profile_path)
-                : PLACEHOLDER_PERSON
+              const imgUrl = r.profile_path ? getProfileUrl(r.profile_path) : null
               return (
                 <div key={r.id} className={styles.resultRow}>
-                  <img src={imgUrl} alt={r.name} className={styles.headshot} />
+                  {imgUrl
+                    ? <img src={imgUrl} alt={r.name} className={styles.resultThumb} />
+                    : <div className={styles.resultThumbPlaceholder} />
+                  }
                   <div className={styles.resultInfo}>
                     <span className={styles.resultName}>{r.name}</span>
                     {r.known_for_department && (
@@ -185,9 +198,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
                       className={styles.addBtn}
                       onClick={() => !isFull && addPerson(r)}
                       disabled={isFull}
-                    >
-                      +
-                    </button>
+                    >+</button>
                   ) : (
                     <span className={styles.addedMark}>✓</span>
                   )}
@@ -197,62 +208,80 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
           </div>
         )}
 
-        {/* Your Picks label */}
+        {/* Grid hint */}
         {userList.length > 0 && (
-          <div className={styles.picksHeader}>
-            <span className={styles.picksLabel}>Your Picks</span>
-            <span className={styles.picksCount}>{userList.length} / {maxItems}</span>
-          </div>
+          <p className={styles.gridHint}>Drag to reorder · Click for details</p>
         )}
 
-        {/* Ranked drag list */}
+        {/* Poster grid */}
         {userList.length === 0 ? (
-          <div className={styles.emptyList}>
+          <div className={styles.emptyGrid}>
             <p>Search for {isActors ? 'actors' : 'directors'} to build your list.</p>
           </div>
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="person-list">
+            <Droppable droppableId="person-grid" direction="horizontal">
               {(provided) => (
-                <ul className={styles.list} ref={provided.innerRef} {...provided.droppableProps}>
-                  {userList.map((person, i) => (
-                    <Draggable
-                      key={String(person.person_id)}
-                      draggableId={String(person.person_id)}
-                      index={i}
-                    >
-                      {(provided, snapshot) => (
-                        <li
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          className={`${styles.listItem} ${snapshot.isDragging ? styles.dragging : ''}`}
-                        >
-                          <span className={styles.dragHandle} {...provided.dragHandleProps}>⠿</span>
-                          <span className={styles.rank}>{i + 1}</span>
-                          <img
-                            src={person.headshot_path ? getProfileUrl(person.headshot_path) : PLACEHOLDER_PERSON}
-                            alt={person.name}
-                            className={styles.headshot}
-                            onClick={() => setSelectedPerson(person)}
-                            style={{ cursor: 'pointer' }}
-                          />
-                          <span
-                            className={styles.personName}
-                            onClick={() => setSelectedPerson(person)}
-                            style={{ cursor: 'pointer' }}
+                <div
+                  className={styles.grid}
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                >
+                  {userList.map((person, i) => {
+                    const imgUrl = person.headshot_path
+                      ? getProfileUrlLarge(person.headshot_path)
+                      : PLACEHOLDER_PERSON
+                    return (
+                      <Draggable
+                        key={String(person.person_id)}
+                        draggableId={String(person.person_id)}
+                        index={i}
+                      >
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            className={`${styles.gridItem} ${snapshot.isDragging ? styles.dragging : ''}`}
                           >
-                            {person.name}
-                          </span>
-                          <button
-                            className={styles.removeBtn}
-                            onClick={() => removeFromList(listKey, person.person_id)}
-                          >×</button>
-                        </li>
-                      )}
-                    </Draggable>
-                  ))}
+                            <div
+                              className={styles.card}
+                              onClick={() => setSelectedPerson(person)}
+                            >
+                              <div className={styles.posterWrap}>
+                                <img
+                                  src={imgUrl}
+                                  alt={person.name}
+                                  className={styles.poster}
+                                  loading="lazy"
+                                  onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
+                                />
+                                <div className={styles.overlay}>
+                                  <div className={styles.overlayContent}>
+                                    <span className={styles.overlayTap}>Tap for details</span>
+                                  </div>
+                                </div>
+                                <span className={styles.rankBadge}>#{i + 1}</span>
+                                <button
+                                  className={styles.removeBtn}
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    removeFromList(listKey, person.person_id)
+                                  }}
+                                  aria-label={`Remove ${person.name}`}
+                                >×</button>
+                              </div>
+                              <div className={styles.cardInfo}>
+                                <span className={styles.cardName}>{person.name}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </Draggable>
+                    )
+                  })}
                   {provided.placeholder}
-                </ul>
+                </div>
               )}
             </Droppable>
           </DragDropContext>
