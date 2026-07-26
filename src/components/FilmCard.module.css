@@ -342,6 +342,27 @@
   cursor: not-allowed;
 }
 
+.watchlistBtn {
+  padding: 9px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.watchlistBtn:hover {
+  background: rgba(201,168,76,0.1);
+}
+
+.inWatchlist {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
 @media (max-width: 600px) {
   .modalContent {
     flex-direction: column;

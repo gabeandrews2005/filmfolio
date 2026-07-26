@@ -5,10 +5,11 @@ import StarSignal from './StarSignal'
 import styles from './FilmCard.module.css'
 
 function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, showAddToList }) {
-  const { seenList, toggleSeen, myList, addToList, removeFromList } = useFilm()
+  const { seenList, toggleSeen, myList, addToList, removeFromList, watchlist, addToWatchlist, removeFromWatchlist } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
   const listFull = myList.length >= 100
+  const inWatchlist = watchlist.some((m) => m.tmdb_id === movie.tmdb_id)
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -24,6 +25,12 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
     e.stopPropagation()
     if (inList) removeFromList('myList', movie.tmdb_id)
     else if (!listFull) addToList('myList', movie)
+  }
+
+  function handleWatchlist(e) {
+    e.stopPropagation()
+    if (inWatchlist) removeFromWatchlist(movie.tmdb_id)
+    else addToWatchlist(movie)
   }
 
   return (
@@ -92,6 +99,13 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
                   {inList ? '✓ In My List' : listFull ? 'List Full (100/100)' : '+ My List'}
                 </button>
               )}
+
+              <button
+                className={`${styles.watchlistBtn} ${inWatchlist ? styles.inWatchlist : ''}`}
+                onClick={handleWatchlist}
+              >
+                {inWatchlist ? '✓ In Watchlist' : '+ Watchlist'}
+              </button>
             </div>
           </div>
         </div>
