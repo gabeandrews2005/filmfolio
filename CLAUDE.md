@@ -46,7 +46,7 @@ Personal film journal feel — darkened theater, warm light, Criterion booklet t
 | Styling | CSS Modules + custom design tokens |
 | State | React Context + `localStorage` |
 | Routing | React Router v6 |
-| Drag-to-rank | `@dnd-kit` (My List poster grid — supports reordering within a wrapping grid); `@hello-pangea/dnd` (single-column lists and other grids) |
+| Drag-to-rank | `@dnd-kit` (My List, Actors/Directors, Shows poster grids — supports reordering within a wrapping grid); `@hello-pangea/dnd` (single-column lists and GenreList grids) |
 | API | TMDB v3 (Bearer JWT auth) |
 | Deployment | Vercel (auto-deploy from `main` branch) |
 
@@ -154,7 +154,10 @@ filmfolio/
 │   │   ├── horror.json
 │   │   ├── seasonal.json
 │   │   ├── nostalgic.json
-│   │   └── songs.json
+│   │   ├── songs.json
+│   │   ├── recommendedActors.json     # curated 100 — Actors page pool
+│   │   ├── recommendedDirectors.json  # curated 50 — Directors page pool
+│   │   └── recommendedShows.json      # curated 98 — Shows page pool
 │   ├── components/
 │   │   ├── Nav.jsx + Nav.module.css              # 3 main links + hamburger button
 │   │   ├── HamburgerMenu.jsx + .module.css       # slide-out drawer, overflow links
@@ -180,8 +183,8 @@ filmfolio/
 │   │   ├── About.jsx + About.module.css
 │   │   └── lists/
 │   │       ├── GenreList.jsx + .module.css        # horror, comedies, animated, seasonal
-│   │       ├── PersonList.jsx + .module.css       # actors, directors
-│   │       └── ShowsList.jsx                      # TV shows (reuses GenreList CSS)
+│   │       ├── PersonList.jsx + .module.css       # actors, directors — Your X above, Recommended X pool below
+│   │       └── ShowsList.jsx + .module.css        # TV shows — same poster-grid pattern as PersonList
 │   ├── App.jsx                        # BrowserRouter, Routes, FilmProvider
 │   ├── index.css                      # global tokens, reset, scrollbar
 │   └── main.jsx                       # ReactDOM entry point
@@ -238,6 +241,8 @@ Placeholder for Gabe's personal story, photo, contact info.
 | `/lists/shows` | ShowsList | 25 |
 
 GenreList auto-populates matching films from `myList` using `GENRE_MAP` (horror→Horror/Thriller, comedies→Comedy, animated→Animation, seasonal→null/manual). PersonList searches TMDB `/search/person` and stores `person_id` for recommendation bonus scoring.
+
+**PersonList (Actors/Directors) and ShowsList share one layout and mechanic:** a search bar to add anyone by name, a "Your X" poster grid (drag-to-reorder to any position via `@dnd-kit`, not `@hello-pangea/dnd` — see Drag-to-rank below) above a "Recommended X" pool below it. The pool resolves a curated name list (`recommendedActors.json` / `recommendedDirectors.json` / `recommendedShows.json`) to TMDB people/shows via `searchPerson`/`searchTV`, throttled to 6 concurrent requests with retry-and-backoff on failure (firing all lookups at once hits TMDB's rate limit and silently drops results). Each pool card has a quick "+" to add without opening the detail modal; items already on the user's list are filtered out of the pool automatically.
 
 ---
 
