@@ -130,6 +130,16 @@
   background: rgba(201,168,76,0.15);
 }
 
+.checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.checkbox:disabled:hover {
+  border-color: rgba(240,236,228,0.5);
+  background: transparent;
+}
+
 .checkboxChecked {
   background: var(--accent-gold) !important;
   border-color: var(--accent-gold) !important;

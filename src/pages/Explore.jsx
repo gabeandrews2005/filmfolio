@@ -48,7 +48,7 @@ const DEFAULT_FILTERS = {
 }
 
 export default function Explore() {
-  const { movies: gabeMovies, seenList, toggleSeen, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
+  const { movies: gabeMovies, myList, addToList, removeFromList, seenList, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
   const [poolMovies, setPoolMovies] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(INITIAL_PAGES)
@@ -60,6 +60,8 @@ export default function Explore() {
   const directorIdSet = useMemo(() => new Set(directorsList.map((d) => d.person_id)), [directorsList])
   const gabeIds = useMemo(() => new Set(gabeMovies.map((m) => m.tmdb_id)), [gabeMovies])
   const notInterestedIds = useMemo(() => new Set(notInterested), [notInterested])
+  const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
+  const myListFull = myList.length >= 100
 
   // Pre-fetch 25 pages of Discover to give ~500 unique films up front
   useEffect(() => {
@@ -175,10 +177,12 @@ export default function Explore() {
     return { actors, directors }
   }
 
-  // Checkbox toggles Seen state directly from the card
+  // Checkbox adds/removes the film from My List directly from the card
   function handleCheckbox(movie, e) {
     e.stopPropagation()
-    toggleSeen(movie.tmdb_id)
+    const inList = myListIds.has(movie.tmdb_id)
+    if (inList) removeFromList('myList', movie.tmdb_id)
+    else if (!myListFull) addToList('myList', movie)
   }
 
   function setFilter(key, value) {
@@ -246,15 +250,17 @@ export default function Explore() {
         <div className={styles.grid}>
           {filtered.map((movie) => {
             const signals = getSignals(movie)
-            const isSeen = seenList.has(movie.tmdb_id)
+            const inMyList = myListIds.has(movie.tmdb_id)
             return (
               <div key={movie.tmdb_id} className={styles.cardWrap}>
                 <button
-                  className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
+                  className={`${styles.checkbox} ${inMyList ? styles.checkboxChecked : ''}`}
                   onClick={(e) => handleCheckbox(movie, e)}
-                  aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
+                  disabled={!inMyList && myListFull}
+                  title={!inMyList && myListFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
+                  aria-label={inMyList ? 'Remove from My List' : 'Add to My List'}
                 >
-                  {isSeen ? '✓' : ''}
+                  {inMyList ? '✓' : ''}
                 </button>
                 <button
                   className={styles.notInterestedBtn}
