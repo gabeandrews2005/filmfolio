@@ -161,7 +161,6 @@ filmfolio/
 │   │   ├── FilmCard.jsx + .module.css            # unified card + FilmModal inline
 │   │   ├── StarSignal.jsx + .module.css          # actor/director bonus badge
 │   │   ├── PersonCard.jsx + .module.css          # headshot card for person lists
-│   │   ├── ProfileSetupModal.jsx + .module.css   # first-visit username/avatar modal
 │   │   ├── UniverseSection.jsx + .module.css     # horizontal scroll strip
 │   │   ├── MovieCard.jsx + MovieCard.module.css  # legacy (Explore still uses it)
 │   │   ├── MovieGrid.jsx + MovieGrid.module.css
@@ -177,12 +176,13 @@ filmfolio/
 │   │   ├── Universe.jsx + Universe.module.css    # user dashboard, filled lists
 │   │   ├── Friends.jsx + Friends.module.css      # demo profiles, social foundation
 │   │   ├── Profile.jsx + Profile.module.css      # user profile with avatar + stats
+│   │   ├── Account.jsx + Account.module.css      # create/edit account (username, avatar), sign out
 │   │   ├── About.jsx + About.module.css
 │   │   └── lists/
 │   │       ├── GenreList.jsx + .module.css        # horror, comedies, animated, seasonal
 │   │       ├── PersonList.jsx + .module.css       # actors, directors
 │   │       └── ShowsList.jsx                      # TV shows (reuses GenreList CSS)
-│   ├── App.jsx                        # BrowserRouter, Routes, ProfileGate, FilmProvider
+│   ├── App.jsx                        # BrowserRouter, Routes, FilmProvider
 │   ├── index.css                      # global tokens, reset, scrollbar
 │   └── main.jsx                       # ReactDOM entry point
 ├── index.html                         # Google Fonts link tags
@@ -218,7 +218,10 @@ Personal dashboard: stats strip (total films ranked, people, shows, seen count).
 Demo profiles (gabe_films, alex_films, maya_watches, dev_cinema) with avatars, bios, and top 10 poster grids. Search bar filters profiles. Notice banner that social features are coming. Foundation for Phase 3 social layer.
 
 ### `/profile` — Profile
-Avatar circle (base64 or initial letter). Username, stats (films ranked, seen count). Link to Universe. All filled lists as horizontal UniverseSection strips. Shows ProfileSetupModal if no user set.
+Avatar circle (base64 or initial letter). Username, stats (films ranked, seen count). Link to Universe. All filled lists as horizontal UniverseSection strips. Redirects to `/account` if no user set.
+
+### `/account` — Account
+Dedicated page (not a popup) to create or edit the local profile: username + optional avatar upload. Pre-fills from `user` when editing. "Sign out" clears `ff_user` (lists/other data are untouched) and returns to `/`. Linked from the hamburger menu — "Create Account" CTA when no user is set, "Account" link when one exists.
 
 ### `/about` — About
 Placeholder for Gabe's personal story, photo, contact info.
@@ -281,8 +284,8 @@ All state lives in `localStorage` (no backend). Managed via `FilmContext.jsx`.
   horrorList: 50, seasonalList: 25, comediesList: 50, animatedList: 50 }
 ```
 
-### ProfileGate (App.jsx)
-On first visit, shows `ProfileSetupModal` after 1.5s if no user and not dismissed this session (`sessionStorage 'ff_profile_dismissed'`). Wraps all routes.
+### Account setup
+No auto-popup — account creation/editing lives entirely on the `/account` page (see Pages & Routes above), reached via the hamburger menu.
 
 ---
 
@@ -295,7 +298,7 @@ Unified card used across Explore, My List grid, and genre list grids. Props: `mo
 Props: `actors, directors, compact`. `compact=true` → small gold ★ badge (tooltip on hover). `compact=false` → gold bar "★ Directed by X · Features Y". Returns null if both empty.
 
 ### `HamburgerMenu`
-Slide-out drawer from right. Overflow links: Actors, Shows, Directors, Animated, Horror, Comedies, Seasonal, Universe, Friends, About. Shows profile avatar/username if user set. Locks body scroll, closes on Escape key.
+Slide-out drawer from right. Overflow links: Actors, Directors, Shows, Animated, Horror, Comedies, Seasonal, Seen Films, Watchlist, Universe, Friends, Statistics, About — plus "Account" prepended when a user is set. Header shows profile avatar/username linking to `/profile/:username` if user set, otherwise a "Create Account" CTA linking to `/account`. Locks body scroll, closes on Escape key.
 
 ### `UniverseSection`
 Horizontal scroll strip with CSS snap. Shows rank badge + title + year per card. Used in Universe and Profile pages.

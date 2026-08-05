@@ -1,9 +1,6 @@
-import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { FilmProvider } from './context/FilmContext'
-import { useFilm } from './context/FilmContext'
 import Nav from './components/Nav'
-import ProfileSetupModal from './components/ProfileSetupModal'
 import Home from './pages/Home'
 import Explore from './pages/Explore'
 import MyList from './pages/MyList'
@@ -11,6 +8,7 @@ import Recommendations from './pages/Recommendations'
 import Universe from './pages/Universe'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
+import Account from './pages/Account'
 import About from './pages/About'
 import SeenFilms from './pages/SeenFilms'
 import Watchlist from './pages/Watchlist'
@@ -19,37 +17,9 @@ import GenreList from './pages/lists/GenreList'
 import PersonList from './pages/lists/PersonList'
 import ShowsList from './pages/lists/ShowsList'
 
-function ProfileGate({ children }) {
-  const { user, setUser } = useFilm()
-  const [showModal, setShowModal] = useState(false)
-  const [checked, setChecked] = useState(false)
-
-  useEffect(() => {
-    if (!user && !sessionStorage.getItem('ff_profile_dismissed')) {
-      const timer = setTimeout(() => setShowModal(true), 1500)
-      return () => clearTimeout(timer)
-    }
-    setChecked(true)
-  }, [user])
-
-  function handleComplete(userData) {
-    if (userData) setUser(userData)
-    sessionStorage.setItem('ff_profile_dismissed', '1')
-    setShowModal(false)
-    setChecked(true)
-  }
-
-  return (
-    <>
-      {children}
-      {showModal && <ProfileSetupModal onComplete={handleComplete} />}
-    </>
-  )
-}
-
 function AppRoutes() {
   return (
-    <ProfileGate>
+    <>
       <Nav />
       <Routes>
         <Route path="/" element={<Home />} />
@@ -61,6 +31,7 @@ function AppRoutes() {
         <Route path="/friends" element={<Friends />} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/account" element={<Account />} />
         <Route path="/about" element={<About />} />
         <Route path="/seen" element={<SeenFilms />} />
         <Route path="/watchlist" element={<Watchlist />} />
@@ -92,7 +63,7 @@ function AppRoutes() {
         <Route path="/lists/shows" element={<ShowsList />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </ProfileGate>
+    </>
   )
 }
 

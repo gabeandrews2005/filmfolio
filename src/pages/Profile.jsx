@@ -1,20 +1,13 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
 import UniverseSection from '../components/UniverseSection'
-import ProfileSetupModal from '../components/ProfileSetupModal'
 import styles from './Profile.module.css'
 
 export default function Profile() {
-  const { user, setUser, myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList, seenList } = useFilm()
+  const { user, myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList, seenList } = useFilm()
 
   if (!user) {
-    return (
-      <ProfileSetupModal
-        onComplete={(userData) => {
-          if (userData) setUser(userData)
-        }}
-      />
-    )
+    return <Navigate to="/account" replace />
   }
 
   const sections = [

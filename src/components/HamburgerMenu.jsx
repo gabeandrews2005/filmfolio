@@ -57,7 +57,7 @@ export default function HamburgerMenu({ isOpen, onClose }) {
           </button>
         </div>
 
-        {user && (
+        {user ? (
           <NavLink to={`/profile/${user.username}`} className={styles.profileLink} onClick={onClose}>
             <div className={styles.profileAvatar}>
               {user.avatar
@@ -70,9 +70,28 @@ export default function HamburgerMenu({ isOpen, onClose }) {
               <span className={styles.profileLabel}>View profile</span>
             </div>
           </NavLink>
+        ) : (
+          <NavLink to="/account" className={styles.profileLink} onClick={onClose}>
+            <div className={styles.profileAvatar}>
+              <span>?</span>
+            </div>
+            <div className={styles.profileInfo}>
+              <span className={styles.profileName}>Create Account</span>
+              <span className={styles.profileLabel}>Save your lists</span>
+            </div>
+          </NavLink>
         )}
 
         <nav className={styles.links}>
+          {user && (
+            <NavLink
+              to="/account"
+              className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
+              onClick={onClose}
+            >
+              Account
+            </NavLink>
+          )}
           {OVERFLOW_LINKS.map(({ to, label }) => (
             <NavLink
               key={to}
