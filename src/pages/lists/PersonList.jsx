@@ -7,6 +7,29 @@ import styles from './PersonList.module.css'
 
 const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ccircle cx='250' cy='260' r='110' fill='%232a2520'/%3E%3Cellipse cx='250' cy='540' rx='160' ry='110' fill='%232a2520'/%3E%3C/svg%3E`
 
+// Firing 100 concurrent TMDB lookups at once triggers rate-limiting (and
+// browsers cap concurrent connections per host anyway), so requests are
+// throttled and empty responses retried with backoff.
+async function resolvePersonWithRetry(name, attempt = 0) {
+  const results = await searchPerson(name)
+  if (results.length > 0 || attempt >= 2) return results
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return resolvePersonWithRetry(name, attempt + 1)
+}
+
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length)
+  let index = 0
+  async function run() {
+    while (index < items.length) {
+      const current = index++
+      results[current] = await worker(items[current])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
+  return results
+}
+
 function PersonModal({ person, myList, onClose }) {
   const [bio, setBio] = useState(null)
   const [topFilms, setTopFilms] = useState([])
@@ -114,8 +137,10 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   useEffect(() => {
     if (!isActors) { setPoolLoading(false); return }
     setPoolLoading(true)
-    Promise.all(RECOMMENDED_ACTORS.map((name) => searchPerson(name)))
+    let cancelled = false
+    mapWithConcurrency(RECOMMENDED_ACTORS, 6, (name) => resolvePersonWithRetry(name))
       .then((responses) => {
+        if (cancelled) return
         const seen = new Set()
         const people = []
         for (const results of responses) {
@@ -127,7 +152,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
         setPoolPeople(people)
         setPoolLoading(false)
       })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { cancelled = true }
   }, [isActors])
 
   const poolToShow = useMemo(
