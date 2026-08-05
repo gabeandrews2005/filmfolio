@@ -36,7 +36,6 @@ function normalizePoolMovie(tmdbMovie) {
     director: null,
     cast: [],
     runtime: null,
-    isFeatured: false,
   }
 }
 
@@ -44,7 +43,6 @@ const DEFAULT_FILTERS = {
   genre: '',
   decade: '',
   seen: 'all',
-  featured: false,
 }
 
 export default function Explore() {
@@ -112,10 +110,8 @@ export default function Explore() {
   const shuffleKeysRef = useRef(new Map())
 
   const allMovies = useMemo(() => {
-    const featured = gabeMovies
-      .filter((m) => m.tmdb_id)
-      .map((m) => ({ ...m, isFeatured: true }))
-    const combined = [...featured, ...poolMovies]
+    const gabeFilms = gabeMovies.filter((m) => m.tmdb_id)
+    const combined = [...gabeFilms, ...poolMovies]
     for (const m of combined) {
       if (!shuffleKeysRef.current.has(m.tmdb_id)) {
         shuffleKeysRef.current.set(m.tmdb_id, Math.random())
@@ -141,7 +137,6 @@ export default function Explore() {
 
   const filtered = useMemo(() => {
     let list = allMovies.filter((m) => !notInterestedIds.has(m.tmdb_id))
-    if (filters.featured) list = list.filter((m) => m.isFeatured)
     if (filters.genre)    list = list.filter((m) => m.genres?.includes(filters.genre))
     if (filters.decade) {
       const d = Number(filters.decade)
@@ -153,16 +148,10 @@ export default function Explore() {
     if (filters.seen === 'seen')   list = list.filter((m) => seenList.has(m.tmdb_id))
     if (filters.seen === 'unseen') list = list.filter((m) => !seenList.has(m.tmdb_id))
 
-    // Featured-only view keeps Gabe's curated ranking; otherwise the whole
-    // pool is shuffled together so featured and discovered films mix freely.
-    if (filters.featured) {
-      list = [...list].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
-    } else {
-      list = [...list].sort((a, b) =>
-        shuffleKeysRef.current.get(a.tmdb_id) - shuffleKeysRef.current.get(b.tmdb_id)
-      )
-    }
-    return list
+    // Whole pool is shuffled together so films mix freely on every load.
+    return [...list].sort((a, b) =>
+      shuffleKeysRef.current.get(a.tmdb_id) - shuffleKeysRef.current.get(b.tmdb_id)
+    )
   }, [allMovies, filters, seenList, notInterestedIds])
 
   function getSignals(movie) {
@@ -204,13 +193,6 @@ export default function Explore() {
 
         {/* Filter bar */}
         <div className={styles.filterBar}>
-          <button
-            className={`${styles.featuredToggle} ${filters.featured ? styles.featuredActive : ''}`}
-            onClick={() => setFilter('featured', !filters.featured)}
-          >
-            ★ Featured
-          </button>
-
           <select
             className={styles.select}
             value={filters.genre}
@@ -239,7 +221,7 @@ export default function Explore() {
             <option value="unseen">Unseen</option>
           </select>
 
-          {(filters.featured || filters.genre || filters.decade || filters.seen !== 'all') && (
+          {(filters.genre || filters.decade || filters.seen !== 'all') && (
             <button className={styles.clearBtn} onClick={() => setFilters(DEFAULT_FILTERS)}>
               Clear filters
             </button>
@@ -272,7 +254,6 @@ export default function Explore() {
                 </button>
                 <FilmCard
                   movie={movie}
-                  isFeatured={movie.isFeatured}
                   actorMatches={signals.actors}
                   directorMatches={signals.directors}
                   showAddToList
@@ -288,7 +269,7 @@ export default function Explore() {
           ))}
         </div>
 
-        {!filters.featured && !poolLoading && (
+        {!poolLoading && (
           <div className={styles.loadMoreWrap}>
             {hasMore ? (
               <button

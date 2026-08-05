@@ -86,20 +86,6 @@
 }
 
 /* ── Badges ─────────────────────────────────────────────────────────────── */
-.featuredBadge {
-  position: absolute;
-  top: 6px;
-  left: 6px;
-  background: var(--accent-gold);
-  color: var(--bg-primary);
-  font-size: 0.65rem;
-  font-weight: 700;
-  padding: 3px 7px;
-  border-radius: 3px;
-  z-index: 2;
-  letter-spacing: 0.05em;
-}
-
 .rankBadge {
   position: absolute;
   top: 6px;
@@ -227,16 +213,6 @@
   gap: 8px;
   flex-wrap: wrap;
   margin-bottom: 10px;
-}
-
-.featuredBadgeLg {
-  background: var(--accent-gold);
-  color: var(--bg-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 3px;
-  letter-spacing: 0.05em;
 }
 
 .seenBadgeLg {

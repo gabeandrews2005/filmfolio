@@ -43,26 +43,6 @@
   border-bottom: 1px solid var(--border);
 }
 
-.featuredToggle {
-  padding: 7px 14px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  transition: color var(--transition), border-color var(--transition), background var(--transition);
-}
-
-.featuredToggle:hover {
-  color: var(--accent-gold);
-  border-color: rgba(201,168,76,0.4);
-}
-
-.featuredActive {
-  color: var(--accent-gold) !important;
-  border-color: rgba(201,168,76,0.5) !important;
-  background: rgba(201,168,76,0.08);
-}
-
 .select {
   background: var(--bg-secondary);
   border: 1px solid var(--border);

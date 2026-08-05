@@ -4,7 +4,7 @@ import { PLACEHOLDER_POSTER } from '../api/tmdb'
 import StarSignal from './StarSignal'
 import styles from './FilmCard.module.css'
 
-function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, showAddToList }) {
+function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList }) {
   const { seenList, toggleSeen, myList, addToList, removeFromList, watchlist, addToWatchlist, removeFromWatchlist } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
@@ -48,14 +48,11 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
           </div>
 
           <div className={styles.modalInfoCol}>
-            <div className={styles.modalBadges}>
-              {isFeatured && (
-                <span className={styles.featuredBadgeLg}>★ Gabe's Pick</span>
-              )}
-              {isSeen && (
+            {isSeen && (
+              <div className={styles.modalBadges}>
                 <span className={styles.seenBadgeLg}>✓ Seen</span>
-              )}
-            </div>
+              </div>
+            )}
 
             <h2 className={styles.modalTitle}>{movie.title}</h2>
 
@@ -116,7 +113,6 @@ function FilmModal({ movie, isFeatured, actorMatches, directorMatches, onClose, 
 
 export default function FilmCard({
   movie,
-  isFeatured = false,
   rankBadge = null,
   showAddToList = true,
   actorMatches = [],
@@ -164,9 +160,6 @@ export default function FilmCard({
           </div>
 
           {/* Badges */}
-          {isFeatured && (
-            <span className={styles.featuredBadge}>★</span>
-          )}
           {rankBadge !== null && (
             <span className={styles.rankBadge}>#{rankBadge}</span>
           )}
@@ -187,7 +180,6 @@ export default function FilmCard({
       {modalOpen && (
         <FilmModal
           movie={movie}
-          isFeatured={isFeatured}
           actorMatches={actorMatches}
           directorMatches={directorMatches}
           onClose={() => setModalOpen(false)}
