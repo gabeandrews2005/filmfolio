@@ -1,9 +1,34 @@
 import { useState, useEffect, useRef } from 'react'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../context/FilmContext'
 import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import styles from './MyList.module.css'
+
+function SortablePoster({ movie, index }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: String(movie.tmdb_id),
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${styles.gridItem} ${isDragging ? styles.gridDragging : ''}`}
+    >
+      <FilmCard movie={movie} rankBadge={index + 1} showAddToList={false} />
+    </div>
+  )
+}
 
 export default function MyList() {
   const { myList, addToList, reorderList } = useFilm()
@@ -71,12 +96,18 @@ export default function MyList() {
     return () => document.removeEventListener('keydown', onEscape)
   }, [])
 
-  function handleDragEnd(result) {
-    if (!result.destination) return
-    const items = [...myList]
-    const [moved] = items.splice(result.source.index, 1)
-    items.splice(result.destination.index, 0, moved)
-    reorderList('myList', items)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = myList.findIndex((m) => String(m.tmdb_id) === active.id)
+    const newIndex = myList.findIndex((m) => String(m.tmdb_id) === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    reorderList('myList', arrayMove(myList, oldIndex, newIndex))
   }
 
   return (
@@ -149,41 +180,15 @@ export default function MyList() {
             <p>Search for a film above to start building your list</p>
           </div>
         ) : (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="grid" direction="horizontal">
-              {(provided) => (
-                <div
-                  className={styles.posterGrid}
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  {myList.map((movie, index) => (
-                    <Draggable
-                      key={String(movie.tmdb_id)}
-                      draggableId={String(movie.tmdb_id)}
-                      index={index}
-                    >
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          className={`${styles.gridItem} ${snapshot.isDragging ? styles.gridDragging : ''}`}
-                        >
-                          <FilmCard
-                            movie={movie}
-                            rankBadge={index + 1}
-                            showAddToList={false}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={myList.map((m) => String(m.tmdb_id))} strategy={rectSortingStrategy}>
+              <div className={styles.posterGrid}>
+                {myList.map((movie, index) => (
+                  <SortablePoster key={movie.tmdb_id} movie={movie} index={index} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
     </div>

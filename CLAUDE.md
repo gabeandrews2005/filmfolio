@@ -46,7 +46,7 @@ Personal film journal feel — darkened theater, warm light, Criterion booklet t
 | Styling | CSS Modules + custom design tokens |
 | State | React Context + `localStorage` |
 | Routing | React Router v6 |
-| Drag-to-rank | `@hello-pangea/dnd` |
+| Drag-to-rank | `@dnd-kit` (My List poster grid — supports reordering within a wrapping grid); `@hello-pangea/dnd` (single-column lists and other grids) |
 | API | TMDB v3 (Bearer JWT auth) |
 | Deployment | Vercel (auto-deploy from `main` branch) |
 
