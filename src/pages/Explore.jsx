@@ -14,6 +14,17 @@ const DISCOVER_PARAMS = {
 }
 const INITIAL_PAGES = 25
 
+// TMDB's discover/popular endpoints return numeric genre_ids, not names —
+// this is TMDB's stable, documented movie genre list (matches the naming
+// already used in movies.json, e.g. "Science Fiction" not "Sci-Fi").
+const TMDB_GENRE_MAP = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
+  878: 'Science Fiction', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War',
+  37: 'Western',
+}
+
 function SkeletonCard() {
   return (
     <div className={styles.skeleton}>
@@ -33,6 +44,7 @@ function normalizePoolMovie(tmdbMovie) {
     vote_average: tmdbMovie.vote_average ?? null,
     posterUrl: getPosterUrl(tmdbMovie.poster_path),
     poster_path: tmdbMovie.poster_path,
+    genres: (tmdbMovie.genre_ids ?? []).map((id) => TMDB_GENRE_MAP[id]).filter(Boolean),
     director: null,
     cast: [],
     runtime: null,
@@ -122,9 +134,9 @@ export default function Explore() {
 
   const genres = useMemo(() => {
     const set = new Set()
-    gabeMovies.forEach((m) => m.genres?.forEach((g) => set.add(g)))
+    allMovies.forEach((m) => m.genres?.forEach((g) => set.add(g)))
     return [...set].sort()
-  }, [gabeMovies])
+  }, [allMovies])
 
   const decades = useMemo(() => {
     const set = new Set()
