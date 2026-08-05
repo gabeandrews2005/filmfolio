@@ -110,6 +110,15 @@ export async function getTopRatedMovies(page = 1) {
   return data;
 }
 
+export async function getPopularPeople(page = 1) {
+  const key = `ff_tmdb_poppl_${page}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB('/person/popular', { page });
+  if (data) setCache(key, data);
+  return data;
+}
+
 export async function getDiscoverMovies(params = {}, page = 1) {
   const cacheKey = `ff_tmdb_disc_${JSON.stringify(params)}_${page}`;
   const cached = getCached(cacheKey);

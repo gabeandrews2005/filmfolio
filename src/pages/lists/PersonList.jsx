@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 import { useFilm } from '../../context/FilmContext'
-import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
+import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits, getPopularPeople } from '../../api/tmdb'
 import styles from './PersonList.module.css'
 
 const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ccircle cx='250' cy='260' r='110' fill='%232a2520'/%3E%3Cellipse cx='250' cy='540' rx='160' ry='110' fill='%232a2520'/%3E%3C/svg%3E`
+const POOL_INITIAL_PAGES = 8
 
 function PersonModal({ person, myList, onClose }) {
   const [bio, setBio] = useState(null)
@@ -102,9 +103,72 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const [debounceTimer, setDebounceTimer] = useState(null)
   const [selectedPerson, setSelectedPerson] = useState(null)
 
+  const [poolPeople, setPoolPeople] = useState([])
+  const [poolLoading, setPoolLoading] = useState(true)
+  const [poolPage, setPoolPage] = useState(POOL_INITIAL_PAGES)
+  const [poolHasMore, setPoolHasMore] = useState(true)
+  const [poolLoadingMore, setPoolLoadingMore] = useState(false)
+
   const isActors = listType === 'actors'
 
   const listIds = useMemo(() => new Set(userList.map((p) => p.person_id)), [userList])
+
+  // Pre-fetch several pages of popular actors to give a browsable pool up front
+  useEffect(() => {
+    if (!isActors) { setPoolLoading(false); return }
+    setPoolLoading(true)
+    const pages = Array.from({ length: POOL_INITIAL_PAGES }, (_, i) => i + 1)
+    Promise.all(pages.map((p) => getPopularPeople(p)))
+      .then((responses) => {
+        const seen = new Set()
+        const people = []
+        for (const res of responses) {
+          for (const p of (res?.results ?? [])) {
+            if (p.known_for_department !== 'Acting' || seen.has(p.id)) continue
+            seen.add(p.id)
+            people.push(p)
+          }
+        }
+        setPoolPeople(people)
+        setPoolLoading(false)
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isActors])
+
+  function handleLoadMorePool() {
+    const nextPage = poolPage + 1
+    setPoolLoadingMore(true)
+    getPopularPeople(nextPage)
+      .then((res) => {
+        const results = res?.results ?? []
+        if (results.length === 0) {
+          setPoolHasMore(false)
+          return
+        }
+        setPoolPeople((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id))
+          const fresh = results.filter((p) => p.known_for_department === 'Acting' && !existingIds.has(p.id))
+          if (fresh.length === 0) setPoolHasMore(false)
+          return [...prev, ...fresh]
+        })
+        setPoolPage(nextPage)
+      })
+      .finally(() => setPoolLoadingMore(false))
+  }
+
+  const poolToShow = useMemo(
+    () => poolPeople.filter((p) => !listIds.has(p.id)),
+    [poolPeople, listIds]
+  )
+
+  function addFromPool(p) {
+    if (listIds.has(p.id) || userList.length >= maxItems) return
+    addToList(listKey, {
+      person_id: p.id,
+      name: p.name,
+      headshot_path: p.profile_path ?? null,
+    })
+  }
 
   function handleSearch(value) {
     setQuery(value)
@@ -208,16 +272,92 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
           </div>
         )}
 
+        {/* Recommended pool */}
+        {isActors && (
+          <div className={styles.poolSection}>
+            <div className={styles.poolHeader}>
+              <h2 className={styles.sectionTitle}>Recommended Actors</h2>
+              {!poolLoading && <span className={styles.poolCount}>{poolToShow.length} to choose from</span>}
+            </div>
+
+            <div className={styles.grid}>
+              {poolLoading
+                ? Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`pool-sk-${i}`} className={styles.poolSkeleton}>
+                      <div className={styles.poolSkeletonImg} />
+                    </div>
+                  ))
+                : poolToShow.map((p) => {
+                    const imgUrl = p.profile_path ? getProfileUrlLarge(p.profile_path) : PLACEHOLDER_PERSON
+                    return (
+                      <div key={p.id} className={styles.gridItem}>
+                        <div
+                          className={styles.card}
+                          onClick={() => setSelectedPerson({ person_id: p.id, name: p.name, headshot_path: p.profile_path ?? null })}
+                        >
+                          <div className={styles.posterWrap}>
+                            <img
+                              src={imgUrl}
+                              alt={p.name}
+                              className={styles.poster}
+                              loading="lazy"
+                              onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
+                            />
+                            <div className={styles.overlay}>
+                              <div className={styles.overlayContent}>
+                                <span className={styles.overlayTap}>Tap for details</span>
+                              </div>
+                            </div>
+                            <button
+                              className={styles.poolAddBtn}
+                              onClick={(e) => { e.stopPropagation(); addFromPool(p) }}
+                              disabled={isFull}
+                              title={isFull ? `Your list is full (${maxItems}/${maxItems}) — remove someone to add more` : undefined}
+                              aria-label={`Add ${p.name}`}
+                            >+</button>
+                          </div>
+                          <div className={styles.cardInfo}>
+                            <span className={styles.cardName}>{p.name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+            </div>
+
+            {!poolLoading && (
+              poolHasMore ? (
+                <div className={styles.loadMoreWrap}>
+                  <button
+                    className={styles.loadMoreBtn}
+                    onClick={handleLoadMorePool}
+                    disabled={poolLoadingMore}
+                  >
+                    {poolLoadingMore ? 'Loading…' : 'Load More Actors'}
+                  </button>
+                </div>
+              ) : (
+                <p className={styles.noMoreText}>No more actors to load</p>
+              )
+            )}
+          </div>
+        )}
+
         {/* Grid hint */}
         {userList.length > 0 && (
-          <p className={styles.gridHint}>Drag to reorder · Click for details</p>
+          <>
+            {isActors && <h2 className={styles.sectionTitle}>Your Actors</h2>}
+            <p className={styles.gridHint}>Drag to reorder · Click for details</p>
+          </>
         )}
 
         {/* Poster grid */}
         {userList.length === 0 ? (
-          <div className={styles.emptyGrid}>
-            <p>Search for {isActors ? 'actors' : 'directors'} to build your list.</p>
-          </div>
+          !isActors && (
+            <div className={styles.emptyGrid}>
+              <p>Search for directors to build your list.</p>
+            </div>
+          )
         ) : (
           <DragDropContext onDragEnd={handleDragEnd}>
             <Droppable droppableId="person-grid" direction="horizontal">
