@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useFilm } from '../context/FilmContext'
 import {
   getDiscoverMovies,
@@ -105,11 +105,21 @@ export default function Explore() {
       .finally(() => setLoadingMore(false))
   }
 
+  // Stable per-film random order — assigned once per tmdb_id so cards don't
+  // reshuffle on every re-render or when "Load More" appends new films.
+  const shuffleKeysRef = useRef(new Map())
+
   const allMovies = useMemo(() => {
     const featured = gabeMovies
       .filter((m) => m.tmdb_id)
       .map((m) => ({ ...m, isFeatured: true }))
-    return [...featured, ...poolMovies]
+    const combined = [...featured, ...poolMovies]
+    for (const m of combined) {
+      if (!shuffleKeysRef.current.has(m.tmdb_id)) {
+        shuffleKeysRef.current.set(m.tmdb_id, Math.random())
+      }
+    }
+    return combined
   }, [gabeMovies, poolMovies])
 
   const genres = useMemo(() => {
@@ -140,6 +150,16 @@ export default function Explore() {
     }
     if (filters.seen === 'seen')   list = list.filter((m) => seenList.has(m.tmdb_id))
     if (filters.seen === 'unseen') list = list.filter((m) => !seenList.has(m.tmdb_id))
+
+    // Featured-only view keeps Gabe's curated ranking; otherwise the whole
+    // pool is shuffled together so featured and discovered films mix freely.
+    if (filters.featured) {
+      list = [...list].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0))
+    } else {
+      list = [...list].sort((a, b) =>
+        shuffleKeysRef.current.get(a.tmdb_id) - shuffleKeysRef.current.get(b.tmdb_id)
+      )
+    }
     return list
   }, [allMovies, filters, seenList, notInterestedIds])
 
@@ -224,74 +244,38 @@ export default function Explore() {
 
         {/* Grid */}
         <div className={styles.grid}>
-          {filtered
-            .filter((m) => m.isFeatured)
-            .map((movie) => {
-              const signals = getSignals(movie)
-              const isSeen = seenList.has(movie.tmdb_id)
-              return (
-                <div key={`f-${movie.tmdb_id}`} className={styles.cardWrap}>
-                  <button
-                    className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
-                    onClick={(e) => handleCheckbox(movie, e)}
-                    aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
-                  >
-                    {isSeen ? '✓' : ''}
-                  </button>
-                  <button
-                    className={styles.notInterestedBtn}
-                    onClick={() => addNotInterested(movie.tmdb_id)}
-                    title="Not interested"
-                    aria-label="Not interested"
-                  >
-                    ✕
-                  </button>
-                  <FilmCard
-                    movie={movie}
-                    isFeatured
-                    actorMatches={signals.actors}
-                    directorMatches={signals.directors}
-                    showAddToList
-                    showNotInterested
-                    onNotInterested={() => addNotInterested(movie.tmdb_id)}
-                  />
-                </div>
-              )
-            })}
-
-          {!filters.featured && filtered
-            .filter((m) => !m.isFeatured)
-            .map((movie) => {
-              const signals = getSignals(movie)
-              const isSeen = seenList.has(movie.tmdb_id)
-              return (
-                <div key={`p-${movie.tmdb_id}`} className={styles.cardWrap}>
-                  <button
-                    className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
-                    onClick={(e) => handleCheckbox(movie, e)}
-                    aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
-                  >
-                    {isSeen ? '✓' : ''}
-                  </button>
-                  <button
-                    className={styles.notInterestedBtn}
-                    onClick={() => addNotInterested(movie.tmdb_id)}
-                    title="Not interested"
-                    aria-label="Not interested"
-                  >
-                    ✕
-                  </button>
-                  <FilmCard
-                    movie={movie}
-                    actorMatches={signals.actors}
-                    directorMatches={signals.directors}
-                    showAddToList
-                    showNotInterested
-                    onNotInterested={() => addNotInterested(movie.tmdb_id)}
-                  />
-                </div>
-              )
-            })}
+          {filtered.map((movie) => {
+            const signals = getSignals(movie)
+            const isSeen = seenList.has(movie.tmdb_id)
+            return (
+              <div key={movie.tmdb_id} className={styles.cardWrap}>
+                <button
+                  className={`${styles.checkbox} ${isSeen ? styles.checkboxChecked : ''}`}
+                  onClick={(e) => handleCheckbox(movie, e)}
+                  aria-label={isSeen ? 'Unmark as seen' : 'Mark as seen'}
+                >
+                  {isSeen ? '✓' : ''}
+                </button>
+                <button
+                  className={styles.notInterestedBtn}
+                  onClick={() => addNotInterested(movie.tmdb_id)}
+                  title="Not interested"
+                  aria-label="Not interested"
+                >
+                  ✕
+                </button>
+                <FilmCard
+                  movie={movie}
+                  isFeatured={movie.isFeatured}
+                  actorMatches={signals.actors}
+                  directorMatches={signals.directors}
+                  showAddToList
+                  showNotInterested
+                  onNotInterested={() => addNotInterested(movie.tmdb_id)}
+                />
+              </div>
+            )
+          })}
 
           {poolLoading && Array.from({ length: 20 }).map((_, i) => (
             <SkeletonCard key={`sk-${i}`} />
