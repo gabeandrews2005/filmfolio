@@ -272,77 +272,6 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
           </div>
         )}
 
-        {/* Recommended pool */}
-        {isActors && (
-          <div className={styles.poolSection}>
-            <div className={styles.poolHeader}>
-              <h2 className={styles.sectionTitle}>Recommended Actors</h2>
-              {!poolLoading && <span className={styles.poolCount}>{poolToShow.length} to choose from</span>}
-            </div>
-
-            <div className={styles.grid}>
-              {poolLoading
-                ? Array.from({ length: 12 }).map((_, i) => (
-                    <div key={`pool-sk-${i}`} className={styles.poolSkeleton}>
-                      <div className={styles.poolSkeletonImg} />
-                    </div>
-                  ))
-                : poolToShow.map((p) => {
-                    const imgUrl = p.profile_path ? getProfileUrlLarge(p.profile_path) : PLACEHOLDER_PERSON
-                    return (
-                      <div key={p.id} className={styles.gridItem}>
-                        <div
-                          className={styles.card}
-                          onClick={() => setSelectedPerson({ person_id: p.id, name: p.name, headshot_path: p.profile_path ?? null })}
-                        >
-                          <div className={styles.posterWrap}>
-                            <img
-                              src={imgUrl}
-                              alt={p.name}
-                              className={styles.poster}
-                              loading="lazy"
-                              onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
-                            />
-                            <div className={styles.overlay}>
-                              <div className={styles.overlayContent}>
-                                <span className={styles.overlayTap}>Tap for details</span>
-                              </div>
-                            </div>
-                            <button
-                              className={styles.poolAddBtn}
-                              onClick={(e) => { e.stopPropagation(); addFromPool(p) }}
-                              disabled={isFull}
-                              title={isFull ? `Your list is full (${maxItems}/${maxItems}) — remove someone to add more` : undefined}
-                              aria-label={`Add ${p.name}`}
-                            >+</button>
-                          </div>
-                          <div className={styles.cardInfo}>
-                            <span className={styles.cardName}>{p.name}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-            </div>
-
-            {!poolLoading && (
-              poolHasMore ? (
-                <div className={styles.loadMoreWrap}>
-                  <button
-                    className={styles.loadMoreBtn}
-                    onClick={handleLoadMorePool}
-                    disabled={poolLoadingMore}
-                  >
-                    {poolLoadingMore ? 'Loading…' : 'Load More Actors'}
-                  </button>
-                </div>
-              ) : (
-                <p className={styles.noMoreText}>No more actors to load</p>
-              )
-            )}
-          </div>
-        )}
-
         {/* Grid hint */}
         {userList.length > 0 && (
           <>
@@ -425,6 +354,77 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
               )}
             </Droppable>
           </DragDropContext>
+        )}
+
+        {/* Recommended pool */}
+        {isActors && (
+          <div className={styles.poolSection}>
+            <div className={styles.poolHeader}>
+              <h2 className={styles.sectionTitle}>Recommended Actors</h2>
+              {!poolLoading && <span className={styles.poolCount}>{poolToShow.length} to choose from</span>}
+            </div>
+
+            <div className={styles.grid}>
+              {poolLoading
+                ? Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`pool-sk-${i}`} className={styles.poolSkeleton}>
+                      <div className={styles.poolSkeletonImg} />
+                    </div>
+                  ))
+                : poolToShow.map((p) => {
+                    const imgUrl = p.profile_path ? getProfileUrlLarge(p.profile_path) : PLACEHOLDER_PERSON
+                    return (
+                      <div key={p.id} className={styles.gridItem}>
+                        <div
+                          className={styles.card}
+                          onClick={() => setSelectedPerson({ person_id: p.id, name: p.name, headshot_path: p.profile_path ?? null })}
+                        >
+                          <div className={styles.posterWrap}>
+                            <img
+                              src={imgUrl}
+                              alt={p.name}
+                              className={styles.poster}
+                              loading="lazy"
+                              onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
+                            />
+                            <div className={styles.overlay}>
+                              <div className={styles.overlayContent}>
+                                <span className={styles.overlayTap}>Tap for details</span>
+                              </div>
+                            </div>
+                            <button
+                              className={styles.poolAddBtn}
+                              onClick={(e) => { e.stopPropagation(); addFromPool(p) }}
+                              disabled={isFull}
+                              title={isFull ? `Your list is full (${maxItems}/${maxItems}) — remove someone to add more` : undefined}
+                              aria-label={`Add ${p.name}`}
+                            >+</button>
+                          </div>
+                          <div className={styles.cardInfo}>
+                            <span className={styles.cardName}>{p.name}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+            </div>
+
+            {!poolLoading && (
+              poolHasMore ? (
+                <div className={styles.loadMoreWrap}>
+                  <button
+                    className={styles.loadMoreBtn}
+                    onClick={handleLoadMorePool}
+                    disabled={poolLoadingMore}
+                  >
+                    {poolLoadingMore ? 'Loading…' : 'Load More Actors'}
+                  </button>
+                </div>
+              ) : (
+                <p className={styles.noMoreText}>No more actors to load</p>
+              )
+            )}
+          </div>
         )}
       </div>
     </div>
