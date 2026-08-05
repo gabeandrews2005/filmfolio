@@ -5,9 +5,15 @@ import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
 import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
 import RECOMMENDED_ACTORS from '../../data/recommendedActors.json'
+import RECOMMENDED_DIRECTORS from '../../data/recommendedDirectors.json'
 import styles from './PersonList.module.css'
 
 const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ccircle cx='250' cy='260' r='110' fill='%232a2520'/%3E%3Cellipse cx='250' cy='540' rx='160' ry='110' fill='%232a2520'/%3E%3C/svg%3E`
+
+const RECOMMENDED_LISTS = {
+  actors: RECOMMENDED_ACTORS,
+  directors: RECOMMENDED_DIRECTORS,
+}
 
 // Firing 100 concurrent TMDB lookups at once triggers rate-limiting (and
 // browsers cap concurrent connections per host anyway), so requests are
@@ -186,15 +192,16 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const [poolLoading, setPoolLoading] = useState(true)
 
   const isActors = listType === 'actors'
+  const recommendedNames = RECOMMENDED_LISTS[listType]
 
   const listIds = useMemo(() => new Set(userList.map((p) => p.person_id)), [userList])
 
-  // Resolve the curated recommended-actors list to TMDB people, in order
+  // Resolve the curated recommended-people list to TMDB people, in order
   useEffect(() => {
-    if (!isActors) { setPoolLoading(false); return }
+    if (!recommendedNames) { setPoolLoading(false); return }
     setPoolLoading(true)
     let cancelled = false
-    mapWithConcurrency(RECOMMENDED_ACTORS, 6, (name) => resolvePersonWithRetry(name))
+    mapWithConcurrency(recommendedNames, 6, (name) => resolvePersonWithRetry(name))
       .then((responses) => {
         if (cancelled) return
         const seen = new Set()
@@ -209,7 +216,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
         setPoolLoading(false)
       })
     return () => { cancelled = true }
-  }, [isActors])
+  }, [recommendedNames])
 
   const poolToShow = useMemo(
     () => poolPeople.filter((p) => !listIds.has(p.id)),
@@ -336,16 +343,16 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
         {/* Grid hint */}
         {userList.length > 0 && (
           <>
-            {isActors && <h2 className={styles.sectionTitle}>Your Actors</h2>}
+            {recommendedNames && <h2 className={styles.sectionTitle}>Your {title}</h2>}
             <p className={styles.gridHint}>Drag to reorder · Click for details</p>
           </>
         )}
 
         {/* Poster grid */}
         {userList.length === 0 ? (
-          !isActors && (
+          !recommendedNames && (
             <div className={styles.emptyGrid}>
-              <p>Search for directors to build your list.</p>
+              <p>Search for {isActors ? 'actors' : 'directors'} to build your list.</p>
             </div>
           )
         ) : (
@@ -367,10 +374,10 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
         )}
 
         {/* Recommended pool */}
-        {isActors && (
+        {recommendedNames && (
           <div className={styles.poolSection}>
             <div className={styles.poolHeader}>
-              <h2 className={styles.sectionTitle}>Recommended Actors</h2>
+              <h2 className={styles.sectionTitle}>Recommended {title}</h2>
               {!poolLoading && <span className={styles.poolCount}>{poolToShow.length} to choose from</span>}
             </div>
 
