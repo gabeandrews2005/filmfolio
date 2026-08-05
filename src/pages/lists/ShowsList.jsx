@@ -7,7 +7,7 @@ import { searchTV, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import RECOMMENDED_SHOWS from '../../data/recommendedShows.json'
 import styles from './ShowsList.module.css'
 
-const MAX_SHOWS = 25
+const MAX_SHOWS = 50
 
 // Firing every lookup at once triggers rate-limiting (and browsers cap
 // concurrent connections per host anyway), so requests are throttled and

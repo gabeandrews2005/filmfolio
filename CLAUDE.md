@@ -238,7 +238,7 @@ Placeholder for Gabe's personal story, photo, contact info.
 | `/lists/seasonal` | GenreList (seasonal) | 25 |
 | `/lists/actors` | PersonList (actors) | 50 |
 | `/lists/directors` | PersonList (directors) | 25 |
-| `/lists/shows` | ShowsList | 25 |
+| `/lists/shows` | ShowsList | 50 |
 
 GenreList auto-populates matching films from `myList` using `GENRE_MAP` (horror→Horror/Thriller, comedies→Comedy, animated→Animation, seasonal→null/manual). PersonList searches TMDB `/search/person` and stores `person_id` for recommendation bonus scoring.
 
@@ -285,7 +285,7 @@ All state lives in `localStorage` (no backend). Managed via `FilmContext.jsx`.
 
 **LIST_MAX limits:**
 ```js
-{ myList: 100, actorsList: 50, showsList: 25, directorsList: 25,
+{ myList: 100, actorsList: 50, showsList: 50, directorsList: 25,
   horrorList: 50, seasonalList: 25, comediesList: 50, animatedList: 50 }
 ```
 

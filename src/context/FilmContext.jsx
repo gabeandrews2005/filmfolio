@@ -23,7 +23,7 @@ const LS_TOP10_LEGACY = 'ff_top10'
 const LIST_MAX = {
   myList:       100,
   actorsList:   50,
-  showsList:    25,
+  showsList:    50,
   directorsList:25,
   horrorList:   50,
   seasonalList: 25,
