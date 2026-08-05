@@ -227,38 +227,6 @@
   100% { opacity: 0.5; }
 }
 
-.loadMoreWrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 28px;
-}
-
-.loadMoreBtn {
-  padding: 12px 32px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-  transition: color var(--transition), border-color var(--transition);
-}
-
-.loadMoreBtn:hover:not(:disabled) {
-  color: var(--text-primary);
-  border-color: var(--text-secondary);
-}
-
-.loadMoreBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.noMoreText {
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 12px;
-}
-
 /* ── Grid hint ───────────────────────────────────────────────────────────── */
 .gridHint {
   font-size: 0.78rem;

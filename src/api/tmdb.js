@@ -81,9 +81,15 @@ export async function searchMovies(query) {
 }
 
 export async function searchPerson(query) {
-  if (!query.trim()) return [];
-  const data = await fetchTMDB('/search/person', { query: query.trim(), page: 1 });
-  return data?.results ?? [];
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const key = `ff_tmdb_sperson_${trimmed.toLowerCase()}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB('/search/person', { query: trimmed, page: 1 });
+  const results = data?.results ?? [];
+  if (results.length) setCache(key, results);
+  return results;
 }
 
 export async function searchTV(query) {
@@ -106,15 +112,6 @@ export async function getTopRatedMovies(page = 1) {
   const cached = getCached(key);
   if (cached) return cached;
   const data = await fetchTMDB('/movie/top_rated', { page });
-  if (data) setCache(key, data);
-  return data;
-}
-
-export async function getPopularPeople(page = 1) {
-  const key = `ff_tmdb_poppl_${page}`;
-  const cached = getCached(key);
-  if (cached) return cached;
-  const data = await fetchTMDB('/person/popular', { page });
   if (data) setCache(key, data);
   return data;
 }
