@@ -42,11 +42,10 @@ function normalizePoolMovie(tmdbMovie) {
 const DEFAULT_FILTERS = {
   genre: '',
   decade: '',
-  seen: 'all',
 }
 
 export default function Explore() {
-  const { movies: gabeMovies, myList, addToList, removeFromList, seenList, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
+  const { movies: gabeMovies, myList, addToList, seenList, watchlist, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
   const [poolMovies, setPoolMovies] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
   const [currentPage, setCurrentPage] = useState(INITIAL_PAGES)
@@ -59,6 +58,7 @@ export default function Explore() {
   const gabeIds = useMemo(() => new Set(gabeMovies.map((m) => m.tmdb_id)), [gabeMovies])
   const notInterestedIds = useMemo(() => new Set(notInterested), [notInterested])
   const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
+  const watchlistIds = useMemo(() => new Set(watchlist.map((m) => m.tmdb_id)), [watchlist])
   const myListFull = myList.length >= 100
 
   // Pre-fetch 25 pages of Discover to give ~500 unique films up front
@@ -136,7 +136,14 @@ export default function Explore() {
   }, [allMovies])
 
   const filtered = useMemo(() => {
-    let list = allMovies.filter((m) => !notInterestedIds.has(m.tmdb_id))
+    // Films you've engaged with (seen, ranked, or queued to watch) fall out
+    // of Explore automatically, same as "Not Interested" dismissals.
+    let list = allMovies.filter((m) =>
+      !notInterestedIds.has(m.tmdb_id) &&
+      !seenList.has(m.tmdb_id) &&
+      !myListIds.has(m.tmdb_id) &&
+      !watchlistIds.has(m.tmdb_id)
+    )
     if (filters.genre)    list = list.filter((m) => m.genres?.includes(filters.genre))
     if (filters.decade) {
       const d = Number(filters.decade)
@@ -145,14 +152,12 @@ export default function Explore() {
         return y && Math.floor(y / 10) * 10 === d
       })
     }
-    if (filters.seen === 'seen')   list = list.filter((m) => seenList.has(m.tmdb_id))
-    if (filters.seen === 'unseen') list = list.filter((m) => !seenList.has(m.tmdb_id))
 
     // Whole pool is shuffled together so films mix freely on every load.
     return [...list].sort((a, b) =>
       shuffleKeysRef.current.get(a.tmdb_id) - shuffleKeysRef.current.get(b.tmdb_id)
     )
-  }, [allMovies, filters, seenList, notInterestedIds])
+  }, [allMovies, filters, seenList, myListIds, watchlistIds, notInterestedIds])
 
   function getSignals(movie) {
     if (actorIdSet.size === 0 && directorIdSet.size === 0) return { actors: [], directors: [] }
@@ -166,12 +171,11 @@ export default function Explore() {
     return { actors, directors }
   }
 
-  // Checkbox adds/removes the film from My List directly from the card
+  // Checkbox adds the film to My List; the card then disappears from Explore
+  // (filtered out along with Seen and Watchlist films — see `filtered` above)
   function handleCheckbox(movie, e) {
     e.stopPropagation()
-    const inList = myListIds.has(movie.tmdb_id)
-    if (inList) removeFromList('myList', movie.tmdb_id)
-    else if (!myListFull) addToList('myList', movie)
+    if (!myListFull) addToList('myList', movie)
   }
 
   function setFilter(key, value) {
@@ -211,17 +215,7 @@ export default function Explore() {
             {decades.map((d) => <option key={d} value={d}>{d}s</option>)}
           </select>
 
-          <select
-            className={styles.select}
-            value={filters.seen}
-            onChange={(e) => setFilter('seen', e.target.value)}
-          >
-            <option value="all">All Films</option>
-            <option value="seen">Seen</option>
-            <option value="unseen">Unseen</option>
-          </select>
-
-          {(filters.genre || filters.decade || filters.seen !== 'all') && (
+          {(filters.genre || filters.decade) && (
             <button className={styles.clearBtn} onClick={() => setFilters(DEFAULT_FILTERS)}>
               Clear filters
             </button>
@@ -232,17 +226,16 @@ export default function Explore() {
         <div className={styles.grid}>
           {filtered.map((movie) => {
             const signals = getSignals(movie)
-            const inMyList = myListIds.has(movie.tmdb_id)
             return (
               <div key={movie.tmdb_id} className={styles.cardWrap}>
                 <button
-                  className={`${styles.checkbox} ${inMyList ? styles.checkboxChecked : ''}`}
+                  className={styles.checkbox}
                   onClick={(e) => handleCheckbox(movie, e)}
-                  disabled={!inMyList && myListFull}
-                  title={!inMyList && myListFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
-                  aria-label={inMyList ? 'Remove from My List' : 'Add to My List'}
+                  disabled={myListFull}
+                  title={myListFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
+                  aria-label="Add to My List"
                 >
-                  {inMyList ? '✓' : ''}
+                  +
                 </button>
                 <button
                   className={styles.notInterestedBtn}
