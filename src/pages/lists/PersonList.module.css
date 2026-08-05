@@ -255,6 +255,10 @@
   min-width: 0;
 }
 
+.sortableItem {
+  touch-action: none;
+}
+
 .dragging .card {
   opacity: 0.85;
   transform: rotate(2deg) scale(1.03);

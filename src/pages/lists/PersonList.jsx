@@ -1,5 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
 import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
 import RECOMMENDED_ACTORS from '../../data/recommendedActors.json'
@@ -28,6 +30,60 @@ async function mapWithConcurrency(items, limit, worker) {
   }
   await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
   return results
+}
+
+function SortablePersonCard({ person, index, onSelect, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: String(person.person_id),
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  const imgUrl = person.headshot_path
+    ? getProfileUrlLarge(person.headshot_path)
+    : PLACEHOLDER_PERSON
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${styles.gridItem} ${styles.sortableItem} ${isDragging ? styles.dragging : ''}`}
+    >
+      <div className={styles.card} onClick={() => onSelect(person)}>
+        <div className={styles.posterWrap}>
+          <img
+            src={imgUrl}
+            alt={person.name}
+            className={styles.poster}
+            loading="lazy"
+            onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
+          />
+          <div className={styles.overlay}>
+            <div className={styles.overlayContent}>
+              <span className={styles.overlayTap}>Tap for details</span>
+            </div>
+          </div>
+          <span className={styles.rankBadge}>#{index + 1}</span>
+          <button
+            className={styles.removeBtn}
+            onClick={(e) => {
+              e.stopPropagation()
+              onRemove(person.person_id)
+            }}
+            aria-label={`Remove ${person.name}`}
+          >×</button>
+        </div>
+        <div className={styles.cardInfo}>
+          <span className={styles.cardName}>{person.name}</span>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function PersonModal({ person, myList, onClose }) {
@@ -197,12 +253,18 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
     setSearchResults([])
   }
 
-  function handleDragEnd(result) {
-    if (!result.destination) return
-    const items = [...userList]
-    const [moved] = items.splice(result.source.index, 1)
-    items.splice(result.destination.index, 0, moved)
-    reorderList(listKey, items)
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = userList.findIndex((p) => String(p.person_id) === active.id)
+    const newIndex = userList.findIndex((p) => String(p.person_id) === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    reorderList(listKey, arrayMove(userList, oldIndex, newIndex))
   }
 
   const isFull = userList.length >= maxItems
@@ -287,72 +349,21 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
             </div>
           )
         ) : (
-          <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="person-grid" direction="horizontal">
-              {(provided) => (
-                <div
-                  className={styles.grid}
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                >
-                  {userList.map((person, i) => {
-                    const imgUrl = person.headshot_path
-                      ? getProfileUrlLarge(person.headshot_path)
-                      : PLACEHOLDER_PERSON
-                    return (
-                      <Draggable
-                        key={String(person.person_id)}
-                        draggableId={String(person.person_id)}
-                        index={i}
-                      >
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`${styles.gridItem} ${snapshot.isDragging ? styles.dragging : ''}`}
-                          >
-                            <div
-                              className={styles.card}
-                              onClick={() => setSelectedPerson(person)}
-                            >
-                              <div className={styles.posterWrap}>
-                                <img
-                                  src={imgUrl}
-                                  alt={person.name}
-                                  className={styles.poster}
-                                  loading="lazy"
-                                  onError={(e) => { e.target.src = PLACEHOLDER_PERSON }}
-                                />
-                                <div className={styles.overlay}>
-                                  <div className={styles.overlayContent}>
-                                    <span className={styles.overlayTap}>Tap for details</span>
-                                  </div>
-                                </div>
-                                <span className={styles.rankBadge}>#{i + 1}</span>
-                                <button
-                                  className={styles.removeBtn}
-                                  onClick={(e) => {
-                                    e.stopPropagation()
-                                    removeFromList(listKey, person.person_id)
-                                  }}
-                                  aria-label={`Remove ${person.name}`}
-                                >×</button>
-                              </div>
-                              <div className={styles.cardInfo}>
-                                <span className={styles.cardName}>{person.name}</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </Draggable>
-                    )
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={userList.map((p) => String(p.person_id))} strategy={rectSortingStrategy}>
+              <div className={styles.grid}>
+                {userList.map((person, i) => (
+                  <SortablePersonCard
+                    key={person.person_id}
+                    person={person}
+                    index={i}
+                    onSelect={setSelectedPerson}
+                    onRemove={(id) => removeFromList(listKey, id)}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
 
         {/* Recommended pool */}
