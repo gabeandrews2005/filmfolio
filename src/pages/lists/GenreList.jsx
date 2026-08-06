@@ -10,6 +10,7 @@ import RankPickerModal from '../../components/RankPickerModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
 import RECOMMENDED_HORROR from '../../data/recommendedHorror.json'
 import RECOMMENDED_COMEDIES from '../../data/recommendedComedies.json'
+import RECOMMENDED_SEASONAL from '../../data/recommendedSeasonal.json'
 import styles from './GenreList.module.css'
 
 // Recommended-pool title lookups fire fastest throttled, since blasting them
@@ -38,6 +39,7 @@ const RECOMMENDED_POOLS = {
   animated: RECOMMENDED_ANIMATED,
   horror: RECOMMENDED_HORROR,
   comedies: RECOMMENDED_COMEDIES,
+  seasonal: RECOMMENDED_SEASONAL,
 }
 
 // Genre-biased search helps disambiguate pools whose titles collide with
@@ -45,11 +47,13 @@ const RECOMMENDED_POOLS = {
 // its live-action version). Horror's and Comedies' curated lists include
 // prestige drama/crime crossovers TMDB doesn't tag with that genre (Se7en,
 // The Silence of the Lambs, Oldboy, Y Tu Mamá También...), so biasing there
-// would silently drop real matches instead of helping.
+// would silently drop real matches instead of helping. Seasonal has no
+// single TMDB genre to bias toward anyway (GENRE_TMDB_IDS.seasonal is null).
 const POOL_GENRE_BIAS = {
   animated: true,
   horror: false,
   comedies: false,
+  seasonal: false,
 }
 
 function normalizeMovie(r) {
