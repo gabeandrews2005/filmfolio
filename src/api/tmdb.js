@@ -188,13 +188,17 @@ export async function enrichMovie(baseMovie) {
     getMovieCredits(baseMovie.tmdb_id),
   ]);
 
-  // Drift detection — log if TMDB title doesn't match what we expect (IDs verified 2026-06-22)
+  // Drift detection — log if TMDB title doesn't match what we expect (IDs verified 2026-08-06)
   if (details && baseMovie.title) {
     const norm = (s) => s.toLowerCase().replace(/(?:^|\s)(?:the|a|an)\s+/g, ' ').replace(/[^a-z0-9]/g, '');
     const expected = norm(baseMovie.title);
     const received = norm(details.title ?? '');
-    if (expected.length > 4 && received.length > 4) {
-      const match = received.includes(expected.slice(0, 8)) || expected.includes(received.slice(0, 8));
+    if (expected && received) {
+      // Short titles (e.g. "RRR") need an exact match — substring matching lets
+      // a wrong ID slip through since a short fragment matches almost anything.
+      const match = expected.length <= 4 || received.length <= 4
+        ? expected === received
+        : received.includes(expected.slice(0, 8)) || expected.includes(received.slice(0, 8));
       if (!match) {
         console.warn(`[FilmFolio] tmdb_id drift detected: expected "${baseMovie.title}" but tmdb_id ${baseMovie.tmdb_id} returns "${details.title}" — run verify-tmdb-ids.mjs`);
       }

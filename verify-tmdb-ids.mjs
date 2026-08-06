@@ -64,7 +64,9 @@ async function searchMovie(title, year) {
 }
 
 function titlesMatch(expected, received) {
-  if (expected.length <= 4 || received.length <= 4) return true; // skip short titles
+  // Short titles (e.g. "RRR") need an exact match — substring matching lets
+  // a wrong ID slip through since a short fragment matches almost anything.
+  if (expected.length <= 4 || received.length <= 4) return expected === received;
   return received.includes(expected.slice(0, 8)) || expected.includes(received.slice(0, 8));
 }
 
