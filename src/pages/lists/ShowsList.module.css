@@ -463,6 +463,36 @@
   line-height: 1.65;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Shows theme — clean, cool white/grey/silver palette instead of the warm
+   gold the film pages use. Nearly every rule above already reads the shared
+   design tokens (--bg-secondary, --accent-gold, --border, --text-*), so
+   overriding those tokens here retheme's the whole page automatically —
+   only the couple of hardcoded gold rgba() values below need a direct fix.
+   ══════════════════════════════════════════════════════════════════════════ */
+.themeShows {
+  --bg-secondary: #1b1d21;
+  --bg-tertiary: #24272b;
+  --text-primary: #f4f5f7;
+  --text-secondary: #b6bac1;
+  --text-muted: #7d818a;
+  --accent-gold: #c9ced6;
+  --border: #3c4046;
+  background: linear-gradient(180deg, #101113 0%, #17191c 100%);
+}
+
+.themeShows .rankBadge {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+.themeShows .addedMark {
+  background: rgba(201,206,214,0.15);
+}
+
+.themeShows .poolAddBtn:hover:not(:disabled) {
+  background: rgba(201,206,214,0.25);
+}
+
 @media (max-width: 600px) {
   .grid {
     grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));

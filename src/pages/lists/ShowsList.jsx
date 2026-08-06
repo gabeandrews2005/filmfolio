@@ -208,7 +208,7 @@ export default function ShowsList() {
   const isFull = showsList.length >= MAX_SHOWS
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.themeShows}`}>
       {selectedShow && (
         <ShowModal show={selectedShow} onClose={() => setSelectedShow(null)} />
       )}
