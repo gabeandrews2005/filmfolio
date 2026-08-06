@@ -327,8 +327,20 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
       {isDirectors && showCountdown && (
         <div className={styles.countdownWrap} aria-hidden="true">
           <div className={styles.filmGrain} />
+          <span className={`${styles.countdownCorner} ${styles.cornerTL}`} />
+          <span className={`${styles.countdownCorner} ${styles.cornerTR}`} />
+          <span className={`${styles.countdownCorner} ${styles.cornerBL}`} />
+          <span className={`${styles.countdownCorner} ${styles.cornerBR}`} />
           <div className={styles.countdownCircle}>
+            <div className={styles.countdownRingGrey} />
             <div className={styles.countdownCross} />
+            {Array.from({ length: 12 }).map((_, i) => (
+              <span
+                key={i}
+                className={styles.countdownTick}
+                style={{ transform: `rotate(${i * 30}deg) translateY(-136px)` }}
+              />
+            ))}
             <div key={countdownValue} className={styles.countdownHand} />
             <span className={styles.countdownDigit}>{countdownValue}</span>
           </div>

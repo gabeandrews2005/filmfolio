@@ -878,25 +878,44 @@
   position: fixed;
   inset: 0;
   z-index: 2000;
-  background: #050505;
+  background: radial-gradient(ellipse at center, #262626 0%, #0a0a0a 72%);
   display: flex;
   align-items: center;
   justify-content: center;
   pointer-events: none;
   overflow: hidden;
   animation: countdownFadeOut 0.35s ease 2.1s forwards;
+  /* Double-line frame border over the whole screen, like a test-card mat */
+  box-shadow:
+    inset 0 0 0 14px rgba(230,230,225,0.9),
+    inset 0 0 0 18px rgba(120,120,120,0.6);
 }
 
 @keyframes countdownFadeOut {
   to { opacity: 0; visibility: hidden; }
 }
 
+/* Corner registration marks, like a film test pattern */
+.countdownCorner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: rgba(220,220,215,0.6);
+  border-style: solid;
+  border-width: 0;
+}
+
+.cornerTL { top: 34px; left: 34px; border-top-width: 2px; border-left-width: 2px; }
+.cornerTR { top: 34px; right: 34px; border-top-width: 2px; border-right-width: 2px; }
+.cornerBL { bottom: 34px; left: 34px; border-bottom-width: 2px; border-left-width: 2px; }
+.cornerBR { bottom: 34px; right: 34px; border-bottom-width: 2px; border-right-width: 2px; }
+
 .countdownCircle {
   position: relative;
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  border: 2px solid rgba(240,236,228,0.7);
+  border: 2px solid rgba(230,230,225,0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -905,9 +924,28 @@
 .countdownCircle::before {
   content: '';
   position: absolute;
-  inset: 22px;
+  inset: 30px;
   border-radius: 50%;
-  border: 1px solid rgba(240,236,228,0.35);
+  border: 1px solid rgba(230,230,225,0.35);
+}
+
+.countdownRingGrey {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1px solid rgba(150,150,150,0.55);
+}
+
+/* 12 clock-face tick marks — the "box shapes" ringing the dial */
+.countdownTick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  background: rgba(210,210,205,0.6);
+  border: 1px solid rgba(120,120,120,0.5);
 }
 
 .countdownCross {
@@ -919,7 +957,7 @@
 .countdownCross::after {
   content: '';
   position: absolute;
-  background: rgba(240,236,228,0.4);
+  background: rgba(200,200,196,0.45);
 }
 
 .countdownCross::before {
@@ -944,7 +982,7 @@
   left: 50%;
   width: 2px;
   height: 138px;
-  background: linear-gradient(180deg, var(--accent-gold) 0%, rgba(201,168,76,0) 88%);
+  background: linear-gradient(180deg, #f0ece4 0%, rgba(240,236,228,0) 88%);
   transform-origin: top center;
   transform: translateX(-50%) rotate(0deg);
   animation: countdownSweep 0.7s linear;
@@ -985,7 +1023,10 @@
 /* ── Overlapping film-strip background ───────────────────────────────────── */
 .themeDirectors {
   position: relative;
-  background-color: #0d0d0d;
+  background-color: #131313;
+  background-image:
+    radial-gradient(ellipse 900px 460px at 50% 0%, rgba(190,190,190,0.06), transparent 65%),
+    linear-gradient(180deg, #171717 0%, #101010 50%, #181818 100%);
   overflow: hidden;
 }
 
@@ -1003,16 +1044,22 @@
   height: 130px;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.16;
-  background-color: rgba(6,6,6,0.9);
+  opacity: 0.22;
+  background-color: rgba(58,58,58,0.85);
   background-image:
-    repeating-linear-gradient(90deg, rgba(240,236,228,0.65) 0 12px, transparent 12px 30px),
-    repeating-linear-gradient(90deg, rgba(240,236,228,0.65) 0 12px, transparent 12px 30px);
-  background-position: 0 9px, 0 calc(100% - 21px);
-  background-size: 30px 12px, 30px 12px;
-  background-repeat: repeat-x, repeat-x;
-  border-top: 1px solid rgba(240,236,228,0.15);
-  border-bottom: 1px solid rgba(240,236,228,0.15);
+    /* sprocket holes, top row */
+    repeating-linear-gradient(90deg, rgba(225,225,220,0.75) 0 12px, transparent 12px 30px),
+    /* sprocket holes, bottom row */
+    repeating-linear-gradient(90deg, rgba(225,225,220,0.75) 0 12px, transparent 12px 30px),
+    /* frame divider lines */
+    repeating-linear-gradient(90deg, rgba(210,210,205,0.35) 0 2px, transparent 2px 90px),
+    /* alternating frame shading for a photographic-strip look */
+    repeating-linear-gradient(90deg, rgba(150,150,150,0.16) 0 45px, rgba(20,20,20,0.16) 45px 90px);
+  background-position: 0 9px, 0 calc(100% - 21px), 24px 22px, 24px 22px;
+  background-size: 30px 12px, 30px 12px, 90px 96px, 90px 96px;
+  background-repeat: repeat-x, repeat-x, repeat-x, repeat-x;
+  border-top: 1px solid rgba(220,220,215,0.25);
+  border-bottom: 1px solid rgba(220,220,215,0.25);
 }
 
 .themeDirectors::before {
