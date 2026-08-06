@@ -808,8 +808,9 @@
 }
 
 .themeActors .rankBadge {
-  background: #a5322f;
+  background: #0a0a0a;
   color: #f5f0e8;
+  border: 1px solid #a5322f;
   font-family: 'EB Garamond', serif;
   font-weight: 600;
   border-radius: 0;
