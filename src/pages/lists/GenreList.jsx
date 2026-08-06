@@ -68,6 +68,18 @@ const GENRE_MAP = {
   seasonal: null,
 }
 
+// Seasonal hillside geometry — shared between the hill bumps rendered in
+// JSX and the tree placement below, so trees can be clustered near each
+// bump's center (its tallest point) instead of drifting into gaps and
+// floating above the hill line.
+const HILL_BUMPS = {
+  far:  [{ left: -15, width: 58 }, { left: 18, width: 50 }, { left: 48, width: 55 }, { left: 80, width: 48 }],
+  mid:  [{ left: -10, width: 52 }, { left: 30, width: 58 }, { left: 72, width: 50 }],
+  near: [{ left: -12, width: 58 }, { left: 40, width: 65 }],
+}
+// Conservative max bottom-% at each band's bump center (measured empirically).
+const HILL_BAND_PEAK = { near: 20, mid: 13, far: 8 }
+
 const GENRE_TMDB_IDS = {
   horror:   27,
   comedies: 35,
@@ -215,22 +227,39 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     }))
   }, [listType])
 
-  // Seasonal scenic background — trees scattered across the full hillside
-  // (further-back trees are smaller/fainter for depth), string lights along
-  // the top, and a persistent snowfall — all randomized once per mount.
+  // Seasonal scenic background — trees clustered near each hill bump's
+  // center (its tallest point) so every tree lands on visible hill rather
+  // than drifting into a gap and floating above the skyline. Further-back
+  // bands get smaller/fainter trees for depth. Randomized once per mount.
   const seasonalTrees = useMemo(() => {
     if (listType !== 'seasonal') return []
-    return Array.from({ length: 34 }, (_, i) => {
-      const bottom = Math.random() * 30
-      const depth = bottom / 30 // 0 = front of the hill, 1 = far back
-      return {
-        id: i,
-        left: Math.random() * 100,
-        bottom,
-        scale: 1.15 - depth * 0.75 + Math.random() * 0.15,
-        opacity: 1 - depth * 0.3,
+    const bandCounts = [['near', 14], ['mid', 12], ['far', 8]]
+    const bandDepth = { near: 0, mid: 0.5, far: 1 }
+    const trees = []
+    let id = 0
+    for (const [band, count] of bandCounts) {
+      const bumps = HILL_BUMPS[band]
+      const peak = HILL_BAND_PEAK[band]
+      const depth = bandDepth[band]
+      for (let i = 0; i < count; i++) {
+        const bump = bumps[Math.floor(Math.random() * bumps.length)]
+        const center = bump.left + bump.width / 2
+        const jitter = (Math.random() - 0.5) * bump.width * 0.55
+        const left = Math.max(0, Math.min(100, center + jitter))
+        // How close the jitter landed to the bump's center (1 = dead center,
+        // 0 = near its tapered edge) — trees near the edge sit lower.
+        const closeness = 1 - Math.min(1, Math.abs(jitter) / (bump.width * 0.35))
+        const bottom = Math.random() * peak * (0.3 + 0.6 * closeness)
+        trees.push({
+          id: id++,
+          left,
+          bottom,
+          scale: 1.1 - depth * 0.65 + Math.random() * 0.15,
+          opacity: 1 - depth * 0.25,
+        })
       }
-    })
+    }
+    return trees
   }, [listType])
 
   const seasonalLights = useMemo(() => {
@@ -447,25 +476,25 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         </div>
       )}
 
-      {/* Seasonal — persistent snowy hillside scene with cabin, trees, string lights, and falling snow */}
+      {/* Seasonal — persistent snowy hillside scene with trees, string lights, and falling snow */}
       {listType === 'seasonal' && (
         <div className={styles.seasonalScene} aria-hidden="true">
           <div className={styles.seasonalSky} />
           <div className={styles.seasonalSun} />
           <div className={styles.seasonalHillsFar}>
-            <span className={styles.hillBump} style={{ left: '-15%', width: '58%' }} />
-            <span className={styles.hillBump} style={{ left: '18%', width: '50%' }} />
-            <span className={styles.hillBump} style={{ left: '48%', width: '55%' }} />
-            <span className={styles.hillBump} style={{ left: '80%', width: '48%' }} />
+            {HILL_BUMPS.far.map((b, i) => (
+              <span key={i} className={styles.hillBump} style={{ left: `${b.left}%`, width: `${b.width}%` }} />
+            ))}
           </div>
           <div className={styles.seasonalHillsMid}>
-            <span className={styles.hillBump} style={{ left: '-10%', width: '52%' }} />
-            <span className={styles.hillBump} style={{ left: '30%', width: '58%' }} />
-            <span className={styles.hillBump} style={{ left: '72%', width: '50%' }} />
+            {HILL_BUMPS.mid.map((b, i) => (
+              <span key={i} className={styles.hillBump} style={{ left: `${b.left}%`, width: `${b.width}%` }} />
+            ))}
           </div>
           <div className={styles.seasonalHillsNear}>
-            <span className={styles.hillBump} style={{ left: '-12%', width: '58%' }} />
-            <span className={styles.hillBump} style={{ left: '40%', width: '65%' }} />
+            {HILL_BUMPS.near.map((b, i) => (
+              <span key={i} className={styles.hillBump} style={{ left: `${b.left}%`, width: `${b.width}%` }} />
+            ))}
           </div>
           {seasonalTrees.map((t) => (
             <span
@@ -474,22 +503,6 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
               style={{ left: `${t.left}%`, bottom: `${t.bottom}%`, transform: `scale(${t.scale})`, opacity: t.opacity }}
             >🎄</span>
           ))}
-          <div className={styles.seasonalCabin}>
-            <div className={styles.cabinRoof}>
-              <div className={styles.roofLeft} />
-              <div className={styles.roofRight} />
-              <div className={styles.roofSnow} />
-            </div>
-            <div className={styles.cabinChimney}>
-              <span className={styles.chimneySmoke} />
-            </div>
-            <div className={styles.cabinBody}>
-              <div className={styles.cabinWindow} style={{ left: '16px' }} />
-              <div className={styles.cabinWindow} style={{ right: '16px' }} />
-              <div className={styles.cabinDoor} />
-            </div>
-            <div className={styles.cabinBase} />
-          </div>
           <div className={styles.lightsString}>
             <div className={styles.lightsWire} />
             {seasonalLights.map((l) => (
