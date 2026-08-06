@@ -4,7 +4,7 @@ import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, us
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
-import { searchMoviesByGenre, searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
+import { searchMoviesByGenre, searchMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
@@ -20,6 +20,23 @@ async function resolveMovieWithRetry(title, genreId, attempt = 0) {
   if (results.length > 0 || attempt >= 2) return results
   await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
   return resolveMovieWithRetry(title, genreId, attempt + 1)
+}
+
+// A handful of curated titles collide with a same-named remake/reboot that
+// TMDB search ranks first (e.g. "Home Alone" surfacing 2021's "Home Sweet
+// Home Alone" instead of the 1990 original) — pin those to an exact tmdb_id
+// (verified against TMDB) instead of trusting the top search result.
+const POOL_TITLE_OVERRIDES = {
+  'Home Alone': 771, // (1990) — not 2021's "Home Sweet Home Alone"
+}
+
+async function resolvePoolTitle(title, genreId) {
+  const overrideId = POOL_TITLE_OVERRIDES[title]
+  if (overrideId) {
+    const details = await getMovieDetails(overrideId)
+    return details ? [details] : []
+  }
+  return resolveMovieWithRetry(title, genreId)
 }
 
 async function mapWithConcurrency(items, limit, worker) {
@@ -173,7 +190,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     setPoolLoading(true)
     let cancelled = false
     const biasGenreId = POOL_GENRE_BIAS[listType] ? genreId : undefined
-    mapWithConcurrency(recommendedPool, 6, (name) => resolveMovieWithRetry(name, biasGenreId))
+    mapWithConcurrency(recommendedPool, 6, (name) => resolvePoolTitle(name, biasGenreId))
       .then((responses) => {
         if (cancelled) return
         const seen = new Set()
