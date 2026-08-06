@@ -215,15 +215,33 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     }))
   }, [listType])
 
-  // Seasonal scenic background — trees scattered across the hillside and a
-  // persistent snowfall, both randomized once per mount.
+  // Seasonal scenic background — trees scattered across the full hillside
+  // (further-back trees are smaller/fainter for depth), string lights along
+  // the top, and a persistent snowfall — all randomized once per mount.
   const seasonalTrees = useMemo(() => {
     if (listType !== 'seasonal') return []
-    return Array.from({ length: 20 }, (_, i) => ({
+    return Array.from({ length: 34 }, (_, i) => {
+      const bottom = Math.random() * 30
+      const depth = bottom / 30 // 0 = front of the hill, 1 = far back
+      return {
+        id: i,
+        left: Math.random() * 100,
+        bottom,
+        scale: 1.15 - depth * 0.75 + Math.random() * 0.15,
+        opacity: 1 - depth * 0.3,
+      }
+    })
+  }, [listType])
+
+  const seasonalLights = useMemo(() => {
+    if (listType !== 'seasonal') return []
+    const colors = ['#e53935', '#43a047', '#fdd835', '#1e88e5', '#e53935', '#43a047']
+    const count = 28
+    return Array.from({ length: count }, (_, i) => ({
       id: i,
-      left: Math.random() * 100,
-      bottom: Math.random() * 26,
-      scale: 0.55 + Math.random() * 0.85,
+      left: (i / (count - 1)) * 100,
+      stem: 10 + Math.abs(Math.sin((i / (count - 1)) * Math.PI * 4.5)) * 26 + Math.random() * 4,
+      color: colors[i % colors.length],
     }))
   }, [listType])
 
@@ -429,34 +447,58 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         </div>
       )}
 
-      {/* Seasonal — persistent snowy hillside scene with cabin, trees, and falling snow */}
+      {/* Seasonal — persistent snowy hillside scene with cabin, trees, string lights, and falling snow */}
       {listType === 'seasonal' && (
         <div className={styles.seasonalScene} aria-hidden="true">
           <div className={styles.seasonalSky} />
           <div className={styles.seasonalSun} />
           <div className={styles.seasonalHillsFar}>
-            <span className={styles.hillBumpFar} style={{ left: '-12%', width: '55%' }} />
-            <span className={styles.hillBumpFar} style={{ left: '22%', width: '68%' }} />
-            <span className={styles.hillBumpFar} style={{ left: '68%', width: '52%' }} />
+            <span className={styles.hillBump} style={{ left: '-15%', width: '58%' }} />
+            <span className={styles.hillBump} style={{ left: '18%', width: '50%' }} />
+            <span className={styles.hillBump} style={{ left: '48%', width: '55%' }} />
+            <span className={styles.hillBump} style={{ left: '80%', width: '48%' }} />
+          </div>
+          <div className={styles.seasonalHillsMid}>
+            <span className={styles.hillBump} style={{ left: '-10%', width: '52%' }} />
+            <span className={styles.hillBump} style={{ left: '30%', width: '58%' }} />
+            <span className={styles.hillBump} style={{ left: '72%', width: '50%' }} />
           </div>
           <div className={styles.seasonalHillsNear}>
-            <span className={styles.hillBumpNear} style={{ left: '-15%', width: '72%' }} />
-            <span className={styles.hillBumpNear} style={{ left: '38%', width: '82%' }} />
+            <span className={styles.hillBump} style={{ left: '-12%', width: '58%' }} />
+            <span className={styles.hillBump} style={{ left: '40%', width: '65%' }} />
           </div>
           {seasonalTrees.map((t) => (
             <span
               key={`tree-${t.id}`}
               className={styles.seasonalTree}
-              style={{ left: `${t.left}%`, bottom: `${t.bottom}%`, transform: `scale(${t.scale})` }}
+              style={{ left: `${t.left}%`, bottom: `${t.bottom}%`, transform: `scale(${t.scale})`, opacity: t.opacity }}
             >🎄</span>
           ))}
           <div className={styles.seasonalCabin}>
-            <div className={styles.cabinChimney} />
-            <div className={styles.cabinRoof} />
+            <div className={styles.cabinRoof}>
+              <div className={styles.roofLeft} />
+              <div className={styles.roofRight} />
+              <div className={styles.roofSnow} />
+            </div>
+            <div className={styles.cabinChimney}>
+              <span className={styles.chimneySmoke} />
+            </div>
             <div className={styles.cabinBody}>
-              <div className={styles.cabinWindow} />
+              <div className={styles.cabinWindow} style={{ left: '16px' }} />
+              <div className={styles.cabinWindow} style={{ right: '16px' }} />
               <div className={styles.cabinDoor} />
             </div>
+            <div className={styles.cabinBase} />
+          </div>
+          <div className={styles.lightsString}>
+            <div className={styles.lightsWire} />
+            {seasonalLights.map((l) => (
+              <span
+                key={`light-${l.id}`}
+                className={styles.lightBulb}
+                style={{ left: `${l.left}%`, top: `${l.stem}px`, '--stem': `${l.stem}px`, background: l.color, boxShadow: `0 0 8px 3px ${l.color}` }}
+              />
+            ))}
           </div>
           <div className={styles.seasonalSnowfall}>
             {seasonalSnowflakes.map((f) => (

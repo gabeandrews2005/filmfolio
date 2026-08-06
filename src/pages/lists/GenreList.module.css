@@ -170,106 +170,199 @@
 }
 
 .seasonalHillsFar,
+.seasonalHillsMid,
 .seasonalHillsNear {
   position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
-  height: 46%;
-}
-
-.seasonalHillsNear {
   height: 30%;
 }
 
-.hillBumpFar,
-.hillBumpNear {
+.seasonalHillsMid {
+  height: 21%;
+}
+
+.seasonalHillsNear {
+  height: 13%;
+}
+
+/* Very wide, shallow ellipses — only a shallow arc peeks above each band's
+   bottom edge, reading as gentle rolling hills rather than round bumps. */
+.hillBump {
   position: absolute;
-  bottom: -35%;
-  aspect-ratio: 1.7 / 1;
+  bottom: -78%;
+  aspect-ratio: 3.4 / 1;
   border-radius: 50%;
 }
 
-.hillBumpFar {
-  background: #dbe9f0;
-}
-
-.hillBumpNear {
-  background: #f4f9fc;
-}
+.seasonalHillsFar .hillBump { background: #dbe9f0; }
+.seasonalHillsMid  .hillBump { background: #ecf5f9; }
+.seasonalHillsNear .hillBump { background: #f8fbfd; }
 
 .seasonalTree {
   position: absolute;
-  font-size: 2.4rem;
+  font-size: 2.2rem;
+  transform-origin: bottom center;
   filter: drop-shadow(0 3px 2px rgba(0,0,0,0.2));
 }
 
+/* ── Cabin ───────────────────────────────────────────────────────────────── */
 .seasonalCabin {
   position: absolute;
-  bottom: 12%;
+  bottom: 8%;
   left: 50%;
   transform: translateX(-50%);
-  width: 90px;
-  filter: drop-shadow(0 4px 4px rgba(0,0,0,0.25));
+  width: 170px;
+  filter: drop-shadow(0 6px 6px rgba(0,0,0,0.3));
 }
 
 .cabinRoof {
-  width: 0;
-  height: 0;
-  margin: 0 auto;
-  border-left: 52px solid transparent;
-  border-right: 52px solid transparent;
-  border-bottom: 36px solid #6b3a2a;
   position: relative;
+  display: flex;
+  justify-content: center;
 }
 
-.cabinRoof::after {
-  content: '';
+.roofLeft,
+.roofRight {
+  width: 0;
+  height: 0;
+  border-bottom: 58px solid;
+}
+
+.roofLeft {
+  border-right: 87px solid transparent;
+  border-bottom-color: #7a4a30;
+}
+
+.roofRight {
+  border-left: 87px solid transparent;
+  border-bottom-color: #663d27;
+}
+
+.roofSnow {
   position: absolute;
-  top: -2px;
-  left: -46px;
-  width: 92px;
-  height: 10px;
+  top: -5px;
+  left: -10px;
+  right: -10px;
+  height: 16px;
   background: #ffffff;
-  border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  border-radius: 0 0 55% 55% / 0 0 100% 100%;
 }
 
 .cabinBody {
-  width: 68px;
-  height: 48px;
-  background: #8a5a3d;
+  width: 150px;
+  height: 92px;
   margin: 0 auto;
   position: relative;
+  background: repeating-linear-gradient(180deg, #8a5a3d 0px, #8a5a3d 12px, #7a4d33 12px, #7a4d33 14px);
+  border: 2px solid #4a2c1c;
+  border-top: none;
 }
 
 .cabinWindow {
   position: absolute;
-  top: 10px;
-  left: 10px;
-  width: 14px;
-  height: 14px;
-  background: #ffe98a;
-  box-shadow: 0 0 10px 3px rgba(255,233,138,0.75);
+  top: 18px;
+  width: 26px;
+  height: 26px;
+  background: #ffdd8a;
+  border: 3px solid #4a2c1c;
+  box-shadow: 0 0 14px 4px rgba(255,221,138,0.8);
 }
+
+.cabinWindow::before,
+.cabinWindow::after {
+  content: '';
+  position: absolute;
+  background: #4a2c1c;
+}
+
+.cabinWindow::before { top: 50%; left: 0; right: 0; height: 2px; margin-top: -1px; }
+.cabinWindow::after   { left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; }
 
 .cabinDoor {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 16px;
-  height: 26px;
+  width: 30px;
+  height: 46px;
   background: #4a2c1c;
+  border-radius: 4px 4px 0 0;
+}
+
+.cabinBase {
+  width: 168px;
+  height: 10px;
+  margin: 0 auto;
+  background: #eef6fb;
+  border-radius: 50%;
 }
 
 .cabinChimney {
   position: absolute;
-  top: 4px;
-  right: 16px;
-  width: 12px;
-  height: 22px;
+  top: 6px;
+  right: 26px;
+  width: 16px;
+  height: 40px;
   background: #6b6b6b;
-  z-index: -1;
+  border: 1px solid #4a4a4a;
+}
+
+.chimneySmoke {
+  position: absolute;
+  top: -12px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.65);
+  animation: chimneySmokeDrift 3.2s ease-in infinite;
+}
+
+@keyframes chimneySmokeDrift {
+  0%   { transform: translate(0, 0) scale(0.6); opacity: 0.7; }
+  100% { transform: translate(16px, -46px) scale(1.7); opacity: 0; }
+}
+
+/* ── String lights along the top of the screen ──────────────────────────── */
+/* Hung just below the nav bar — the nav sits above this fixed scene layer,
+   so lights positioned at top:0 would render hidden underneath it. */
+.lightsString {
+  position: absolute;
+  top: var(--nav-height);
+  left: 0;
+  right: 0;
+  height: 60px;
+}
+
+.lightsWire {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #33322f;
+  opacity: 0.7;
+}
+
+.lightBulb {
+  position: absolute;
+  top: 10px;
+  width: 11px;
+  height: 15px;
+  border-radius: 50% 50% 45% 45% / 60% 60% 40% 40%;
+  transform: translateX(-50%);
+}
+
+.lightBulb::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  width: 1px;
+  height: var(--stem, 16px);
+  background: rgba(40,38,34,0.7);
 }
 
 .seasonalSnowfall {
@@ -1023,6 +1116,7 @@
   .bloodDrip { animation: none; height: var(--drip-length, 60vh); opacity: 0.6; }
   .titleDrip { animation: none; }
   .seasonalSnowflake { animation: none; top: 40%; }
+  .chimneySmoke { animation: none; opacity: 0; }
 }
 
 @media (max-width: 480px) {
