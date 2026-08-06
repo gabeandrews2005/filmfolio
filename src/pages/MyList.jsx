@@ -70,6 +70,7 @@ export default function MyList() {
       vote_average: r.vote_average,
       director: '',
     })
+    handleClear()
   }
 
   function handleClear() {
