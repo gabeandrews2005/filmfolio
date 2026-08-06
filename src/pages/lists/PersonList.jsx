@@ -196,6 +196,16 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const isActors = listType === 'actors'
   const recommendedNames = RECOMMENDED_LISTS[listType]
 
+  // Curtain-rise entrance, Actors only — the "show" opens on every visit
+  const [showCurtain, setShowCurtain] = useState(isActors)
+
+  useEffect(() => {
+    if (!isActors) return
+    setShowCurtain(true)
+    const t = setTimeout(() => setShowCurtain(false), 2200)
+    return () => clearTimeout(t)
+  }, [isActors])
+
   const listIds = useMemo(() => new Set(userList.map((p) => p.person_id)), [userList])
 
   // Resolve the curated recommended-people list to TMDB people, in order
@@ -291,7 +301,14 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const isFull = userList.length >= maxItems
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${isActors ? styles.themeActors : ''}`}>
+      {isActors && showCurtain && (
+        <div className={styles.curtainWrap} aria-hidden="true">
+          <div className={`${styles.curtainPanel} ${styles.curtainLeft}`} />
+          <div className={`${styles.curtainPanel} ${styles.curtainRight}`} />
+        </div>
+      )}
+
       {selectedPerson && (
         <PersonModal
           person={selectedPerson}
@@ -316,6 +333,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>{title}</h1>
+            {isActors && <p className={styles.theatricalSubtitle}>Dramatis Personae</p>}
           </div>
           {userList.length > 0 && (
             <span className={styles.countBadge}>{userList.length} / {maxItems}</span>

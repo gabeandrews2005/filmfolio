@@ -540,3 +540,275 @@
     font-size: 1.3rem;
   }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Theatrical theme — Actors page only. Scoped under .themeActors so
+   Directors (same component/CSS module) is completely unaffected.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Curtain-rise entrance ───────────────────────────────────────────────── */
+.curtainWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  pointer-events: none;
+  overflow: hidden;
+  background: #000;
+}
+
+.curtainPanel {
+  position: relative;
+  width: 50%;
+  height: 100%;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      #5c0f0f 0px,
+      #8b1a1a 22px,
+      #6e1313 44px,
+      #a52323 66px
+    );
+  box-shadow:
+    inset 0 0 140px rgba(0,0,0,0.8),
+    inset -50px 0 90px rgba(0,0,0,0.45);
+}
+
+.curtainPanel::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 56px;
+  background-image: repeating-radial-gradient(
+    circle at top,
+    rgba(0,0,0,0.4) 0px,
+    rgba(0,0,0,0.4) 3px,
+    transparent 4px,
+    transparent 36px
+  );
+  background-size: 72px 56px;
+  background-repeat: repeat-x;
+  z-index: 1;
+}
+
+.curtainLeft {
+  animation: curtainOpenLeft 1.8s cubic-bezier(0.76, 0, 0.24, 1) 0.3s forwards;
+}
+
+.curtainRight {
+  animation: curtainOpenRight 1.8s cubic-bezier(0.76, 0, 0.24, 1) 0.3s forwards;
+}
+
+.curtainLeft::after,
+.curtainRight::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #d4af6a, #8b6a2f 50%, #d4af6a);
+  z-index: 1;
+}
+
+.curtainLeft::after { right: 0; }
+.curtainRight::after { left: 0; }
+
+@keyframes curtainOpenLeft {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes curtainOpenRight {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(100%); }
+}
+
+/* ── Playbill header ─────────────────────────────────────────────────────── */
+.themeActors .header {
+  position: relative;
+}
+
+.themeActors .header::before {
+  content: '';
+  position: absolute;
+  top: -30px;
+  left: 0;
+  width: 420px;
+  height: 220px;
+  background: radial-gradient(ellipse at center, rgba(245,240,232,0.07) 0%, transparent 72%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.themeActors .title {
+  font-family: 'Cinzel', 'Playfair Display', serif;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #f5f0e8;
+  text-shadow: 0 0 30px rgba(245,240,232,0.18);
+}
+
+.theatricalSubtitle {
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #a5322f;
+  letter-spacing: 0.03em;
+  margin-top: 6px;
+}
+
+.themeActors .countBadge {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.95rem;
+  color: #f5f0e8;
+}
+
+/* ── Search & result rows ────────────────────────────────────────────────── */
+.themeActors .searchInput {
+  background: #0a0a0a;
+  border: 1px solid #3a3a3a;
+  color: #f5f0e8;
+  font-family: 'EB Garamond', serif;
+  font-size: 1.05rem;
+}
+
+.themeActors .searchInput::placeholder {
+  color: #7a7a7a;
+  font-style: italic;
+}
+
+.themeActors .searchInput:focus {
+  border-color: #a5322f;
+}
+
+.themeActors .results {
+  background: #0a0a0a;
+  border: 1px solid #3a3a3a;
+}
+
+.themeActors .resultRow:hover {
+  background: #161616;
+}
+
+.themeActors .resultName {
+  font-family: 'EB Garamond', serif;
+  font-size: 1rem;
+}
+
+.themeActors .addBtn:hover:not(:disabled) {
+  background: #a5322f;
+  color: #f5f0e8;
+}
+
+.themeActors .addedMark {
+  background: rgba(165,50,47,0.18);
+  color: #a5322f;
+}
+
+/* ── Section titles & hints ──────────────────────────────────────────────── */
+.themeActors .sectionTitle {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #f5f0e8;
+  font-style: normal;
+  border-bottom: 1px solid #3a3a3a;
+  padding-bottom: 8px;
+}
+
+.themeActors .poolCount,
+.themeActors .gridHint {
+  font-family: 'EB Garamond', serif;
+  font-style: italic;
+  color: #9a9a9a;
+}
+
+/* ── Playbill photograph cards — black & white, spotlighted on hover ────── */
+.themeActors .posterWrap {
+  border: 1px solid #3a3a3a;
+  background: #0a0a0a;
+}
+
+.themeActors .poster {
+  filter: grayscale(100%) contrast(1.15) brightness(0.95);
+  transition: filter 450ms ease, transform 300ms ease;
+}
+
+.themeActors .card:hover .poster {
+  filter: grayscale(0%) contrast(1.05) brightness(1);
+}
+
+.themeActors .rankBadge {
+  background: #a5322f;
+  color: #f5f0e8;
+  font-family: 'EB Garamond', serif;
+  font-weight: 600;
+  border-radius: 0;
+}
+
+.themeActors .cardName {
+  font-family: 'EB Garamond', serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #f5f0e8;
+}
+
+.themeActors .removeBtn:hover {
+  color: #d94f4c;
+}
+
+.themeActors .poolAddBtn {
+  border-color: rgba(245,240,232,0.5);
+}
+
+.themeActors .poolAddBtn:hover:not(:disabled) {
+  border-color: #a5322f;
+  background: rgba(165,50,47,0.3);
+}
+
+/* ── Person detail modal ─────────────────────────────────────────────────── */
+.themeActors .modal {
+  background: #0a0a0a;
+  border: 1px solid #3a3a3a;
+}
+
+.themeActors .modalName {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.04em;
+  color: #f5f0e8;
+}
+
+.themeActors .modalImage {
+  filter: grayscale(100%) contrast(1.1);
+}
+
+.themeActors .modalBio {
+  font-family: 'EB Garamond', serif;
+  font-size: 0.95rem;
+}
+
+.themeActors .modalFilmsLabel {
+  font-family: 'Cinzel', serif;
+  color: #a5322f;
+}
+
+.themeActors .modalFilmTitle {
+  font-family: 'EB Garamond', serif;
+}
+
+.themeActors .modalMatchNote {
+  color: #a5322f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtainLeft,
+  .curtainRight {
+    animation: none;
+    transform: translateX(-100%);
+  }
+
+  .curtainRight {
+    transform: translateX(100%);
+  }
+}
