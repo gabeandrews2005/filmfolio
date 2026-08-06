@@ -171,6 +171,34 @@ export function FilmProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [LIST_SETTERS])
 
+  // Inserts an item at a specific 1-based rank, shifting everything at and
+  // below that rank down — including off the end if the list is already at
+  // its cap (e.g. slotting a film in at #7 of a full Top 100 drops #100).
+  const insertAtRank = useCallback((listName, item, rank) => {
+    const config = LIST_SETTERS[listName]
+    if (!config) return
+    const [currentList, setter, lsKey] = config
+    const maxItems = LIST_MAX[listName] ?? 50
+    const id = getItemId(item)
+    if (currentList.some((i) => getItemId(i) === id)) return
+    const index = Math.min(Math.max(rank - 1, 0), currentList.length)
+    const next = [...currentList]
+    next.splice(index, 0, item)
+    next.length = Math.min(next.length, maxItems)
+    setter(next)
+    saveLS(lsKey, next)
+    if (MOVIE_LISTS.has(listName) && item.tmdb_id) {
+      setSeenList((prev) => {
+        if (prev.has(item.tmdb_id)) return prev
+        const next2 = new Set(prev)
+        next2.add(item.tmdb_id)
+        saveLS(LS_SEEN, [...next2])
+        return next2
+      })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [LIST_SETTERS])
+
   const removeFromList = useCallback((listName, id) => {
     const config = LIST_SETTERS[listName]
     if (!config) return
@@ -276,6 +304,7 @@ export function FilmProvider({ children }) {
       animatedList,
       // Generic list operations
       addToList,
+      insertAtRank,
       removeFromList,
       reorderList,
       // Backwards-compat top-10 operations (used by TopTenBuilder)

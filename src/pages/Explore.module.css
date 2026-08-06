@@ -174,6 +174,30 @@
   margin-bottom: 20px;
 }
 
+.rankInput {
+  width: 100%;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-family: var(--font-mono);
+  margin-bottom: 8px;
+  transition: border-color var(--transition);
+}
+
+.rankInput:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.rankErrorText {
+  font-size: 0.8rem;
+  color: #e05a5a;
+  margin-bottom: 12px;
+}
+
 .confirmActions {
   display: flex;
   gap: 12px;
