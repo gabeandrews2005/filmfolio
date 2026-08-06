@@ -7,7 +7,46 @@ import { useFilm } from '../../context/FilmContext'
 import { searchMoviesByGenre, searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
+import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
 import styles from './GenreList.module.css'
+
+// Recommended-pool title lookups fire fastest throttled, since blasting them
+// all at once triggers TMDB rate-limiting; empty responses get retried with backoff.
+async function resolveMovieWithRetry(title, genreId, attempt = 0) {
+  const results = genreId ? await searchMoviesByGenre(title, genreId) : await searchMovies(title)
+  if (results.length > 0 || attempt >= 2) return results
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return resolveMovieWithRetry(title, genreId, attempt + 1)
+}
+
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length)
+  let index = 0
+  async function run() {
+    while (index < items.length) {
+      const current = index++
+      results[current] = await worker(items[current])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
+  return results
+}
+
+const RECOMMENDED_POOLS = {
+  animated: RECOMMENDED_ANIMATED,
+}
+
+function normalizeMovie(r) {
+  return {
+    tmdb_id: r.id,
+    title: r.title,
+    year: r.release_date?.slice(0, 4) ?? '',
+    posterUrl: getPosterUrl(r.poster_path),
+    overview: r.overview,
+    vote_average: r.vote_average,
+    director: '',
+  }
+}
 
 const GENRE_MAP = {
   horror:   ['Horror', 'Thriller'],
@@ -92,6 +131,32 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
 
   const theme = THEMES[listType] ?? {}
   const genreId = GENRE_TMDB_IDS[listType]
+  const recommendedPool = RECOMMENDED_POOLS[listType]
+
+  const [poolMovies, setPoolMovies] = useState([])
+  const [poolLoading, setPoolLoading] = useState(!!recommendedPool)
+
+  // Resolve the curated recommended-films list to TMDB movies, in order
+  useEffect(() => {
+    if (!recommendedPool) return
+    setPoolLoading(true)
+    let cancelled = false
+    mapWithConcurrency(recommendedPool, 6, (name) => resolveMovieWithRetry(name, genreId))
+      .then((responses) => {
+        if (cancelled) return
+        const seen = new Set()
+        const movies = []
+        for (const results of responses) {
+          const match = results?.[0]
+          if (!match || seen.has(match.id)) continue
+          seen.add(match.id)
+          movies.push(normalizeMovie(match))
+        }
+        setPoolMovies(movies)
+        setPoolLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [recommendedPool, genreId])
 
   useEffect(() => {
     if (theme.entrance && !entranceDone) {
@@ -131,6 +196,11 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   const listIds = useMemo(() => new Set(userList.map((m) => m.tmdb_id)), [userList])
   const combinedCount = myListSourced.length + manualItems.length
 
+  const poolToShow = useMemo(
+    () => poolMovies.filter((m) => !listIds.has(m.tmdb_id) && !myListSourcedIds.has(m.tmdb_id)),
+    [poolMovies, listIds, myListSourcedIds]
+  )
+
   function excludeFromDerived(tmdbId) {
     setDerivedExclusions((prev) => new Set([...prev, tmdbId]))
   }
@@ -165,15 +235,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   }
 
   function addSearchResult(r) {
-    const handled = addMovie({
-      tmdb_id: r.id,
-      title: r.title,
-      year: r.release_date?.slice(0, 4) ?? '',
-      posterUrl: getPosterUrl(r.poster_path),
-      overview: r.overview,
-      vote_average: r.vote_average,
-      director: '',
-    })
+    const handled = addMovie(normalizeMovie(r))
     if (handled) {
       setQuery('')
       setSearchResults([])
@@ -444,6 +506,37 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         {!hasAnyContent && !query && (
           <div className={styles.emptyList}>
             <p>Search for films above to get started.</p>
+          </div>
+        )}
+
+        {/* Recommended pool */}
+        {recommendedPool && (
+          <div className={styles.poolSection}>
+            <div className={styles.poolHeader}>
+              <h2 className={styles.sectionTitle}>Recommended {title}</h2>
+              {!poolLoading && <span className={styles.poolCount}>{poolToShow.length} to choose from</span>}
+            </div>
+
+            <div className={styles.posterGrid}>
+              {poolLoading
+                ? Array.from({ length: 12 }).map((_, i) => (
+                    <div key={`pool-sk-${i}`} className={styles.poolSkeleton}>
+                      <div className={styles.poolSkeletonImg} />
+                    </div>
+                  ))
+                : poolToShow.map((movie) => (
+                    <div key={movie.tmdb_id} className={styles.gridItem}>
+                      <FilmCard movie={movie} showAddToList={false} />
+                      <button
+                        className={styles.poolAddOverlay}
+                        onClick={(e) => { e.stopPropagation(); addMovie(movie) }}
+                        disabled={noRoomAtAll}
+                        title={noRoomAtAll ? 'Your Top 100 fills every slot — no room to add more' : isFull ? 'List full — pick a rank to slot it in' : undefined}
+                        aria-label={`Add ${movie.title}`}
+                      >+</button>
+                    </div>
+                  ))}
+            </div>
           </div>
         )}
       </div>

@@ -486,6 +486,74 @@
   border-color: var(--accent-gold);
 }
 
+/* ── Recommended pool ─────────────────────────────────────────────────────── */
+.poolSection {
+  margin-top: 40px;
+}
+
+.poolHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sectionTitle {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  color: var(--text-primary);
+}
+
+.poolCount {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.poolAddOverlay {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.7);
+  color: var(--accent-gold);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+  transition: background var(--transition), color var(--transition), opacity var(--transition);
+}
+
+.poolAddOverlay:hover:not(:disabled) {
+  background: var(--accent-gold);
+  color: #0d0d0d;
+}
+
+.poolAddOverlay:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.poolSkeleton {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.poolSkeletonImg {
+  aspect-ratio: 2/3;
+  background: linear-gradient(110deg, var(--bg-secondary) 8%, var(--bg-tertiary) 18%, var(--bg-secondary) 33%);
+  background-size: 200% 100%;
+  animation: poolShimmer 1.5s linear infinite;
+  border-radius: 8px;
+}
+
+@keyframes poolShimmer {
+  to { background-position-x: -200%; }
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    Animated theme — bright, colorful, busy. FilmCard is a shared component
    in its own CSS module, so it's retheme'd by overriding the design-token
@@ -656,6 +724,35 @@
   border: 3px dashed #ffb300;
   color: #55524a;
   font-weight: 600;
+}
+
+.themeAnimated .sectionTitle {
+  font-family: 'Luckiest Guy', 'Baloo 2', cursive;
+  color: #ffffff;
+  -webkit-text-stroke: 1.5px #2e7d32;
+  text-shadow: 2px 2px 0 #2e7d32;
+  letter-spacing: 0.02em;
+}
+
+.themeAnimated .poolCount {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  font-weight: 700;
+}
+
+.themeAnimated .poolAddOverlay {
+  background: rgba(255,255,255,0.85);
+  color: #4fc3f7;
+}
+
+.themeAnimated .poolAddOverlay:hover:not(:disabled) {
+  background: #4fc3f7;
+  color: #ffffff;
+}
+
+.themeAnimated .poolSkeletonImg {
+  background: linear-gradient(110deg, #fff3d6 8%, #ffe082 18%, #fff3d6 33%);
+  background-size: 200% 100%;
 }
 
 /* ── Flying scene: dinosaurs, planes, erupting volcanoes ─────────────────── */
