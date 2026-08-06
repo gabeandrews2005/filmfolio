@@ -9,6 +9,7 @@ import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
 import RECOMMENDED_HORROR from '../../data/recommendedHorror.json'
+import RECOMMENDED_COMEDIES from '../../data/recommendedComedies.json'
 import styles from './GenreList.module.css'
 
 // Recommended-pool title lookups fire fastest throttled, since blasting them
@@ -36,17 +37,19 @@ async function mapWithConcurrency(items, limit, worker) {
 const RECOMMENDED_POOLS = {
   animated: RECOMMENDED_ANIMATED,
   horror: RECOMMENDED_HORROR,
+  comedies: RECOMMENDED_COMEDIES,
 }
 
 // Genre-biased search helps disambiguate pools whose titles collide with
 // unrelated same-name films in other genres (e.g. an animated remake vs.
-// its live-action version). Horror's curated list includes prestige
-// thriller/crime crossovers TMDB doesn't tag with the Horror genre (Se7en,
-// The Silence of the Lambs, Oldboy...), so biasing there would silently
-// drop real matches instead of helping.
+// its live-action version). Horror's and Comedies' curated lists include
+// prestige drama/crime crossovers TMDB doesn't tag with that genre (Se7en,
+// The Silence of the Lambs, Oldboy, Y Tu Mamá También...), so biasing there
+// would silently drop real matches instead of helping.
 const POOL_GENRE_BIAS = {
   animated: true,
   horror: false,
+  comedies: false,
 }
 
 function normalizeMovie(r) {
