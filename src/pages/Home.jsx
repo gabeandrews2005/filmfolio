@@ -1,8 +1,34 @@
 import { useEffect, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { PLACEHOLDER_POSTER } from '../api/tmdb'
+import { PLACEHOLDER_POSTER, getMovieDetails, getBackdropUrl, searchMovies } from '../api/tmdb'
+import EXPLORE_MOVIES from '../data/exploreMovies.json'
 import styles from './Home.module.css'
+
+const BACKDROP_POOL_SIZE = 8
+const BACKDROP_CANDIDATE_COUNT = 16 // pull extra in case some lack a backdrop image
+
+// Curated-title lookups are throttled — firing them all at once triggers
+// TMDB rate-limiting — and empty responses are retried with backoff.
+async function resolveMovieWithRetry(title, attempt = 0) {
+  const results = await searchMovies(title)
+  if (results.length > 0 || attempt >= 2) return results
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return resolveMovieWithRetry(title, attempt + 1)
+}
+
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length)
+  let index = 0
+  async function run() {
+    while (index < items.length) {
+      const current = index++
+      results[current] = await worker(items[current])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
+  return results
+}
 
 const SITE_DIRECTORY = [
   { to: '/explore',         icon: '🎬', label: 'Explore',       desc: 'Browse thousands of films across all genres and eras' },
@@ -24,11 +50,66 @@ const SITE_DIRECTORY = [
 ]
 
 export default function Home() {
-  const { movies, seenList, myList } = useFilm()
+  const { seenList, myList } = useFilm()
   const [bgIndex, setBgIndex] = useState(0)
   const intervalRef = useRef(null)
+  const [exploreBackdrops, setExploreBackdrops] = useState([])
+  const [myListBackdrops, setMyListBackdrops] = useState([])
 
-  const backdropMovies = movies.filter((m) => m.backdropUrl).slice(0, 8)
+  const hasMyList = myList.length > 0
+
+  // Before the user has ranked anything, the hero pulls backdrops from the
+  // curated Explore list (fixed order, first N candidates resolved via TMDB).
+  useEffect(() => {
+    if (hasMyList) return
+    let cancelled = false
+    const candidates = EXPLORE_MOVIES.slice(0, BACKDROP_CANDIDATE_COUNT)
+    mapWithConcurrency(candidates, 6, (title) => resolveMovieWithRetry(title))
+      .then((responses) => {
+        if (cancelled) return
+        const seen = new Set()
+        const backdrops = []
+        for (const results of responses) {
+          const match = results?.[0]
+          if (!match || !match.backdrop_path || seen.has(match.id)) continue
+          seen.add(match.id)
+          backdrops.push({
+            tmdb_id: match.id,
+            title: match.title,
+            backdropUrl: getBackdropUrl(match.backdrop_path),
+          })
+          if (backdrops.length >= BACKDROP_POOL_SIZE) break
+        }
+        setExploreBackdrops(backdrops)
+      })
+    return () => { cancelled = true }
+  }, [hasMyList])
+
+  // Once the user has films of their own, the hero switches to their list instead.
+  useEffect(() => {
+    if (!hasMyList) return
+    let cancelled = false
+    const candidates = myList.slice(0, BACKDROP_CANDIDATE_COUNT)
+    Promise.all(candidates.map(async (m) => {
+      if (m.backdropUrl) return m
+      const details = await getMovieDetails(m.tmdb_id)
+      return details?.backdrop_path
+        ? { ...m, backdropUrl: getBackdropUrl(details.backdrop_path) }
+        : null
+    })).then((results) => {
+      if (cancelled) return
+      setMyListBackdrops(results.filter((m) => m?.backdropUrl).slice(0, BACKDROP_POOL_SIZE))
+    })
+    return () => { cancelled = true }
+  }, [hasMyList, myList])
+
+  const backdropMovies = hasMyList ? myListBackdrops : exploreBackdrops
+
+  // Reset the crossfade index whenever the backdrop source switches, so a
+  // leftover index from a longer list can't point past the end of a shorter one.
+  useEffect(() => {
+    setBgIndex(0)
+  }, [hasMyList])
 
   useEffect(() => {
     if (backdropMovies.length === 0) return
