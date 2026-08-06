@@ -6,6 +6,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
 import { searchMoviesByGenre, searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
+import RankPickerModal from '../../components/RankPickerModal'
 import styles from './GenreList.module.css'
 
 const GENRE_MAP = {
@@ -84,6 +85,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   const [debounceTimer, setDebounceTimer] = useState(null)
   const [showEntrance, setShowEntrance] = useState(false)
   const [entranceDone, setEntranceDone] = useState(false)
+  const [rankPickerMovie, setRankPickerMovie] = useState(null)
 
   // Per-session exclusions: tmdb_ids the user has removed from the derived section
   const [derivedExclusions, setDerivedExclusions] = useState(() => new Set())
@@ -148,14 +150,22 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     setDebounceTimer(timer)
   }
 
+  // Adds directly if there's room. Once full, opens a rank picker instead of
+  // doing nothing — but the rank only ranges over the manually-added section,
+  // since the Top 100 films ahead of it have a fixed order.
   function addMovie(movie) {
-    if (listIds.has(movie.tmdb_id) || myListSourcedIds.has(movie.tmdb_id)) return
-    if (userList.length >= maxItems) return
-    addToList(listKey, movie)
+    if (listIds.has(movie.tmdb_id) || myListSourcedIds.has(movie.tmdb_id)) return false
+    if (combinedCount < maxItems) {
+      addToList(listKey, movie)
+      return true
+    }
+    if (myListSourced.length >= maxItems) return false // no room at all — every slot is a Top 100 film
+    setRankPickerMovie(movie)
+    return true
   }
 
   function addSearchResult(r) {
-    addMovie({
+    const handled = addMovie({
       tmdb_id: r.id,
       title: r.title,
       year: r.release_date?.slice(0, 4) ?? '',
@@ -164,8 +174,10 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       vote_average: r.vote_average,
       director: '',
     })
-    setQuery('')
-    setSearchResults([])
+    if (handled) {
+      setQuery('')
+      setSearchResults([])
+    }
   }
 
   // Applies a new manual-items order, keeping any hidden overlap items
@@ -173,6 +185,20 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   function commitManualReorder(newManualItems) {
     const hiddenItems = userList.filter((m) => myListSourcedIds.has(m.tmdb_id))
     reorderList(listKey, [...newManualItems, ...hiddenItems])
+  }
+
+  // Inserts a manually-added film at a combined-list rank, translating it into
+  // a position within the manual section (ranks 1..myListSourced.length are
+  // reserved for the fixed Top 100 films), and drops the last manual film if
+  // the manual section is now over its share of maxItems.
+  function insertManualAtRank(movie, rank) {
+    const manualRank = rank - myListSourced.length
+    const index = Math.min(Math.max(manualRank - 1, 0), manualItems.length)
+    const newManual = [...manualItems]
+    newManual.splice(index, 0, movie)
+    const manualCap = Math.max(maxItems - myListSourced.length, 0)
+    newManual.length = Math.min(newManual.length, manualCap)
+    commitManualReorder(newManual)
   }
 
   const sensors = useSensors(
@@ -197,12 +223,36 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     commitManualReorder(items)
   }
 
-  const isFull = userList.length >= maxItems
+  const isFull = combinedCount >= maxItems
+  // True edge case: every slot is consumed by fixed Top 100 films, so there's
+  // no rank — not even via the picker — a new manual film could occupy.
+  const noRoomAtAll = myListSourced.length >= maxItems
   const themeClass = theme.className ? styles[theme.className] ?? '' : ''
   const hasAnyContent = combinedCount > 0
 
   return (
     <div className={`${styles.page} ${themeClass}`}>
+      {rankPickerMovie && (
+        <RankPickerModal
+          itemName={rankPickerMovie.title}
+          minRank={myListSourced.length + 1}
+          maxRank={maxItems}
+          description={
+            <>
+              Your list is full ({maxItems}/{maxItems}). Pick a rank for <strong>{rankPickerMovie.title}</strong> —
+              the first {myListSourced.length} spot{myListSourced.length === 1 ? '' : 's'} are locked to your Top 100
+              films, so it'll land at #{myListSourced.length + 1} or later. Whatever's there (and everything below
+              it) shifts down, and the last film drops off the list.
+            </>
+          }
+          onSubmit={(rank) => {
+            insertManualAtRank(rankPickerMovie, rank)
+            setRankPickerMovie(null)
+          }}
+          onCancel={() => setRankPickerMovie(null)}
+        />
+      )}
+
       {/* Horror entrance */}
       {listType === 'horror' && showEntrance && (
         <div className={styles.horrorEntrance}>
@@ -269,11 +319,12 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
                     <span className={styles.resultYear}>{r.release_date?.slice(0, 4)}</span>
                   </div>
                   <button
-                    className={`${styles.addBtn} ${alreadyShown ? styles.added : ''} ${!alreadyShown && isFull ? styles.full : ''}`}
-                    onClick={() => !alreadyShown && !isFull && addSearchResult(r)}
-                    disabled={alreadyShown || isFull}
+                    className={`${styles.addBtn} ${alreadyShown ? styles.added : ''} ${!alreadyShown && noRoomAtAll ? styles.full : ''}`}
+                    onClick={() => !alreadyShown && addSearchResult(r)}
+                    disabled={alreadyShown || noRoomAtAll}
+                    title={!alreadyShown && isFull && !noRoomAtAll ? 'List full — choose a rank to slot it in' : undefined}
                   >
-                    {alreadyShown ? '✓' : isFull ? '—' : '+'}
+                    {alreadyShown ? '✓' : noRoomAtAll ? '—' : '+'}
                   </button>
                 </div>
               )

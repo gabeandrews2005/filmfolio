@@ -5,6 +5,7 @@ import {
   getPosterUrl,
 } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
+import RankPickerModal from '../components/RankPickerModal'
 import styles from './Explore.module.css'
 
 const DISCOVER_PARAMS = {
@@ -65,8 +66,6 @@ export default function Explore() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
   const [rankPickerMovie, setRankPickerMovie] = useState(null)
-  const [rankInput, setRankInput] = useState('')
-  const [rankError, setRankError] = useState('')
 
   const actorIdSet = useMemo(() => new Set(actorsList.map((a) => a.person_id)), [actorsList])
   const directorIdSet = useMemo(() => new Set(directorsList.map((d) => d.person_id)), [directorsList])
@@ -193,28 +192,9 @@ export default function Explore() {
     e.stopPropagation()
     if (myListFull) {
       setRankPickerMovie(movie)
-      setRankInput('')
-      setRankError('')
     } else {
       addToList('myList', movie)
     }
-  }
-
-  function closeRankPicker() {
-    setRankPickerMovie(null)
-    setRankInput('')
-    setRankError('')
-  }
-
-  function handleRankSubmit(e) {
-    e.preventDefault()
-    const rank = parseInt(rankInput, 10)
-    if (!Number.isInteger(rank) || rank < 1 || rank > 100) {
-      setRankError('Enter a rank between 1 and 100.')
-      return
-    }
-    insertAtRank('myList', rankPickerMovie, rank)
-    closeRankPicker()
   }
 
   function setFilter(key, value) {
@@ -224,36 +204,15 @@ export default function Explore() {
   return (
     <div className={styles.page}>
       {rankPickerMovie && (
-        <div className={styles.confirmOverlay} onClick={(e) => { if (e.target === e.currentTarget) closeRankPicker() }}>
-          <div className={styles.confirmBox}>
-            <p className={styles.confirmText}>
-              Your list is full (100/100). Pick a rank for <strong>{rankPickerMovie.title}</strong> —
-              the film there (and everything below it) shifts down a spot, and #100 drops off the list.
-            </p>
-            <form onSubmit={handleRankSubmit}>
-              <input
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={100}
-                value={rankInput}
-                onChange={(e) => { setRankInput(e.target.value); setRankError('') }}
-                className={styles.rankInput}
-                placeholder="1–100"
-                autoFocus
-              />
-              {rankError && <p className={styles.rankErrorText}>{rankError}</p>}
-              <div className={styles.confirmActions}>
-                <button type="button" className={styles.confirmNo} onClick={closeRankPicker}>
-                  Cancel
-                </button>
-                <button type="submit" className={styles.confirmYes}>
-                  Add at Rank
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <RankPickerModal
+          itemName={rankPickerMovie.title}
+          maxRank={100}
+          onSubmit={(rank) => {
+            insertAtRank('myList', rankPickerMovie, rank)
+            setRankPickerMovie(null)
+          }}
+          onCancel={() => setRankPickerMovie(null)}
+        />
       )}
 
       <div className="container">

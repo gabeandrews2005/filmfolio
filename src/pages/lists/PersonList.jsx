@@ -6,6 +6,7 @@ import { useFilm } from '../../context/FilmContext'
 import { searchPerson, getProfileUrl, getProfileUrlLarge, getPersonDetails, getPersonMovieCredits } from '../../api/tmdb'
 import RECOMMENDED_ACTORS from '../../data/recommendedActors.json'
 import RECOMMENDED_DIRECTORS from '../../data/recommendedDirectors.json'
+import RankPickerModal from '../../components/RankPickerModal'
 import styles from './PersonList.module.css'
 
 const PLACEHOLDER_PERSON = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ccircle cx='250' cy='260' r='110' fill='%232a2520'/%3E%3Cellipse cx='250' cy='540' rx='160' ry='110' fill='%232a2520'/%3E%3C/svg%3E`
@@ -178,7 +179,7 @@ function PersonModal({ person, myList, onClose }) {
 }
 
 export default function PersonList({ listType, title, maxItems = 50 }) {
-  const { myList, addToList, removeFromList, reorderList } = useFilm()
+  const { myList, addToList, insertAtRank, removeFromList, reorderList } = useFilm()
   const listKey = `${listType}List`
   const userList = useFilm()[listKey] ?? []
 
@@ -187,6 +188,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const [searching, setSearching] = useState(false)
   const [debounceTimer, setDebounceTimer] = useState(null)
   const [selectedPerson, setSelectedPerson] = useState(null)
+  const [rankPickerPerson, setRankPickerPerson] = useState(null)
 
   const [poolPeople, setPoolPeople] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
@@ -223,13 +225,29 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
     [poolPeople, listIds]
   )
 
+  function buildPersonItem(raw) {
+    return {
+      person_id: raw.id,
+      name: raw.name,
+      headshot_path: raw.profile_path ?? null,
+    }
+  }
+
+  // Adds directly if there's room; once the list is full, opens the rank
+  // picker instead of silently doing nothing. Returns false only when the
+  // person is already on the list (nothing to clear the search box for).
+  function addOrPromptRank(item) {
+    if (listIds.has(item.person_id)) return false
+    if (userList.length >= maxItems) {
+      setRankPickerPerson(item)
+      return true
+    }
+    addToList(listKey, item)
+    return true
+  }
+
   function addFromPool(p) {
-    if (listIds.has(p.id) || userList.length >= maxItems) return
-    addToList(listKey, {
-      person_id: p.id,
-      name: p.name,
-      headshot_path: p.profile_path ?? null,
-    })
+    addOrPromptRank(buildPersonItem(p))
   }
 
   function handleSearch(value) {
@@ -249,15 +267,11 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   }
 
   function addPerson(result) {
-    if (listIds.has(result.id)) return
-    if (userList.length >= maxItems) return
-    addToList(listKey, {
-      person_id: result.id,
-      name: result.name,
-      headshot_path: result.profile_path ?? null,
-    })
-    setQuery('')
-    setSearchResults([])
+    const handled = addOrPromptRank(buildPersonItem(result))
+    if (handled) {
+      setQuery('')
+      setSearchResults([])
+    }
   }
 
   const sensors = useSensors(
@@ -283,6 +297,18 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
           person={selectedPerson}
           myList={myList}
           onClose={() => setSelectedPerson(null)}
+        />
+      )}
+
+      {rankPickerPerson && (
+        <RankPickerModal
+          itemName={rankPickerPerson.name}
+          maxRank={maxItems}
+          onSubmit={(rank) => {
+            insertAtRank(listKey, rankPickerPerson, rank)
+            setRankPickerPerson(null)
+          }}
+          onCancel={() => setRankPickerPerson(null)}
         />
       )}
 
@@ -328,8 +354,8 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
                   {!inList ? (
                     <button
                       className={styles.addBtn}
-                      onClick={() => !isFull && addPerson(r)}
-                      disabled={isFull}
+                      onClick={() => addPerson(r)}
+                      title={isFull ? `Your list is full (${maxItems}/${maxItems}) — choose a rank to slot them in` : undefined}
                     >+</button>
                   ) : (
                     <span className={styles.addedMark}>✓</span>
@@ -412,8 +438,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
                             <button
                               className={styles.poolAddBtn}
                               onClick={(e) => { e.stopPropagation(); addFromPool(p) }}
-                              disabled={isFull}
-                              title={isFull ? `Your list is full (${maxItems}/${maxItems}) — remove someone to add more` : undefined}
+                              title={isFull ? `Your list is full (${maxItems}/${maxItems}) — choose a rank to slot them in` : undefined}
                               aria-label={`Add ${p.name}`}
                             >+</button>
                           </div>
