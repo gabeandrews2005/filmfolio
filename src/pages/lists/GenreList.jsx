@@ -278,6 +278,24 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         </div>
       )}
 
+      {/* Animated page — busy, playful ambient background scene */}
+      {listType === 'animated' && (
+        <div className={styles.animatedScene} aria-hidden="true">
+          <span className={`${styles.flyer} ${styles.dino1}`}>🦕</span>
+          <span className={`${styles.flyer} ${styles.dino2}`}>🦖</span>
+          <span className={`${styles.flyer} ${styles.dino3}`}>🦕</span>
+          <span className={`${styles.flyer} ${styles.plane1}`}>✈️</span>
+          <span className={`${styles.flyer} ${styles.plane2}`}>🛩️</span>
+          <span className={`${styles.flyer} ${styles.plane3}`}>✈️</span>
+          <span className={`${styles.volcano} ${styles.volcano1}`}>🌋</span>
+          <span className={`${styles.volcano} ${styles.volcano2}`}>🌋</span>
+          <span className={`${styles.volcanoSmoke} ${styles.smoke1a}`}>💨</span>
+          <span className={`${styles.volcanoSmoke} ${styles.smoke1b}`}>💨</span>
+          <span className={`${styles.volcanoSmoke} ${styles.smoke2a}`}>💨</span>
+          <span className={`${styles.volcanoSmoke} ${styles.smoke2b}`}>💨</span>
+        </div>
+      )}
+
       <div className="container">
         <div className={styles.header}>
           <div>

@@ -24,10 +24,6 @@
   color: var(--accent-gold);
 }
 
-.themeAnimated .title {
-  color: var(--accent-gold);
-}
-
 .themeComedies .title {
   color: #d4a843;
 }
@@ -488,6 +484,249 @@
 
 .top100ListItem {
   border-color: var(--accent-gold);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Animated theme — bright, colorful, busy. FilmCard is a shared component
+   in its own CSS module, so it's retheme'd by overriding the design-token
+   custom properties it reads from (--bg-secondary, --text-primary,
+   --accent-gold, --border, etc.) rather than targeting its classes
+   directly — those overrides cascade down to it automatically.
+   ══════════════════════════════════════════════════════════════════════════ */
+.themeAnimated {
+  --bg-secondary: #fffdf7;
+  --bg-tertiary: #fff3d6;
+  --text-primary: #2b2b2b;
+  --text-secondary: #55524a;
+  --text-muted: #8a8676;
+  --accent-gold: #ff6f00;
+  --border: #ffb74d;
+
+  position: relative;
+  overflow: hidden;
+  font-family: 'Baloo 2', var(--font-sans, sans-serif);
+  background: linear-gradient(180deg, #4fc3f7 0%, #81d4fa 30%, #ffe082 65%, #aed581 100%);
+}
+
+.themeAnimated :global(.container) {
+  position: relative;
+  z-index: 2;
+}
+
+/* Puffy clouds dotting the sky */
+.themeAnimated::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(60px 24px at 12% 12%, rgba(255,255,255,0.85), transparent 70%),
+    radial-gradient(80px 28px at 68% 8%, rgba(255,255,255,0.75), transparent 70%),
+    radial-gradient(70px 26px at 38% 20%, rgba(255,255,255,0.65), transparent 70%),
+    radial-gradient(90px 32px at 88% 26%, rgba(255,255,255,0.6), transparent 70%),
+    radial-gradient(65px 24px at 22% 34%, rgba(255,255,255,0.5), transparent 70%);
+}
+
+/* ── Blocky animated title ───────────────────────────────────────────────── */
+.themeAnimated .title {
+  font-family: 'Luckiest Guy', 'Baloo 2', cursive;
+  font-size: 3rem;
+  color: #ff5252;
+  -webkit-text-stroke: 2.5px #ffffff;
+  text-shadow: 4px 4px 0 #2e7d32, 0 3px 14px rgba(0,0,0,0.25);
+  letter-spacing: 0.02em;
+  animation: titleBounce 1.8s ease-in-out infinite;
+}
+
+@keyframes titleBounce {
+  0%, 100% { transform: translateY(0) rotate(-1.5deg); }
+  50%      { transform: translateY(-10px) rotate(1.5deg); }
+}
+
+.themeAnimated .toggleViewBtn {
+  background: #ffffff;
+  border: 3px solid #29b6f6;
+  border-radius: 14px;
+  color: #0277bd;
+  font-weight: 700;
+}
+
+.themeAnimated .toggleViewBtn:hover {
+  background: #e1f5fe;
+  border-color: #0288d1;
+}
+
+.themeAnimated .searchInput {
+  background: #ffffff;
+  border: 3px solid #ffb300;
+  border-radius: 16px;
+  color: #2b2b2b;
+  font-weight: 600;
+}
+
+.themeAnimated .searchInput::placeholder {
+  color: #a89f8a;
+}
+
+.themeAnimated .searchInput:focus {
+  border-color: #ff5252;
+}
+
+.themeAnimated .results {
+  background: #ffffff;
+  border: 3px solid #ffb300;
+  border-radius: 16px;
+}
+
+.themeAnimated .resultRow:hover {
+  background: #fff3e0;
+}
+
+.themeAnimated .resultTitle {
+  color: #2b2b2b;
+  font-weight: 700;
+}
+
+.themeAnimated .resultYear {
+  color: #8a8676;
+}
+
+.themeAnimated .addBtn {
+  background: #4fc3f7;
+  color: #ffffff;
+}
+
+.themeAnimated .addBtn:hover:not(:disabled) {
+  background: #29b6f6;
+}
+
+.themeAnimated .added {
+  background: rgba(255,111,0,0.18) !important;
+  color: #ff6f00 !important;
+}
+
+.themeAnimated .picksHint,
+.themeAnimated .picksCount {
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.35);
+  font-weight: 700;
+}
+
+.themeAnimated .top100Ring {
+  outline-color: #ffca28;
+  outline-width: 3px;
+}
+
+.themeAnimated .manualRing {
+  outline-color: #ffffff;
+  outline-style: dashed;
+}
+
+.themeAnimated .removeOverlay {
+  background: rgba(255,255,255,0.85);
+  color: #ff5252;
+}
+
+.themeAnimated .removeOverlay:hover {
+  background: #ff5252;
+  color: #ffffff;
+}
+
+.themeAnimated .listItem {
+  background: #ffffff;
+  border: 2px solid #ffcc80;
+}
+
+.themeAnimated .listItem:hover {
+  background: #fff3e0;
+}
+
+.themeAnimated .rank {
+  color: #ff6f00;
+}
+
+.themeAnimated .top100ListItem {
+  border-color: #ffca28;
+  border-width: 3px;
+}
+
+.themeAnimated .emptyList {
+  background: rgba(255,255,255,0.85);
+  border: 3px dashed #ffb300;
+  color: #55524a;
+  font-weight: 600;
+}
+
+/* ── Flying scene: dinosaurs, planes, erupting volcanoes ─────────────────── */
+.animatedScene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flyer {
+  position: fixed;
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+  will-change: transform;
+}
+
+@keyframes flyRight {
+  0%   { transform: translateX(-15vw) translateY(0) rotate(0deg); }
+  50%  { transform: translateX(50vw) translateY(-30px) rotate(3deg); }
+  100% { transform: translateX(115vw) translateY(0) rotate(-2deg); }
+}
+
+@keyframes flyLeft {
+  0%   { transform: translateX(115vw) translateY(0) rotate(0deg) scaleX(-1); }
+  50%  { transform: translateX(50vw) translateY(-25px) rotate(-3deg) scaleX(-1); }
+  100% { transform: translateX(-15vw) translateY(0) rotate(2deg) scaleX(-1); }
+}
+
+.dino1 { top: 12%; font-size: 3.4rem; animation: flyRight 22s linear infinite; animation-delay: -2s; }
+.dino2 { top: 30%; font-size: 2.6rem; animation: flyLeft 28s linear infinite; animation-delay: -10s; }
+.dino3 { top: 48%; font-size: 3rem;   animation: flyRight 34s linear infinite; animation-delay: -18s; }
+
+.plane1 { top: 8%;  font-size: 2.4rem; animation: flyLeft 18s linear infinite; animation-delay: -4s; }
+.plane2 { top: 22%; font-size: 2rem;   animation: flyRight 24s linear infinite; animation-delay: -14s; }
+.plane3 { top: 40%; font-size: 2.2rem; animation: flyLeft 30s linear infinite; animation-delay: -8s; }
+
+.volcano {
+  position: fixed;
+  bottom: -30px;
+  font-size: 5.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+}
+
+.volcano1 { left: 3%; }
+.volcano2 { right: 5%; font-size: 4.4rem; }
+
+.volcanoSmoke {
+  position: fixed;
+  font-size: 1.7rem;
+  opacity: 0;
+  animation: eruptPuff 4s ease-in infinite;
+}
+
+@keyframes eruptPuff {
+  0%   { opacity: 0;   transform: translateY(0) scale(0.6); }
+  8%   { opacity: 0.9; transform: translateY(-10px) scale(1); }
+  40%  { opacity: 0.5; transform: translateY(-100px) scale(1.5); }
+  70%  { opacity: 0;   transform: translateY(-160px) scale(1.7); }
+  100% { opacity: 0;   transform: translateY(-160px) scale(1.7); }
+}
+
+.smoke1a { left: 6.5%;  bottom: 92px; animation-delay: 0s; }
+.smoke1b { left: 8%;    bottom: 92px; animation-delay: 1.8s; }
+.smoke2a { right: 8.5%; bottom: 78px; animation-delay: 0.9s; }
+.smoke2b { right: 7%;   bottom: 78px; animation-delay: 2.7s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .themeAnimated .title { animation: none; }
+  .flyer, .volcanoSmoke { animation: none; opacity: 0; }
 }
 
 @media (max-width: 480px) {
