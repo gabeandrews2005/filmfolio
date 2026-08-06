@@ -21,6 +21,15 @@
   text-shadow: 0 0 30px rgba(139,26,26,0.4);
 }
 
+.themeHorror .poolAddOverlay {
+  color: #e2231a;
+}
+
+.themeHorror .poolAddOverlay:hover:not(:disabled) {
+  background: #e2231a;
+  color: #ffffff;
+}
+
 .themeSeasonal {
   --theme-accent: #c0453e;
   --theme-glow: rgba(192,69,62,0.1);
@@ -92,56 +101,9 @@
 .bloodSplat::before { width: 7px;  height: 7px; top: -6px;  left: 58%; }
 .bloodSplat::after   { width: 4px; height: 4px; top: -11px; left: 40%; }
 
-/* ── Horror title — dripping blood ──────────────────────────────────────── */
-.titleWrap {
-  position: relative;
-  display: inline-block;
-}
-
+/* ── Horror title ────────────────────────────────────────────────────────── */
 .titleBleeding {
   text-shadow: 0 0 30px rgba(139,26,26,0.4), 0 3px 0 rgba(90,10,10,0.6);
-}
-
-.titleDrips {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.titleDrip {
-  position: absolute;
-  top: 92%;
-  width: 5px;
-  border-radius: 0 0 50% 50%;
-  background: linear-gradient(180deg, #a5231f 0%, #6e1414 100%);
-  transform-origin: top;
-  animation: titleDripPulse ease-in-out infinite;
-}
-
-.titleDrip::after {
-  content: '';
-  position: absolute;
-  bottom: -6px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 9px;
-  height: 9px;
-  background: #8b1a1a;
-  border-radius: 50%;
-}
-
-.titleDrip:nth-child(1) { left: 3%;  height: 12px; animation-delay: 0s;    animation-duration: 2.6s; }
-.titleDrip:nth-child(2) { left: 15%; height: 24px; animation-delay: 0.4s;  animation-duration: 3.1s; }
-.titleDrip:nth-child(3) { left: 29%; height: 9px;  animation-delay: 0.8s;  animation-duration: 2.4s; }
-.titleDrip:nth-child(4) { left: 44%; height: 30px; animation-delay: 0.2s;  animation-duration: 3.4s; }
-.titleDrip:nth-child(5) { left: 57%; height: 15px; animation-delay: 1.1s;  animation-duration: 2.8s; }
-.titleDrip:nth-child(6) { left: 69%; height: 22px; animation-delay: 0.6s;  animation-duration: 3.0s; }
-.titleDrip:nth-child(7) { left: 82%; height: 11px; animation-delay: 1.4s;  animation-duration: 2.5s; }
-.titleDrip:nth-child(8) { left: 93%; height: 19px; animation-delay: 0.3s;  animation-duration: 3.2s; }
-
-@keyframes titleDripPulse {
-  0%, 100% { transform: scaleY(1); }
-  50%      { transform: scaleY(1.4); }
 }
 
 /* ── Snow entrance ───────────────────────────────────────────────────────── */

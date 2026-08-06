@@ -426,18 +426,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       <div className="container">
         <div className={styles.header}>
           <div>
-            {listType === 'horror' ? (
-              <span className={styles.titleWrap}>
-                <h1 className={`${styles.title} ${styles.titleBleeding}`}>{title}</h1>
-                <span className={styles.titleDrips} aria-hidden="true">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <span key={i} className={styles.titleDrip} />
-                  ))}
-                </span>
-              </span>
-            ) : (
-              <h1 className={styles.title}>{title}</h1>
-            )}
+            <h1 className={`${styles.title} ${listType === 'horror' ? styles.titleBleeding : ''}`}>{title}</h1>
           </div>
           <div className={styles.headerActions}>
             {hasAnyContent && (
