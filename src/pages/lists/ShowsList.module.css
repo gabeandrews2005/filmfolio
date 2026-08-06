@@ -464,33 +464,73 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Shows theme — clean, cool white/grey/silver palette instead of the warm
-   gold the film pages use. Nearly every rule above already reads the shared
-   design tokens (--bg-secondary, --accent-gold, --border, --text-*), so
-   overriding those tokens here retheme's the whole page automatically —
-   only the couple of hardcoded gold rgba() values below need a direct fix.
+   Shows theme — clean silver/white palette with a brushed-metal texture,
+   instead of the warm gold + near-black the film pages use. Nearly every
+   rule above already reads the shared design tokens (--bg-secondary,
+   --accent-gold, --border, --text-*), so overriding those tokens here
+   retheme's the whole page automatically — only the small handful of
+   hardcoded dark-on-dark overlay chips below need a direct fix, since they
+   assumed a dark page background.
    ══════════════════════════════════════════════════════════════════════════ */
 .themeShows {
-  --bg-secondary: #1b1d21;
-  --bg-tertiary: #24272b;
-  --text-primary: #f4f5f7;
-  --text-secondary: #b6bac1;
-  --text-muted: #7d818a;
-  --accent-gold: #c9ced6;
-  --border: #3c4046;
-  background: linear-gradient(180deg, #101113 0%, #17191c 100%);
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #ebedf0;
+  --text-primary: #24262a;
+  --text-secondary: #55585f;
+  --text-muted: #72767e;
+  --accent-gold: #8b909b;
+  --border: #d6d9de;
+  position: relative;
+  background:
+    repeating-linear-gradient(135deg, rgba(255,255,255,0.55) 0px, rgba(255,255,255,0.55) 3px, rgba(198,201,207,0.4) 3px, rgba(198,201,207,0.4) 6px),
+    linear-gradient(160deg, #f7f8fa 0%, #e7e9ed 45%, #d2d5db 100%);
+}
+
+/* Fine grain over the brushed gradient so it reads as textured metal, not flat color */
+.themeShows::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+.themeShows :global(.container) {
+  position: relative;
+  z-index: 1;
 }
 
 .themeShows .rankBadge {
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  background: linear-gradient(135deg, #ffffff 0%, #cdd1d7 55%, #a7abb3 100%);
+  color: #24262a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6);
 }
 
 .themeShows .addedMark {
-  background: rgba(201,206,214,0.15);
+  background: rgba(139,144,155,0.15);
+}
+
+.themeShows .poolAddBtn {
+  border-color: rgba(36,38,42,0.35);
+  background: rgba(255,255,255,0.6);
+  color: #24262a;
 }
 
 .themeShows .poolAddBtn:hover:not(:disabled) {
-  background: rgba(201,206,214,0.25);
+  background: rgba(139,144,155,0.3);
+}
+
+.themeShows .removeBtn {
+  background: rgba(255,255,255,0.85);
+  color: #55585f;
+}
+
+.themeShows .removeBtn:hover {
+  color: #c0392b;
 }
 
 @media (max-width: 600px) {
