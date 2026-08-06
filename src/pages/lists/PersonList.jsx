@@ -194,6 +194,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const [poolLoading, setPoolLoading] = useState(true)
 
   const isActors = listType === 'actors'
+  const isDirectors = listType === 'directors'
   const recommendedNames = RECOMMENDED_LISTS[listType]
 
   // Curtain-rise entrance, Actors only — the "show" opens on every visit
@@ -205,6 +206,20 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
     const t = setTimeout(() => setShowCurtain(false), 3000)
     return () => clearTimeout(t)
   }, [isActors])
+
+  // 3-2-1 film countdown leader, Directors only — plays on every visit
+  const [showCountdown, setShowCountdown] = useState(isDirectors)
+  const [countdownValue, setCountdownValue] = useState(3)
+
+  useEffect(() => {
+    if (!isDirectors) return
+    setShowCountdown(true)
+    setCountdownValue(3)
+    const t1 = setTimeout(() => setCountdownValue(2), 700)
+    const t2 = setTimeout(() => setCountdownValue(1), 1400)
+    const t3 = setTimeout(() => setShowCountdown(false), 2500)
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3) }
+  }, [isDirectors])
 
   const listIds = useMemo(() => new Set(userList.map((p) => p.person_id)), [userList])
 
@@ -301,11 +316,22 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   const isFull = userList.length >= maxItems
 
   return (
-    <div className={`${styles.page} ${isActors ? styles.themeActors : ''}`}>
+    <div className={`${styles.page} ${isActors ? styles.themeActors : ''} ${isDirectors ? styles.themeDirectors : ''}`}>
       {isActors && showCurtain && (
         <div className={styles.curtainWrap} aria-hidden="true">
           <div className={`${styles.curtainPanel} ${styles.curtainLeft}`} />
           <div className={`${styles.curtainPanel} ${styles.curtainRight}`} />
+        </div>
+      )}
+
+      {isDirectors && showCountdown && (
+        <div className={styles.countdownWrap} aria-hidden="true">
+          <div className={styles.filmGrain} />
+          <div className={styles.countdownCircle}>
+            <div className={styles.countdownCross} />
+            <div key={countdownValue} className={styles.countdownHand} />
+            <span className={styles.countdownDigit}>{countdownValue}</span>
+          </div>
         </div>
       )}
 

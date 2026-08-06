@@ -867,10 +867,173 @@
   color: #a5322f;
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   Directors page — 3-2-1 film countdown leader + overlapping film-strip
+   background. Scoped under .themeDirectors / .countdown* so Actors (same
+   component/CSS module) is unaffected.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 3-2-1 countdown leader entrance ─────────────────────────────────────── */
+.countdownWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: #050505;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+  animation: countdownFadeOut 0.35s ease 2.1s forwards;
+}
+
+@keyframes countdownFadeOut {
+  to { opacity: 0; visibility: hidden; }
+}
+
+.countdownCircle {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: 2px solid rgba(240,236,228,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdownCircle::before {
+  content: '';
+  position: absolute;
+  inset: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(240,236,228,0.35);
+}
+
+.countdownCross {
+  position: absolute;
+  inset: 0;
+}
+
+.countdownCross::before,
+.countdownCross::after {
+  content: '';
+  position: absolute;
+  background: rgba(240,236,228,0.4);
+}
+
+.countdownCross::before {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.countdownCross::after {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.countdownHand {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 138px;
+  background: linear-gradient(180deg, var(--accent-gold) 0%, rgba(201,168,76,0) 88%);
+  transform-origin: top center;
+  transform: translateX(-50%) rotate(0deg);
+  animation: countdownSweep 0.7s linear;
+}
+
+@keyframes countdownSweep {
+  from { transform: translateX(-50%) rotate(0deg); }
+  to   { transform: translateX(-50%) rotate(360deg); }
+}
+
+.countdownDigit {
+  position: relative;
+  z-index: 1;
+  font-family: 'Anton', var(--font-display), sans-serif;
+  font-size: 6.5rem;
+  color: #f0ece4;
+  line-height: 1;
+  text-shadow: 0 0 30px rgba(0,0,0,0.8);
+}
+
+.filmGrain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+  background-image:
+    repeating-linear-gradient(115deg, rgba(255,255,255,0.04) 0px, transparent 2px, transparent 4px),
+    repeating-linear-gradient(65deg, rgba(255,255,255,0.03) 0px, transparent 3px, transparent 6px);
+  animation: grainFlicker 220ms steps(2) infinite;
+}
+
+@keyframes grainFlicker {
+  0%   { opacity: 0.35; }
+  50%  { opacity: 0.55; }
+  100% { opacity: 0.4; }
+}
+
+/* ── Overlapping film-strip background ───────────────────────────────────── */
+.themeDirectors {
+  position: relative;
+  background-color: #0d0d0d;
+  overflow: hidden;
+}
+
+.themeDirectors :global(.container) {
+  position: relative;
+  z-index: 2;
+}
+
+.themeDirectors::before,
+.themeDirectors::after {
+  content: '';
+  position: fixed;
+  left: -20%;
+  width: 140%;
+  height: 130px;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background-color: rgba(6,6,6,0.9);
+  background-image:
+    repeating-linear-gradient(90deg, rgba(240,236,228,0.65) 0 12px, transparent 12px 30px),
+    repeating-linear-gradient(90deg, rgba(240,236,228,0.65) 0 12px, transparent 12px 30px);
+  background-position: 0 9px, 0 calc(100% - 21px);
+  background-size: 30px 12px, 30px 12px;
+  background-repeat: repeat-x, repeat-x;
+  border-top: 1px solid rgba(240,236,228,0.15);
+  border-bottom: 1px solid rgba(240,236,228,0.15);
+}
+
+.themeDirectors::before {
+  top: 14%;
+  transform: rotate(-7deg);
+}
+
+.themeDirectors::after {
+  top: 56%;
+  transform: rotate(6deg);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .curtainLeft,
   .curtainRight {
     animation: none;
     opacity: 0;
+  }
+
+  .countdownHand,
+  .filmGrain {
+    animation: none;
   }
 }
