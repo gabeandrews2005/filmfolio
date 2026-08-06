@@ -513,7 +513,7 @@
 .poolAddOverlay {
   position: absolute;
   top: 4px;
-  right: 4px;
+  left: 4px;
   width: 26px;
   height: 26px;
   border-radius: 50%;
