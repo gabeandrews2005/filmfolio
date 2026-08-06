@@ -8,6 +8,7 @@ import { searchMoviesByGenre, searchMovies, getPosterUrl, PLACEHOLDER_POSTER } f
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
+import RECOMMENDED_HORROR from '../../data/recommendedHorror.json'
 import styles from './GenreList.module.css'
 
 // Recommended-pool title lookups fire fastest throttled, since blasting them
@@ -34,6 +35,18 @@ async function mapWithConcurrency(items, limit, worker) {
 
 const RECOMMENDED_POOLS = {
   animated: RECOMMENDED_ANIMATED,
+  horror: RECOMMENDED_HORROR,
+}
+
+// Genre-biased search helps disambiguate pools whose titles collide with
+// unrelated same-name films in other genres (e.g. an animated remake vs.
+// its live-action version). Horror's curated list includes prestige
+// thriller/crime crossovers TMDB doesn't tag with the Horror genre (Se7en,
+// The Silence of the Lambs, Oldboy...), so biasing there would silently
+// drop real matches instead of helping.
+const POOL_GENRE_BIAS = {
+  animated: true,
+  horror: false,
 }
 
 function normalizeMovie(r) {
@@ -140,7 +153,8 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     if (!recommendedPool) return
     setPoolLoading(true)
     let cancelled = false
-    mapWithConcurrency(recommendedPool, 6, (name) => resolveMovieWithRetry(name, genreId))
+    const biasGenreId = POOL_GENRE_BIAS[listType] ? genreId : undefined
+    mapWithConcurrency(recommendedPool, 6, (name) => resolveMovieWithRetry(name, biasGenreId))
       .then((responses) => {
         if (cancelled) return
         const seen = new Set()
@@ -155,7 +169,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         setPoolLoading(false)
       })
     return () => { cancelled = true }
-  }, [recommendedPool, genreId])
+  }, [recommendedPool, genreId, listType])
 
   useEffect(() => {
     if (theme.entrance && !entranceDone) {
