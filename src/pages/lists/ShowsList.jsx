@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
 import { searchTV, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import RECOMMENDED_SHOWS from '../../data/recommendedShows.json'
+import RankPickerModal from '../../components/RankPickerModal'
 import styles from './ShowsList.module.css'
 
 const MAX_SHOWS = 50
@@ -127,12 +128,13 @@ function ShowModal({ show, onClose }) {
 }
 
 export default function ShowsList() {
-  const { showsList, addToList, removeFromList, reorderList } = useFilm()
+  const { showsList, addToList, insertAtRank, removeFromList, reorderList } = useFilm()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [debounceTimer, setDebounceTimer] = useState(null)
   const [selectedShow, setSelectedShow] = useState(null)
+  const [rankPickerShow, setRankPickerShow] = useState(null)
 
   const [poolShows, setPoolShows] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
@@ -165,9 +167,21 @@ export default function ShowsList() {
     [poolShows, listIds]
   )
 
+  // Adds directly if there's room; once the list is full, opens the rank
+  // picker instead of silently doing nothing. Returns false only when the
+  // show is already on the list (nothing to clear the search box for).
+  function addOrPromptRank(show) {
+    if (listIds.has(show.tmdb_id)) return false
+    if (showsList.length >= MAX_SHOWS) {
+      setRankPickerShow(show)
+      return true
+    }
+    addToList('showsList', show)
+    return true
+  }
+
   function addFromPool(s) {
-    if (listIds.has(s.tmdb_id) || showsList.length >= MAX_SHOWS) return
-    addToList('showsList', s)
+    addOrPromptRank(s)
   }
 
   function handleSearch(value) {
@@ -184,11 +198,11 @@ export default function ShowsList() {
   }
 
   function addShow(r) {
-    if (listIds.has(r.id)) return
-    if (showsList.length >= MAX_SHOWS) return
-    addToList('showsList', normalizeShow(r))
-    setQuery('')
-    setSearchResults([])
+    const handled = addOrPromptRank(normalizeShow(r))
+    if (handled) {
+      setQuery('')
+      setSearchResults([])
+    }
   }
 
   const sensors = useSensors(
@@ -211,6 +225,18 @@ export default function ShowsList() {
     <div className={`${styles.page} ${styles.themeShows}`}>
       {selectedShow && (
         <ShowModal show={selectedShow} onClose={() => setSelectedShow(null)} />
+      )}
+
+      {rankPickerShow && (
+        <RankPickerModal
+          itemName={rankPickerShow.title}
+          maxRank={MAX_SHOWS}
+          onSubmit={(rank) => {
+            insertAtRank('showsList', rankPickerShow, rank)
+            setRankPickerShow(null)
+          }}
+          onCancel={() => setRankPickerShow(null)}
+        />
       )}
 
       <div className="container">
@@ -255,8 +281,8 @@ export default function ShowsList() {
                   {!inList ? (
                     <button
                       className={styles.addBtn}
-                      onClick={() => !isFull && addShow(r)}
-                      disabled={isFull}
+                      onClick={() => addShow(r)}
+                      title={isFull ? `Your list is full (${MAX_SHOWS}/${MAX_SHOWS}) — pick a rank to slot it in` : undefined}
                     >+</button>
                   ) : (
                     <span className={styles.addedMark}>✓</span>
@@ -327,8 +353,7 @@ export default function ShowsList() {
                         <button
                           className={styles.poolAddBtn}
                           onClick={(e) => { e.stopPropagation(); addFromPool(s) }}
-                          disabled={isFull}
-                          title={isFull ? `Your list is full (${MAX_SHOWS}/${MAX_SHOWS}) — remove a show to add more` : undefined}
+                          title={isFull ? `Your list is full (${MAX_SHOWS}/${MAX_SHOWS}) — pick a rank to slot it in` : undefined}
                           aria-label={`Add ${s.title}`}
                         >+</button>
                       </div>
