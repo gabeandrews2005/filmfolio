@@ -267,6 +267,11 @@
   color: var(--text-muted);
 }
 
+.picksHint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
 /* ── Auto-populate strip ─────────────────────────────────────────────────── */
 .autoSection {
   margin-bottom: 28px;
@@ -360,35 +365,6 @@
   line-height: 1.3;
 }
 
-/* ── Section dividers ─────────────────────────────────────────────────────── */
-.sectionDivider {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 28px 0 16px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sectionLabel {
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--accent-gold);
-}
-
-.sectionHint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-}
-
-.sectionCount {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
 /* ── Grid view ────────────────────────────────────────────────────────────── */
 .posterGrid {
   display: grid;
@@ -396,14 +372,25 @@
   gap: 20px;
 }
 
-/* Derived grid has no drag handles — static */
-.derivedGrid {
-  margin-bottom: 4px;
-}
-
 .gridItem {
   position: relative;
   user-select: none;
+  border-radius: 8px;
+}
+
+/* From the user's Top 100 — gold ring; manually added — regular border */
+.top100Ring {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 3px;
+}
+
+.manualRing {
+  outline: 2px solid var(--border);
+  outline-offset: 3px;
+}
+
+.sortableItem {
+  touch-action: none;
 }
 
 .gridDragging {
@@ -497,6 +484,10 @@
 /* ── Derived list item (no drag handle) ──────────────────────────────────── */
 .derivedItem {
   cursor: default;
+}
+
+.top100ListItem {
+  border-color: var(--accent-gold);
 }
 
 @media (max-width: 480px) {

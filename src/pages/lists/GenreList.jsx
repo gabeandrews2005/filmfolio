@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
 import { searchMoviesByGenre, searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
@@ -40,6 +43,35 @@ const THEMES = {
   },
 }
 
+// Manually-added film in the grid — the only kind that's drag-reorderable;
+// films sourced from the user's Top 100 keep their position fixed above.
+function SortableManualCard({ movie, rank, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: String(movie.tmdb_id),
+  })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className={`${styles.gridItem} ${styles.manualRing} ${styles.sortableItem} ${isDragging ? styles.gridDragging : ''}`}
+    >
+      <FilmCard movie={movie} rankBadge={rank} showAddToList={false} />
+      <button
+        className={styles.removeOverlay}
+        onClick={(e) => { e.stopPropagation(); onRemove() }}
+      >×</button>
+    </div>
+  )
+}
+
 export default function GenreList({ listType, title, maxItems = 50 }) {
   const { myList, addToList, removeFromList, reorderList } = useFilm()
   const listKey = `${listType}List`
@@ -70,12 +102,12 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones
+  // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones.
+  // These lead the combined list and carry the gold "from your Top 100" border.
   const myListSourced = useMemo(() => {
     const genres = GENRE_MAP[listType]
     if (!genres) return []
     return myList
-      .map((m, idx) => ({ ...m, myListRank: idx + 1 }))
       .filter((m) =>
         m.genres?.some((g) => genres.includes(g)) &&
         !derivedExclusions.has(m.tmdb_id)
@@ -87,13 +119,15 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     [myListSourced]
   )
 
-  // Manually added films: stored userList items not also in the derived section
+  // Manually added films: stored userList items not also in the derived section.
+  // These follow the derived films, in the order they were added / reordered.
   const manualItems = useMemo(
     () => userList.filter((m) => !myListSourcedIds.has(m.tmdb_id)),
     [userList, myListSourcedIds]
   )
 
   const listIds = useMemo(() => new Set(userList.map((m) => m.tmdb_id)), [userList])
+  const combinedCount = myListSourced.length + manualItems.length
 
   function excludeFromDerived(tmdbId) {
     setDerivedExclusions((prev) => new Set([...prev, tmdbId]))
@@ -134,19 +168,38 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     setSearchResults([])
   }
 
-  function handleManualDragEnd(result) {
+  // Applies a new manual-items order, keeping any hidden overlap items
+  // (stored items that also match the derived/Top 100 set) at the end.
+  function commitManualReorder(newManualItems) {
+    const hiddenItems = userList.filter((m) => myListSourcedIds.has(m.tmdb_id))
+    reorderList(listKey, [...newManualItems, ...hiddenItems])
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  function handleManualDragEndGrid(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = manualItems.findIndex((m) => String(m.tmdb_id) === active.id)
+    const newIndex = manualItems.findIndex((m) => String(m.tmdb_id) === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    commitManualReorder(arrayMove(manualItems, oldIndex, newIndex))
+  }
+
+  function handleManualDragEndList(result) {
     if (!result.destination) return
     const items = [...manualItems]
     const [moved] = items.splice(result.source.index, 1)
     items.splice(result.destination.index, 0, moved)
-    // Rebuild full userList: reordered manual items + any hidden overlap items at end
-    const hiddenItems = userList.filter((m) => myListSourcedIds.has(m.tmdb_id))
-    reorderList(listKey, [...items, ...hiddenItems])
+    commitManualReorder(items)
   }
 
   const isFull = userList.length >= maxItems
   const themeClass = theme.className ? styles[theme.className] ?? '' : ''
-  const hasAnyContent = myListSourced.length > 0 || manualItems.length > 0
+  const hasAnyContent = combinedCount > 0
 
   return (
     <div className={`${styles.page} ${themeClass}`}>
@@ -228,140 +281,94 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
           </div>
         )}
 
-        {/* ── From My List (derived) section ────────────────────────────── */}
-        {myListSourced.length > 0 && (
-          <>
-            <div className={styles.sectionDivider}>
-              <span className={styles.sectionLabel}>From My List</span>
-              <span className={styles.sectionHint}>Ordered by your ranking</span>
-            </div>
-
-            {viewMode === 'grid' ? (
-              <div className={`${styles.posterGrid} ${styles.derivedGrid}`}>
-                {myListSourced.map((movie) => (
-                  <div key={movie.tmdb_id} className={styles.gridItem}>
-                    <FilmCard movie={movie} rankBadge={movie.myListRank} showAddToList={false} />
-                    <button
-                      className={styles.removeOverlay}
-                      onClick={() => excludeFromDerived(movie.tmdb_id)}
-                      title="Remove from this view"
-                    >×</button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <ul className={styles.list}>
-                {myListSourced.map((movie) => (
-                  <li key={movie.tmdb_id} className={`${styles.listItem} ${styles.derivedItem}`}>
-                    <span className={styles.rank}>#{movie.myListRank}</span>
-                    <img src={movie.posterUrl || PLACEHOLDER_POSTER} alt={movie.title} className={styles.thumb} />
-                    <div className={styles.resultInfo}>
-                      <span className={styles.resultTitle}>{movie.title}</span>
-                      <span className={styles.resultYear}>{movie.year}</span>
-                    </div>
-                    <button
-                      className={styles.removeBtn}
-                      onClick={() => excludeFromDerived(movie.tmdb_id)}
-                      title="Remove from this view"
-                    >×</button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </>
+        {/* ── Combined list: Top 100 films (gold border, fixed order) followed
+             by manually added films (regular border, drag-to-reorder) ────── */}
+        {hasAnyContent && (
+          <div className={styles.picksHeader}>
+            <span className={styles.picksHint}>Gold border = from your Top 100 · drag to reorder added films</span>
+            <span className={styles.picksCount}>{combinedCount} / {maxItems}</span>
+          </div>
         )}
 
-        {/* ── Added Here (manual) section ───────────────────────────────── */}
-        {manualItems.length > 0 && (
-          <>
-            {myListSourced.length > 0 && (
-              <div className={styles.sectionDivider}>
-                <span className={styles.sectionLabel}>Added Here</span>
-                <span className={styles.sectionCount}>{manualItems.length} / {maxItems}</span>
+        {viewMode === 'grid' ? (
+          <div className={styles.posterGrid}>
+            {myListSourced.map((movie, i) => (
+              <div key={movie.tmdb_id} className={`${styles.gridItem} ${styles.top100Ring}`}>
+                <FilmCard movie={movie} rankBadge={i + 1} showAddToList={false} />
+                <button
+                  className={styles.removeOverlay}
+                  onClick={() => excludeFromDerived(movie.tmdb_id)}
+                  title="Remove from this view"
+                >×</button>
               </div>
-            )}
+            ))}
 
-            {!myListSourced.length && (
-              <div className={styles.picksHeader}>
-                <span className={styles.picksLabel}>Your Picks</span>
-                <span className={styles.picksCount}>{manualItems.length} / {maxItems}</span>
-              </div>
-            )}
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleManualDragEndGrid}>
+              <SortableContext items={manualItems.map((m) => String(m.tmdb_id))} strategy={rectSortingStrategy}>
+                {manualItems.map((movie, i) => (
+                  <SortableManualCard
+                    key={movie.tmdb_id}
+                    movie={movie}
+                    rank={myListSourced.length + i + 1}
+                    onRemove={() => removeFromList(listKey, movie.tmdb_id)}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          </div>
+        ) : (
+          <DragDropContext onDragEnd={handleManualDragEndList}>
+            <Droppable droppableId="genre-list">
+              {(provided) => (
+                <ul className={styles.list} ref={provided.innerRef} {...provided.droppableProps}>
+                  {myListSourced.map((movie, i) => (
+                    <li key={movie.tmdb_id} className={`${styles.listItem} ${styles.derivedItem} ${styles.top100ListItem}`}>
+                      <span className={styles.rank}>#{i + 1}</span>
+                      <img src={movie.posterUrl || PLACEHOLDER_POSTER} alt={movie.title} className={styles.thumb} />
+                      <div className={styles.resultInfo}>
+                        <span className={styles.resultTitle}>{movie.title}</span>
+                        <span className={styles.resultYear}>{movie.year}</span>
+                      </div>
+                      <button
+                        className={styles.removeBtn}
+                        onClick={() => excludeFromDerived(movie.tmdb_id)}
+                        title="Remove from this view"
+                      >×</button>
+                    </li>
+                  ))}
 
-            {viewMode === 'grid' ? (
-              <DragDropContext onDragEnd={handleManualDragEnd}>
-                <Droppable droppableId="genre-grid" direction="horizontal">
-                  {(provided) => (
-                    <div
-                      className={styles.posterGrid}
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
+                  {manualItems.map((movie, i) => (
+                    <Draggable
+                      key={String(movie.tmdb_id)}
+                      draggableId={String(movie.tmdb_id)}
+                      index={i}
                     >
-                      {manualItems.map((movie, i) => (
-                        <Draggable
-                          key={String(movie.tmdb_id)}
-                          draggableId={String(movie.tmdb_id)}
-                          index={i}
+                      {(provided, snapshot) => (
+                        <li
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`${styles.listItem} ${snapshot.isDragging ? styles.dragging : ''}`}
                         >
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              className={`${styles.gridItem} ${snapshot.isDragging ? styles.gridDragging : ''}`}
-                            >
-                              <FilmCard movie={movie} showAddToList={false} />
-                              <button
-                                className={styles.removeOverlay}
-                                onClick={() => removeFromList(listKey, movie.tmdb_id)}
-                              >×</button>
-                            </div>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            ) : (
-              <DragDropContext onDragEnd={handleManualDragEnd}>
-                <Droppable droppableId="genre-list">
-                  {(provided) => (
-                    <ul className={styles.list} ref={provided.innerRef} {...provided.droppableProps}>
-                      {manualItems.map((movie, i) => (
-                        <Draggable
-                          key={String(movie.tmdb_id)}
-                          draggableId={String(movie.tmdb_id)}
-                          index={i}
-                        >
-                          {(provided, snapshot) => (
-                            <li
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              className={`${styles.listItem} ${snapshot.isDragging ? styles.dragging : ''}`}
-                            >
-                              <span className={styles.dragHandle} {...provided.dragHandleProps}>⠿</span>
-                              <img src={movie.posterUrl || PLACEHOLDER_POSTER} alt={movie.title} className={styles.thumb} />
-                              <div className={styles.resultInfo}>
-                                <span className={styles.resultTitle}>{movie.title}</span>
-                                <span className={styles.resultYear}>{movie.year}</span>
-                              </div>
-                              <button
-                                className={styles.removeBtn}
-                                onClick={() => removeFromList(listKey, movie.tmdb_id)}
-                              >×</button>
-                            </li>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </ul>
-                  )}
-                </Droppable>
-              </DragDropContext>
-            )}
-          </>
+                          <span className={styles.dragHandle} {...provided.dragHandleProps}>⠿</span>
+                          <span className={styles.rank}>#{myListSourced.length + i + 1}</span>
+                          <img src={movie.posterUrl || PLACEHOLDER_POSTER} alt={movie.title} className={styles.thumb} />
+                          <div className={styles.resultInfo}>
+                            <span className={styles.resultTitle}>{movie.title}</span>
+                            <span className={styles.resultYear}>{movie.year}</span>
+                          </div>
+                          <button
+                            className={styles.removeBtn}
+                            onClick={() => removeFromList(listKey, movie.tmdb_id)}
+                          >×</button>
+                        </li>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </ul>
+              )}
+            </Droppable>
+          </DragDropContext>
         )}
 
         {/* Empty state */}
