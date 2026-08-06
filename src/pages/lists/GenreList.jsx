@@ -65,8 +65,7 @@ const GENRE_TMDB_IDS = {
 const THEMES = {
   horror: {
     className: 'themeHorror',
-    entrance: true,
-    entranceDuration: 1800,
+    entrance: false,
   },
   seasonal: {
     className: 'themeSeasonal',
@@ -168,6 +167,39 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       return () => clearTimeout(t)
     }
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Ambient blood scene — randomized once per mount so drips/splats don't
+  // jitter to new positions on every re-render. Extra density is clustered
+  // near the left/right edges so blood visibly runs down the sides too.
+  const bloodDrips = useMemo(() => {
+    if (listType !== 'horror') return []
+    const edge = Array.from({ length: 16 }, () => Math.random() * 14)
+    const positions = [
+      ...edge.map((v) => v),                 // left edge, 0–14%
+      ...edge.map((v) => 100 - v),            // right edge, 86–100%
+      ...Array.from({ length: 24 }, () => Math.random() * 100), // spread across the top
+    ]
+    return positions.map((left, i) => ({
+      id: i,
+      left,
+      length: 20 + Math.random() * 65,
+      duration: 4 + Math.random() * 5,
+      delay: -(Math.random() * 8),
+      width: 3 + Math.random() * 4,
+    }))
+  }, [listType])
+
+  const bloodSplats = useMemo(() => {
+    if (listType !== 'horror') return []
+    return Array.from({ length: 18 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+      scale: 0.6 + Math.random() * 1.1,
+      rotate: Math.random() * 360,
+      opacity: 0.5 + Math.random() * 0.35,
+    }))
+  }, [listType])
 
   // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones.
   // These lead the combined list and carry the gold "from your Top 100" border.
@@ -315,15 +347,34 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         />
       )}
 
-      {/* Horror entrance */}
-      {listType === 'horror' && showEntrance && (
-        <div className={styles.horrorEntrance}>
-          <div className={styles.drip} />
-          <div className={styles.drip} />
-          <div className={styles.drip} />
-          <div className={styles.drip} />
-          <div className={styles.drip} />
-          <span className={styles.horrorIcon}>🩸</span>
+      {/* Horror — persistent ambient blood scene (not a one-time entrance) */}
+      {listType === 'horror' && (
+        <div className={styles.bloodScene} aria-hidden="true">
+          {bloodDrips.map((d) => (
+            <span
+              key={`drip-${d.id}`}
+              className={styles.bloodDrip}
+              style={{
+                left: `${d.left}%`,
+                width: `${d.width}px`,
+                animationDuration: `${d.duration}s`,
+                animationDelay: `${d.delay}s`,
+                '--drip-length': `${d.length}vh`,
+              }}
+            />
+          ))}
+          {bloodSplats.map((s) => (
+            <span
+              key={`splat-${s.id}`}
+              className={styles.bloodSplat}
+              style={{
+                left: `${s.left}%`,
+                top: `${s.top}%`,
+                opacity: s.opacity,
+                transform: `scale(${s.scale}) rotate(${s.rotate}deg)`,
+              }}
+            />
+          ))}
         </div>
       )}
       {/* Seasonal snow entrance */}
@@ -361,7 +412,18 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       <div className="container">
         <div className={styles.header}>
           <div>
-            <h1 className={styles.title}>{title}</h1>
+            {listType === 'horror' ? (
+              <span className={styles.titleWrap}>
+                <h1 className={`${styles.title} ${styles.titleBleeding}`}>{title}</h1>
+                <span className={styles.titleDrips} aria-hidden="true">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <span key={i} className={styles.titleDrip} />
+                  ))}
+                </span>
+              </span>
+            ) : (
+              <h1 className={styles.title}>{title}</h1>
+            )}
           </div>
           <div className={styles.headerActions}>
             {hasAnyContent && (
