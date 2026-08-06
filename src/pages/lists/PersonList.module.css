@@ -652,8 +652,9 @@
 .curtainRight::after { left: 0; }
 
 /* Curtain gathers into a bunched, diagonally-swept drape as it's drawn
-   back — the stage-facing edge sweeps up and in, tying back toward the
-   top corner, rather than the whole panel sliding as a flat rectangle. */
+   back. The top edge stays pinned flush to the top of the screen the
+   whole time (as if hung from a fixed rod) — only the bottom-inner
+   corner rises and sweeps in as the fabric is gathered to the side. */
 @keyframes curtainOpenLeft {
   0% {
     transform: translateX(0) scaleX(1);
@@ -661,19 +662,19 @@
   }
   20% {
     transform: translateX(-2%) scaleX(0.97);
-    clip-path: polygon(0% 0%, 100% 3%, 88% 100%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 0% 100%);
   }
   45% {
     transform: translateX(-22%) scaleX(0.82);
-    clip-path: polygon(0% 0%, 100% 9%, 66% 97%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 68% 88%, 0% 100%);
   }
   70% {
     transform: translateX(-58%) scaleX(0.6);
-    clip-path: polygon(0% 0%, 100% 15%, 48% 91%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 50% 74%, 0% 100%);
   }
   100% {
     transform: translateX(-104%) scaleX(0.44);
-    clip-path: polygon(0% 0%, 100% 21%, 36% 85%, 0% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 38% 62%, 0% 100%);
   }
 }
 
@@ -684,19 +685,19 @@
   }
   20% {
     transform: translateX(2%) scaleX(0.97);
-    clip-path: polygon(0% 3%, 100% 0%, 100% 100%, 12% 100%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 10% 100%);
   }
   45% {
     transform: translateX(22%) scaleX(0.82);
-    clip-path: polygon(0% 9%, 100% 0%, 100% 100%, 34% 97%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 32% 88%);
   }
   70% {
     transform: translateX(58%) scaleX(0.6);
-    clip-path: polygon(0% 15%, 100% 0%, 100% 100%, 52% 91%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 50% 74%);
   }
   100% {
     transform: translateX(104%) scaleX(0.44);
-    clip-path: polygon(0% 21%, 100% 0%, 100% 100%, 64% 85%);
+    clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 62% 62%);
   }
 }
 
