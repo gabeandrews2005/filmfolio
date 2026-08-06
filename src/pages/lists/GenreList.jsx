@@ -215,6 +215,30 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     }))
   }, [listType])
 
+  // Seasonal scenic background — trees scattered across the hillside and a
+  // persistent snowfall, both randomized once per mount.
+  const seasonalTrees = useMemo(() => {
+    if (listType !== 'seasonal') return []
+    return Array.from({ length: 20 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      bottom: Math.random() * 26,
+      scale: 0.55 + Math.random() * 0.85,
+    }))
+  }, [listType])
+
+  const seasonalSnowflakes = useMemo(() => {
+    if (listType !== 'seasonal') return []
+    return Array.from({ length: 50 }, (_, i) => ({
+      id: i,
+      left: Math.random() * 100,
+      size: 6 + Math.random() * 14,
+      duration: 7 + Math.random() * 9,
+      delay: -(Math.random() * 14),
+      drift: (Math.random() - 0.5) * 80,
+    }))
+  }, [listType])
+
   // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones.
   // These lead the combined list and carry the gold "from your Top 100" border.
   const myListSourced = useMemo(() => {
@@ -402,6 +426,53 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
               fontSize: `${8 + Math.random() * 16}px`,
             }}>❄</div>
           ))}
+        </div>
+      )}
+
+      {/* Seasonal — persistent snowy hillside scene with cabin, trees, and falling snow */}
+      {listType === 'seasonal' && (
+        <div className={styles.seasonalScene} aria-hidden="true">
+          <div className={styles.seasonalSky} />
+          <div className={styles.seasonalSun} />
+          <div className={styles.seasonalHillsFar}>
+            <span className={styles.hillBumpFar} style={{ left: '-12%', width: '55%' }} />
+            <span className={styles.hillBumpFar} style={{ left: '22%', width: '68%' }} />
+            <span className={styles.hillBumpFar} style={{ left: '68%', width: '52%' }} />
+          </div>
+          <div className={styles.seasonalHillsNear}>
+            <span className={styles.hillBumpNear} style={{ left: '-15%', width: '72%' }} />
+            <span className={styles.hillBumpNear} style={{ left: '38%', width: '82%' }} />
+          </div>
+          {seasonalTrees.map((t) => (
+            <span
+              key={`tree-${t.id}`}
+              className={styles.seasonalTree}
+              style={{ left: `${t.left}%`, bottom: `${t.bottom}%`, transform: `scale(${t.scale})` }}
+            >🎄</span>
+          ))}
+          <div className={styles.seasonalCabin}>
+            <div className={styles.cabinChimney} />
+            <div className={styles.cabinRoof} />
+            <div className={styles.cabinBody}>
+              <div className={styles.cabinWindow} />
+              <div className={styles.cabinDoor} />
+            </div>
+          </div>
+          <div className={styles.seasonalSnowfall}>
+            {seasonalSnowflakes.map((f) => (
+              <span
+                key={`snow-${f.id}`}
+                className={styles.seasonalSnowflake}
+                style={{
+                  left: `${f.left}%`,
+                  fontSize: `${f.size}px`,
+                  animationDuration: `${f.duration}s`,
+                  animationDelay: `${f.delay}s`,
+                  '--drift': `${f.drift}px`,
+                }}
+              >❄</span>
+            ))}
+          </div>
         </div>
       )}
 
