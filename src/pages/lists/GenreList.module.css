@@ -8,6 +8,10 @@
 .themeHorror {
   --theme-accent: #8b1a1a;
   --theme-glow: rgba(139,26,26,0.15);
+  /* Retheme's the shared FilmCard's rank badge (and every other gold accent
+     on this page) to blood red — FilmCard lives in its own CSS module, so it
+     can only be restyled by overriding the design token it reads from. */
+  --accent-gold: #e2231a;
   position: relative;
 }
 
