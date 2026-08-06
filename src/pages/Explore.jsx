@@ -1,11 +1,13 @@
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useFilm } from '../context/FilmContext'
 import {
   getDiscoverMovies,
+  searchMovies,
   getPosterUrl,
 } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import RankPickerModal from '../components/RankPickerModal'
+import EXPLORE_MOVIES from '../data/exploreMovies.json'
 import styles from './Explore.module.css'
 
 const DISCOVER_PARAMS = {
@@ -13,9 +15,8 @@ const DISCOVER_PARAMS = {
   'vote_count.gte': 1000,
   'vote_average.gte': 7.0,
 }
-const INITIAL_PAGES = 25
 
-// TMDB's discover/popular endpoints return numeric genre_ids, not names —
+// TMDB's discover/search endpoints return numeric genre_ids, not names —
 // this is TMDB's stable, documented movie genre list (matches the naming
 // already used in movies.json, e.g. "Science Fiction" not "Sci-Fi").
 const TMDB_GENRE_MAP = {
@@ -24,6 +25,28 @@ const TMDB_GENRE_MAP = {
   27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
   878: 'Science Fiction', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War',
   37: 'Western',
+}
+
+// Curated-list lookups are throttled — firing all 500 at once triggers
+// TMDB rate-limiting — and empty responses are retried with backoff.
+async function resolveMovieWithRetry(title, attempt = 0) {
+  const results = await searchMovies(title)
+  if (results.length > 0 || attempt >= 2) return results
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return resolveMovieWithRetry(title, attempt + 1)
+}
+
+async function mapWithConcurrency(items, limit, worker) {
+  const results = new Array(items.length)
+  let index = 0
+  async function run() {
+    while (index < items.length) {
+      const current = index++
+      results[current] = await worker(items[current])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
+  return results
 }
 
 function SkeletonCard() {
@@ -58,10 +81,10 @@ const DEFAULT_FILTERS = {
 }
 
 export default function Explore() {
-  const { movies: gabeMovies, myList, addToList, insertAtRank, seenList, watchlist, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
+  const { myList, addToList, insertAtRank, seenList, watchlist, actorsList, directorsList, notInterested, addNotInterested } = useFilm()
   const [poolMovies, setPoolMovies] = useState([])
   const [poolLoading, setPoolLoading] = useState(true)
-  const [currentPage, setCurrentPage] = useState(INITIAL_PAGES)
+  const [currentPage, setCurrentPage] = useState(0)
   const [hasMore, setHasMore] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [filters, setFilters] = useState(DEFAULT_FILTERS)
@@ -69,33 +92,35 @@ export default function Explore() {
 
   const actorIdSet = useMemo(() => new Set(actorsList.map((a) => a.person_id)), [actorsList])
   const directorIdSet = useMemo(() => new Set(directorsList.map((d) => d.person_id)), [directorsList])
-  const gabeIds = useMemo(() => new Set(gabeMovies.map((m) => m.tmdb_id)), [gabeMovies])
   const notInterestedIds = useMemo(() => new Set(notInterested), [notInterested])
   const myListIds = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
   const watchlistIds = useMemo(() => new Set(watchlist.map((m) => m.tmdb_id)), [watchlist])
   const myListFull = myList.length >= 100
 
-  // Pre-fetch 25 pages of Discover to give ~500 unique films up front
+  // Resolve the curated Explore list against TMDB, in the exact given order.
+  // This is the entire base pool and it never shuffles or reorders.
   useEffect(() => {
     setPoolLoading(true)
-    const pages = Array.from({ length: INITIAL_PAGES }, (_, i) => i + 1)
-    Promise.all(pages.map((p) => getDiscoverMovies(DISCOVER_PARAMS, p)))
+    let cancelled = false
+    mapWithConcurrency(EXPLORE_MOVIES, 6, (title) => resolveMovieWithRetry(title))
       .then((responses) => {
+        if (cancelled) return
         const seen = new Set()
         const movies = []
-        for (const res of responses) {
-          for (const m of (res?.results ?? [])) {
-            if (gabeIds.has(m.id) || seen.has(m.id)) continue
-            seen.add(m.id)
-            movies.push(normalizePoolMovie(m))
-          }
+        for (const results of responses) {
+          const match = results?.[0]
+          if (!match || seen.has(match.id)) continue
+          seen.add(match.id)
+          movies.push(normalizePoolMovie(match))
         }
         setPoolMovies(movies)
         setPoolLoading(false)
       })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gabeIds])
+    return () => { cancelled = true }
+  }, [])
 
+  // "Load More" appends additional TMDB discover pages after the curated
+  // list, in the order TMDB returns them — never reshuffled.
   function handleLoadMore() {
     const nextPage = currentPage + 1
     setLoadingMore(true)
@@ -109,7 +134,7 @@ export default function Explore() {
         setPoolMovies((prev) => {
           const existingIds = new Set(prev.map((m) => m.tmdb_id))
           const fresh = results
-            .filter((m) => !gabeIds.has(m.id) && !existingIds.has(m.id))
+            .filter((m) => !existingIds.has(m.id))
             .map(normalizePoolMovie)
           if (fresh.length === 0) setHasMore(false)
           return [...prev, ...fresh]
@@ -119,40 +144,25 @@ export default function Explore() {
       .finally(() => setLoadingMore(false))
   }
 
-  // Stable per-film random order — assigned once per tmdb_id so cards don't
-  // reshuffle on every re-render or when "Load More" appends new films.
-  const shuffleKeysRef = useRef(new Map())
-
-  const allMovies = useMemo(() => {
-    const gabeFilms = gabeMovies.filter((m) => m.tmdb_id)
-    const combined = [...gabeFilms, ...poolMovies]
-    for (const m of combined) {
-      if (!shuffleKeysRef.current.has(m.tmdb_id)) {
-        shuffleKeysRef.current.set(m.tmdb_id, Math.random())
-      }
-    }
-    return combined
-  }, [gabeMovies, poolMovies])
-
   const genres = useMemo(() => {
     const set = new Set()
-    allMovies.forEach((m) => m.genres?.forEach((g) => set.add(g)))
+    poolMovies.forEach((m) => m.genres?.forEach((g) => set.add(g)))
     return [...set].sort()
-  }, [allMovies])
+  }, [poolMovies])
 
   const decades = useMemo(() => {
     const set = new Set()
-    allMovies.forEach((m) => {
+    poolMovies.forEach((m) => {
       const y = parseInt(m.year)
       if (y) set.add(Math.floor(y / 10) * 10)
     })
     return [...set].sort((a, b) => b - a)
-  }, [allMovies])
+  }, [poolMovies])
 
   const filtered = useMemo(() => {
     // Films you've engaged with (seen, ranked, or queued to watch) fall out
     // of Explore automatically, same as "Not Interested" dismissals.
-    let list = allMovies.filter((m) =>
+    let list = poolMovies.filter((m) =>
       !notInterestedIds.has(m.tmdb_id) &&
       !seenList.has(m.tmdb_id) &&
       !myListIds.has(m.tmdb_id) &&
@@ -166,12 +176,9 @@ export default function Explore() {
         return y && Math.floor(y / 10) * 10 === d
       })
     }
-
-    // Whole pool is shuffled together so films mix freely on every load.
-    return [...list].sort((a, b) =>
-      shuffleKeysRef.current.get(a.tmdb_id) - shuffleKeysRef.current.get(b.tmdb_id)
-    )
-  }, [allMovies, filters, seenList, myListIds, watchlistIds, notInterestedIds])
+    // No re-sort — the curated order (plus any appended "Load More" pages) is fixed.
+    return list
+  }, [poolMovies, filters, seenList, myListIds, watchlistIds, notInterestedIds])
 
   function getSignals(movie) {
     if (actorIdSet.size === 0 && directorIdSet.size === 0) return { actors: [], directors: [] }

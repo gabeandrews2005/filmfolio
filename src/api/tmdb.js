@@ -75,9 +75,15 @@ export async function getMovieRecommendations(tmdbId) {
 }
 
 export async function searchMovies(query) {
-  if (!query.trim()) return [];
-  const data = await fetchTMDB('/search/movie', { query: query.trim(), page: 1 });
-  return data?.results ?? [];
+  const trimmed = query.trim();
+  if (!trimmed) return [];
+  const key = `ff_tmdb_smovie_${trimmed.toLowerCase()}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB('/search/movie', { query: trimmed, page: 1 });
+  const results = data?.results ?? [];
+  if (results.length) setCache(key, results);
+  return results;
 }
 
 export async function searchPerson(query) {
