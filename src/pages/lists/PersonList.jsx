@@ -202,7 +202,7 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
   useEffect(() => {
     if (!isActors) return
     setShowCurtain(true)
-    const t = setTimeout(() => setShowCurtain(false), 2200)
+    const t = setTimeout(() => setShowCurtain(false), 2700)
     return () => clearTimeout(t)
   }, [isActors])
 

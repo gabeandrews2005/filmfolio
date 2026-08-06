@@ -546,6 +546,41 @@
    Directors (same component/CSS module) is completely unaffected.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── Grand stage backdrop — warm proscenium, not flat black ──────────────── */
+.themeActors {
+  position: relative;
+  background-color: #150c0a;
+  background-image:
+    radial-gradient(ellipse 900px 480px at 50% 0%, rgba(165,50,47,0.22), transparent 62%),
+    radial-gradient(ellipse 700px 400px at 50% 100%, rgba(90,58,24,0.16), transparent 65%),
+    repeating-linear-gradient(180deg, rgba(64,36,22,0.35) 0px, rgba(38,20,12,0.35) 4px, rgba(64,36,22,0.35) 8px),
+    linear-gradient(180deg, #1c100c 0%, #170c0a 45%, #20120c 100%);
+  background-attachment: fixed;
+}
+
+/* Static curtain "legs" framing the stage at either edge of the viewport */
+.themeActors::before,
+.themeActors::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 64px;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, #4a0d0d 0px, #6e1313 14px, #3d0a0a 28px, #6e1313 42px);
+  box-shadow: inset -30px 0 50px rgba(0,0,0,0.6);
+}
+
+.themeActors::before { left: 0; }
+.themeActors::after { right: 0; box-shadow: inset 30px 0 50px rgba(0,0,0,0.6); }
+
+.themeActors :global(.container) {
+  position: relative;
+  z-index: 2;
+}
+
 /* ── Curtain-rise entrance ───────────────────────────────────────────────── */
 .curtainWrap {
   position: fixed;
@@ -592,11 +627,13 @@
 }
 
 .curtainLeft {
-  animation: curtainOpenLeft 1.8s cubic-bezier(0.76, 0, 0.24, 1) 0.3s forwards;
+  transform-origin: top left;
+  animation: curtainOpenLeft 2.4s cubic-bezier(0.45, 0, 0.4, 1) 0.2s forwards;
 }
 
 .curtainRight {
-  animation: curtainOpenRight 1.8s cubic-bezier(0.76, 0, 0.24, 1) 0.3s forwards;
+  transform-origin: top right;
+  animation: curtainOpenRight 2.4s cubic-bezier(0.45, 0, 0.4, 1) 0.2s forwards;
 }
 
 .curtainLeft::after,
@@ -613,14 +650,24 @@
 .curtainLeft::after { right: 0; }
 .curtainRight::after { left: 0; }
 
+/* Cloth-like sway as the curtain is drawn — a bit of billow and settle,
+   rather than a flat mechanical slide. */
 @keyframes curtainOpenLeft {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(-100%); }
+  0%   { transform: translateX(0) skewY(0deg) scaleX(1); }
+  22%  { transform: translateX(-16%) skewY(-1.6deg) scaleX(1.015); }
+  46%  { transform: translateX(-46%) skewY(1.2deg) scaleX(1.01); }
+  70%  { transform: translateX(-78%) skewY(-0.8deg) scaleX(1.005); }
+  88%  { transform: translateX(-103%) skewY(0.5deg) scaleX(1); }
+  100% { transform: translateX(-100%) skewY(0deg) scaleX(1); }
 }
 
 @keyframes curtainOpenRight {
-  0%   { transform: translateX(0); }
-  100% { transform: translateX(100%); }
+  0%   { transform: translateX(0) skewY(0deg) scaleX(1); }
+  22%  { transform: translateX(16%) skewY(1.6deg) scaleX(1.015); }
+  46%  { transform: translateX(46%) skewY(-1.2deg) scaleX(1.01); }
+  70%  { transform: translateX(78%) skewY(0.8deg) scaleX(1.005); }
+  88%  { transform: translateX(103%) skewY(-0.5deg) scaleX(1); }
+  100% { transform: translateX(100%) skewY(0deg) scaleX(1); }
 }
 
 /* ── Playbill header ─────────────────────────────────────────────────────── */
@@ -724,19 +771,10 @@
   color: #9a9a9a;
 }
 
-/* ── Playbill photograph cards — black & white, spotlighted on hover ────── */
+/* ── Playbill photograph cards — full color, framed like a program ──────── */
 .themeActors .posterWrap {
   border: 1px solid #3a3a3a;
   background: #0a0a0a;
-}
-
-.themeActors .poster {
-  filter: grayscale(100%) contrast(1.15) brightness(0.95);
-  transition: filter 450ms ease, transform 300ms ease;
-}
-
-.themeActors .card:hover .poster {
-  filter: grayscale(0%) contrast(1.05) brightness(1);
 }
 
 .themeActors .rankBadge {
@@ -777,10 +815,6 @@
   font-family: 'Cinzel', serif;
   letter-spacing: 0.04em;
   color: #f5f0e8;
-}
-
-.themeActors .modalImage {
-  filter: grayscale(100%) contrast(1.1);
 }
 
 .themeActors .modalBio {
