@@ -339,30 +339,7 @@ async function discoverByKeyword(keywordId, page) {
 }
 
 const PERSON_TOP_COUNT = 8;
-const PERSON_DISCOVER_PAGES = 2;
-
-// Same rating-first, popularity-second philosophy as discoverByKeyword —
-// this is an opt-in filter, so it's fine for it to reach into a favorite
-// actor/director's more obscure work rather than just their biggest hits.
-async function discoverByCast(personId, page) {
-  const data = await fetchTMDB('/discover/movie', {
-    with_cast: String(personId),
-    'vote_count.gte': 50,
-    sort_by: 'vote_average.desc',
-    page,
-  });
-  return data?.results ?? [];
-}
-
-async function discoverByCrew(personId, page) {
-  const data = await fetchTMDB('/discover/movie', {
-    with_crew: String(personId),
-    'vote_count.gte': 50,
-    sort_by: 'vote_average.desc',
-    page,
-  });
-  return data?.results ?? [];
-}
+const PERSON_CREDIT_MIN_VOTES = 5;
 
 // A person's list position becomes their weight the same way film rank
 // does for themes: #1 is worth the list's own max slots, #2 one less, etc.
@@ -383,13 +360,15 @@ function buildPersonScores(list, max) {
 // contributes 99, ... rank 100 contributes 1 — then discovers and ranks new
 // films by how much they overlap with that weighted profile.
 //
-// `personFilters` is the opt-in actor/director layer: when enabled, films
-// starring/directed by people on the user's ranked Actors/Directors lists
-// get discovered as their own candidates (so a film can surface purely on
-// a favorite person even with a thin thematic match) and score a rank-
-// weighted bonus on top of their theme score — so among several films with
-// the same favorite actor, the one that also fits the taste profile still
-// wins out.
+// `personFilters` is the opt-in actor/director layer. When enabled it
+// doesn't just add a bonus on top of the usual keyword-discovered pool —
+// it replaces candidate sourcing entirely with the actual filmographies of
+// the user's top-ranked actors/directors (every credit, not a popularity-
+// filtered slice), so nearly every result really does star or was made by
+// someone on the list. The same theme-scoring pass then runs over that
+// pool to pick the best-fitting films from within it, plus a rank-weighted
+// person bonus (stacking when a film matches more than one favorite
+// person) so a film that's both well-cast *and* on-theme rises to the top.
 export async function buildThemeRecommendations(userList, excludeIds, personFilters = {}) {
   const {
     actorsList = [], directorsList = [],
@@ -423,20 +402,32 @@ export async function buildThemeRecommendations(userList, excludeIds, personFilt
   const topActorIds = [...actorScores.keys()].slice(0, PERSON_TOP_COUNT);
   const topDirectorIds = [...directorScores.keys()].slice(0, PERSON_TOP_COUNT);
 
-  const pageSets = await Promise.all([
-    ...topKeywordIds.flatMap((id) =>
-      Array.from({ length: THEME_DISCOVER_PAGES_PER_KEYWORD }, (_, i) => discoverByKeyword(id, i + 1))
-    ),
-    ...topActorIds.flatMap((id) =>
-      Array.from({ length: PERSON_DISCOVER_PAGES }, (_, i) => discoverByCast(id, i + 1))
-    ),
-    ...topDirectorIds.flatMap((id) =>
-      Array.from({ length: PERSON_DISCOVER_PAGES }, (_, i) => discoverByCrew(id, i + 1))
-    ),
-  ]);
+  let rawResults;
+  if (hasPersonSignal) {
+    const filmographies = await Promise.all([
+      ...topActorIds.map((id) => getPersonMovieCredits(id).then((c) => c?.cast ?? [])),
+      ...topDirectorIds.map((id) =>
+        getPersonMovieCredits(id).then((c) => (c?.crew ?? []).filter((cr) => cr.job === 'Director'))
+      ),
+    ]);
+    // Best-regarded credits first — with a full filmography easily running
+    // past the candidate cap for a prolific person, this decides which
+    // credits are worth spending the per-candidate keyword/credits fetch on.
+    rawResults = filmographies
+      .flat()
+      .filter((m) => m.release_date && (m.vote_count ?? 0) >= PERSON_CREDIT_MIN_VOTES)
+      .sort((a, b) => (b.vote_average ?? 0) - (a.vote_average ?? 0));
+  } else {
+    const pageSets = await Promise.all(
+      topKeywordIds.flatMap((id) =>
+        Array.from({ length: THEME_DISCOVER_PAGES_PER_KEYWORD }, (_, i) => discoverByKeyword(id, i + 1))
+      )
+    );
+    rawResults = pageSets.flat();
+  }
 
   const candidates = new Map();
-  pageSets.flat().forEach((movie) => {
+  rawResults.forEach((movie) => {
     if (excludeIds.has(movie.id) || candidates.has(movie.id)) return;
     candidates.set(movie.id, {
       tmdb_id: movie.id,
