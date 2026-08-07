@@ -19,7 +19,7 @@ function loadRecFilters() {
   }
 }
 
-function RecModal({ movie, onClose, onNotInterested, onSeen }) {
+function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist }) {
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
@@ -93,6 +93,12 @@ function RecModal({ movie, onClose, onNotInterested, onSeen }) {
                 Seen It
               </button>
               <button
+                className={filmCardStyles.watchlistBtn}
+                onClick={(e) => { e.stopPropagation(); onWatchlist(movie); onClose() }}
+              >
+                + Watchlist
+              </button>
+              <button
                 className={filmCardStyles.separateListBtn}
                 onClick={(e) => { e.stopPropagation(); onNotInterested(movie.tmdb_id); onClose() }}
               >
@@ -106,7 +112,7 @@ function RecModal({ movie, onClose, onNotInterested, onSeen }) {
   )
 }
 
-function RecCard({ movie, onNotInterested, onSeen }) {
+function RecCard({ movie, onNotInterested, onSeen, onWatchlist }) {
   const [ratings, setRatings] = useState(null)
   const [loadingRatings, setLoadingRatings] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -169,6 +175,9 @@ function RecCard({ movie, onNotInterested, onSeen }) {
             <button className={styles.seenBtn} onClick={(e) => { e.stopPropagation(); onSeen(movie.tmdb_id) }}>
               Seen It
             </button>
+            <button className={styles.watchlistBtn} onClick={(e) => { e.stopPropagation(); onWatchlist(movie) }}>
+              + Watchlist
+            </button>
             <button className={styles.notBtn} onClick={(e) => { e.stopPropagation(); onNotInterested(movie.tmdb_id) }}>
               Not Interested
             </button>
@@ -182,6 +191,7 @@ function RecCard({ movie, onNotInterested, onSeen }) {
           onClose={() => setModalOpen(false)}
           onNotInterested={onNotInterested}
           onSeen={onSeen}
+          onWatchlist={onWatchlist}
         />
       )}
     </>
@@ -191,7 +201,7 @@ function RecCard({ movie, onNotInterested, onSeen }) {
 export default function Recommendations() {
   const {
     myList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
-    actorsList, directorsList,
+    actorsList, directorsList, addToWatchlist,
   } = useFilm()
   const [allRecs, setAllRecs] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
@@ -248,6 +258,11 @@ export default function Recommendations() {
   function handleSeen(tmdbId) {
     setDismissed((prev) => new Set([...prev, tmdbId]))
     toggleSeen(tmdbId)
+  }
+
+  function handleWatchlist(movie) {
+    setDismissed((prev) => new Set([...prev, movie.tmdb_id]))
+    addToWatchlist(movie)
   }
 
   if (myList.length === 0) {
@@ -330,6 +345,7 @@ export default function Recommendations() {
                 movie={movie}
                 onNotInterested={handleNotInterested}
                 onSeen={handleSeen}
+                onWatchlist={handleWatchlist}
               />
             ))}
           </div>
