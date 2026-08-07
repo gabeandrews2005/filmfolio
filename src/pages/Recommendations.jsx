@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
 import { buildThemeRecommendations, getMovieExternalIds, safeSetItem } from '../api/tmdb'
@@ -13,9 +13,9 @@ const LS_REC_FILTERS = 'ff_rec_filters'
 function loadRecFilters() {
   try {
     const saved = JSON.parse(localStorage.getItem(LS_REC_FILTERS) || '{}')
-    return { actors: !!saved.actors, directors: !!saved.directors }
+    return { actors: !!saved.actors, directors: !!saved.directors, genre: saved.genre ?? null }
   } catch {
-    return { actors: false, directors: false }
+    return { actors: false, directors: false, genre: null }
   }
 }
 
@@ -210,10 +210,28 @@ export default function Recommendations() {
   const [filtersOpen, setFiltersOpen] = useState(false)
   const [includeActors, setIncludeActors] = useState(() => loadRecFilters().actors)
   const [includeDirectors, setIncludeDirectors] = useState(() => loadRecFilters().directors)
+  const [selectedGenre, setSelectedGenre] = useState(() => loadRecFilters().genre)
 
   useEffect(() => {
-    safeSetItem(LS_REC_FILTERS, JSON.stringify({ actors: includeActors, directors: includeDirectors }))
-  }, [includeActors, includeDirectors])
+    safeSetItem(LS_REC_FILTERS, JSON.stringify({ actors: includeActors, directors: includeDirectors, genre: selectedGenre }))
+  }, [includeActors, includeDirectors, selectedGenre])
+
+  // Genres actually present on the user's Top 100 — no point offering a tab
+  // for a genre they don't have anything ranked in.
+  const availableGenres = useMemo(() => {
+    const set = new Set()
+    myList.forEach((m) => (m.genres ?? []).forEach((g) => set.add(g)))
+    return [...set].sort()
+  }, [myList])
+
+  // A genre the user had selected can disappear from the Top 100 (film
+  // removed/reordered out) — fall back to "All" rather than silently
+  // keep filtering by a genre no longer available.
+  useEffect(() => {
+    if (selectedGenre && availableGenres.length > 0 && !availableGenres.includes(selectedGenre)) {
+      setSelectedGenre(null)
+    }
+  }, [selectedGenre, availableGenres])
 
   useEffect(() => {
     if (myList.length === 0) return
@@ -233,7 +251,7 @@ export default function Recommendations() {
         ])
         const recs = await buildThemeRecommendations(myList, excludeIds, {
           actorsList, directorsList, includeActors, includeDirectors,
-        })
+        }, selectedGenre)
         if (!cancelled) setAllRecs(recs)
       } catch {
         if (!cancelled) setError('Could not load recommendations. Check your API key.')
@@ -244,7 +262,7 @@ export default function Recommendations() {
     load()
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myList, movies, includeActors, includeDirectors])
+  }, [myList, movies, includeActors, includeDirectors, selectedGenre])
 
   const visibleRecs = allRecs
     .filter((m) => !dismissed.has(m.tmdb_id))
@@ -322,10 +340,33 @@ export default function Recommendations() {
           </div>
         </div>
 
+        {availableGenres.length > 0 && (
+          <div className={styles.genreTabs}>
+            <button
+              className={`${styles.genreTab} ${!selectedGenre ? styles.genreTabActive : ''}`}
+              onClick={() => setSelectedGenre(null)}
+            >
+              All
+            </button>
+            {availableGenres.map((genre) => (
+              <button
+                key={genre}
+                className={`${styles.genreTab} ${selectedGenre === genre ? styles.genreTabActive : ''}`}
+                onClick={() => setSelectedGenre(genre)}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && (
           <div className={styles.loading}>
             <div className={styles.spinner} />
-            <p>Analyzing your taste from {myList.length} film{myList.length === 1 ? '' : 's'}…</p>
+            <p>
+              Analyzing your taste from {myList.length} film{myList.length === 1 ? '' : 's'}
+              {selectedGenre ? ` (${selectedGenre} only)` : ''}…
+            </p>
           </div>
         )}
 

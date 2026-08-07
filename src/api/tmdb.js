@@ -381,13 +381,20 @@ async function getCreditsWithRetry(tmdbId, attempt = 0) {
 // pool to pick the best-fitting films from within it, plus a rank-weighted
 // person bonus (stacking when a film matches more than one favorite
 // person) so a film that's both well-cast *and* on-theme rises to the top.
-export async function buildThemeRecommendations(userList, excludeIds, personFilters = {}) {
+//
+// `genreFilter` narrows the taste profile itself: when set, only Top 100
+// films tagged with that genre contribute their themes at all — a film's
+// rank-weight still comes from its true position in the full Top 100
+// (skipped films don't shift anyone else's weight down), just its themes
+// are excluded from the profile entirely if it doesn't match.
+export async function buildThemeRecommendations(userList, excludeIds, personFilters = {}, genreFilter = null) {
   const {
     actorsList = [], directorsList = [],
     includeActors = false, includeDirectors = false,
   } = personFilters;
   const themeScores = new Map(); // keywordId -> { name, score, occurrences, sources }
   userList.forEach((movie, i) => {
+    if (genreFilter && !movie.genres?.includes(genreFilter)) return;
     const weight = 101 - (i + 1);
     (movie.keywords ?? []).forEach((kw) => {
       const name = kw.name?.toLowerCase();

@@ -87,6 +87,40 @@
   gap: 20px;
 }
 
+/* Genre tabs — narrows which Top 100 films' themes feed the algorithm */
+.genreTabs {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 28px;
+}
+
+.genreTab {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.genreTab:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.genreTabActive {
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+  border-color: var(--accent-gold);
+}
+
 /* "Why we picked this" — Picks For You detail modal */
 .whySection {
   margin-top: 18px;
