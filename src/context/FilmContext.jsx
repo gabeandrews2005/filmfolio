@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import seedMovies from '../data/movies.json'
-import { enrichMovie } from '../api/tmdb'
+import { enrichMovie, getMovieDetails } from '../api/tmdb'
 
 const FilmContext = createContext(null)
 
@@ -123,6 +123,41 @@ export function FilmProvider({ children }) {
     enrich()
     return () => { cancelled = true }
   }, [])
+
+  // Backfill genres on myList items that don't have them — films added via
+  // My List's own search bar (rather than Explore's "+") historically didn't
+  // carry genre data, which silently broke the Horror/Comedies/Animated/
+  // Seasonal pages' "auto-derive matches from Top 100" feature for them.
+  // Runs whenever myList changes; converges once every item has a genres
+  // array (even an empty one, so lookup failures don't retry forever).
+  useEffect(() => {
+    const missing = myList.filter((m) => !m.genres && m.tmdb_id)
+    if (missing.length === 0) return
+    let cancelled = false
+    async function backfill() {
+      const results = new Array(missing.length)
+      let index = 0
+      async function run() {
+        while (index < missing.length) {
+          const current = index++
+          const details = await getMovieDetails(missing[current].tmdb_id)
+          results[current] = details?.genres?.map((g) => g.name) ?? []
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
+      if (cancelled) return
+      setMyList((prev) => {
+        const next = prev.map((m) => {
+          const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
+          return idx === -1 ? m : { ...m, genres: results[idx] }
+        })
+        saveLS(LS_MYLIST, next)
+        return next
+      })
+    }
+    backfill()
+    return () => { cancelled = true }
+  }, [myList])
 
   // ── Seen list ──────────────────────────────────────────────────────────────
   const toggleSeen = useCallback((tmdbId) => {

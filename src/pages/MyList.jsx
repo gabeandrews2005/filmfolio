@@ -7,6 +7,17 @@ import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import styles from './MyList.module.css'
 
+// TMDB's stable, documented movie genre list — search results carry
+// genre_ids, not names. Films added here need genres set so the Horror/
+// Comedies/Animated/Seasonal pages can auto-derive matches from Top 100.
+const TMDB_GENRE_MAP = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
+  878: 'Science Fiction', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War',
+  37: 'Western',
+}
+
 function SortablePoster({ movie, index, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(movie.tmdb_id),
@@ -74,6 +85,7 @@ export default function MyList() {
       overview: r.overview,
       vote_average: r.vote_average,
       director: '',
+      genres: (r.genre_ids ?? []).map((id) => TMDB_GENRE_MAP[id]).filter(Boolean),
     })
     handleClear()
   }
