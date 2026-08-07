@@ -745,13 +745,6 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
           </DragDropContext>
         )}
 
-        {/* Empty state */}
-        {!hasAnyContent && !query && (
-          <div className={styles.emptyList}>
-            <p>Search for films above to get started.</p>
-          </div>
-        )}
-
         {/* Recommended pool */}
         {recommendedPool && (
           <div className={styles.poolSection}>
