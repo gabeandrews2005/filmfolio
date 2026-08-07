@@ -190,14 +190,21 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   const [derivedExclusions, setDerivedExclusions] = useState(() => new Set())
 
   // Once separated, this list stops auto-pulling matching films from the
-  // user's Top 100 — it's a one-way switch, persisted per list type.
+  // user's Top 100 — reversible, persisted per list type.
   const [separated, setSeparated] = useState(() => localStorage.getItem(`ff_separated_${listType}`) === 'true')
   const [showSeparateModal, setShowSeparateModal] = useState(false)
+  const [showRevertModal, setShowRevertModal] = useState(false)
 
   function confirmSeparate() {
     safeSetItem(`ff_separated_${listType}`, 'true')
     setSeparated(true)
     setShowSeparateModal(false)
+  }
+
+  function confirmRevert() {
+    safeSetItem(`ff_separated_${listType}`, 'false')
+    setSeparated(false)
+    setShowRevertModal(false)
   }
 
   const theme = THEMES[listType] ?? {}
@@ -510,6 +517,25 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         />
       )}
 
+      {showRevertModal && (
+        <ConfirmModal
+          title="Revert Separation?"
+          message={
+            <>
+              This reconnects your {title} list to your Top 100 — films from your Top 100 that match
+              will start automatically showing up here again, pinned at the top, like before you
+              separated it.
+              <br /><br />
+              Nothing you've added here gets removed. If a film you manually added is also on your
+              Top 100, it'll just merge into that pinned section instead of appearing twice.
+            </>
+          }
+          confirmLabel="Revert Separation"
+          onConfirm={confirmRevert}
+          onCancel={() => setShowRevertModal(false)}
+        />
+      )}
+
       {/* Horror — persistent ambient blood scene (not a one-time entrance) */}
       {listType === 'horror' && (
         <div className={styles.bloodScene} aria-hidden="true">
@@ -696,12 +722,19 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
             <h1 className={`${styles.title} ${listType === 'horror' ? styles.titleBleeding : ''}`}>{title}</h1>
           </div>
           <div className={styles.headerActions}>
-            {!separated && (
+            {!separated ? (
               <button
                 className={styles.separateBtn}
                 onClick={() => setShowSeparateModal(true)}
               >
                 Separate from My List
+              </button>
+            ) : (
+              <button
+                className={styles.revertBtn}
+                onClick={() => setShowRevertModal(true)}
+              >
+                Revert Separation
               </button>
             )}
             {hasAnyContent && (

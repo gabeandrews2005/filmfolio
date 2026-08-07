@@ -377,6 +377,21 @@
   color: #ffffff;
 }
 
+.revertBtn {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-gold);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--accent-gold);
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.revertBtn:hover {
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+}
+
 .toggleViewBtn:hover {
   color: var(--text-primary);
   border-color: var(--text-secondary);
