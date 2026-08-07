@@ -4,7 +4,7 @@ import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, us
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
-import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
+import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER, safeSetItem } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -195,7 +195,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   const [showSeparateModal, setShowSeparateModal] = useState(false)
 
   function confirmSeparate() {
-    localStorage.setItem(`ff_separated_${listType}`, 'true')
+    safeSetItem(`ff_separated_${listType}`, 'true')
     setSeparated(true)
     setShowSeparateModal(false)
   }

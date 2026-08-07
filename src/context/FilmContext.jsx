@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import seedMovies from '../data/movies.json'
-import { enrichMovie, getMovieDetails } from '../api/tmdb'
+import { enrichMovie, getMovieDetails, safeSetItem } from '../api/tmdb'
 
 const FilmContext = createContext(null)
 
@@ -52,9 +52,7 @@ function loadLS(key, fallback) {
 }
 
 function saveLS(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch {}
+  safeSetItem(key, JSON.stringify(value))
 }
 
 function loadMyList() {

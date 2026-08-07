@@ -1,3 +1,5 @@
+import { safeSetItem } from './tmdb';
+
 const OMDB_KEY = import.meta.env.VITE_OMDB_API_KEY;
 const OMDB_BASE = 'https://www.omdbapi.com/';
 const CACHE_TTL = 24 * 60 * 60 * 1000;
@@ -18,9 +20,7 @@ function getCached(key) {
 }
 
 function setCache(key, data) {
-  try {
-    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-  } catch {}
+  safeSetItem(key, JSON.stringify({ data, ts: Date.now() }));
 }
 
 export async function getOmdbRatings(imdbId) {

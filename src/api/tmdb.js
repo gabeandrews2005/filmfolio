@@ -23,10 +23,33 @@ function getCached(key) {
   }
 }
 
-function setCache(key, data) {
+// Writes to localStorage without ever throwing — a full quota otherwise
+// surfaces as an uncaught QuotaExceededError at the call site (this app has
+// hit that in the wild: enough cached TMDB responses accumulate to fill a
+// browser's quota, which crashed an unrelated feature that happened to write
+// to localStorage next). On quota failure, clears the disposable TMDB/OMDB
+// response cache — all of it is safely re-fetchable — and retries once
+// before giving up quietly. Real user data (lists, seen, etc.) always
+// writes through this, so it's the thing worth freeing space for.
+export function safeSetItem(key, value) {
   try {
-    localStorage.setItem(key, JSON.stringify({ data, ts: Date.now() }));
-  } catch {}
+    localStorage.setItem(key, value);
+    return true;
+  } catch {
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith('ff_tmdb_') || k.startsWith('ff_omdb_'))
+        .forEach((k) => localStorage.removeItem(k));
+      localStorage.setItem(key, value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+}
+
+function setCache(key, data) {
+  safeSetItem(key, JSON.stringify({ data, ts: Date.now() }));
 }
 
 async function fetchTMDB(path, params = {}) {
