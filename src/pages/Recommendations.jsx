@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
 import { buildThemeRecommendations, getMovieExternalIds } from '../api/tmdb'
@@ -6,17 +6,9 @@ import { getOmdbRatings } from '../api/omdb'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
 
-const TIER_MUST    = { label: '🔥 Must Watch',       min: 80, color: '#c9a84c' }
-const TIER_GREAT   = { label: '⭐ Great Match',       min: 65, color: '#a09a8e' }
-const TIER_WORTH   = { label: '👍 Worth the Watch',  min: 50, color: '#8b6a3e' }
-const TIERS = [TIER_MUST, TIER_GREAT, TIER_WORTH]
+const RESULTS_CAP = 60
 
-function matchPct(score, maxScore) {
-  const base = Math.min(100, Math.round((score / Math.max(maxScore, 1)) * 100))
-  return Math.min(100, base)
-}
-
-function RecCard({ movie, matchPct: pct, tier, onNotInterested, onSeen }) {
+function RecCard({ movie, onNotInterested, onSeen }) {
   const [ratings, setRatings] = useState(null)
   const [loadingRatings, setLoadingRatings] = useState(true)
 
@@ -38,8 +30,6 @@ function RecCard({ movie, matchPct: pct, tier, onNotInterested, onSeen }) {
     return () => { cancelled = true }
   }, [movie.tmdb_id])
 
-  const tierColor = tier.color
-
   return (
     <div className={styles.card}>
       <div className={styles.cardPosterWrap}>
@@ -49,9 +39,6 @@ function RecCard({ movie, matchPct: pct, tier, onNotInterested, onSeen }) {
           className={styles.cardPoster}
           loading="lazy"
         />
-        <div className={styles.matchBadge} style={{ background: tierColor, color: '#0d0d0d' }}>
-          {pct}% Match
-        </div>
         {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
           <div className={styles.starBadge}>★</div>
         )}
@@ -120,12 +107,9 @@ export default function Recommendations() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myList, movies])
 
-  const maxScore = allRecs.length > 0 ? allRecs[0].score : 1
-
   const visibleRecs = allRecs
     .filter((m) => !dismissed.has(m.tmdb_id))
-    .map((m) => ({ ...m, pct: matchPct(m.score, maxScore) }))
-    .filter((m) => m.pct >= 50)
+    .slice(0, RESULTS_CAP)
 
   function handleNotInterested(tmdbId) {
     setDismissed((prev) => new Set([...prev, tmdbId]))
@@ -175,31 +159,18 @@ export default function Recommendations() {
           </p>
         )}
 
-        {!loading && visibleRecs.length > 0 && TIERS.map((tier) => {
-          const tierRecs = visibleRecs.filter((m) => {
-            if (tier === TIER_MUST)  return m.pct >= 80
-            if (tier === TIER_GREAT) return m.pct >= 65 && m.pct < 80
-            return m.pct >= 50 && m.pct < 65
-          })
-          if (tierRecs.length === 0) return null
-          return (
-            <section key={tier.label} className={styles.tier}>
-              <h2 className={styles.tierTitle}>{tier.label}</h2>
-              <div className={styles.grid}>
-                {tierRecs.map((movie) => (
-                  <RecCard
-                    key={movie.tmdb_id}
-                    movie={movie}
-                    matchPct={movie.pct}
-                    tier={tier}
-                    onNotInterested={handleNotInterested}
-                    onSeen={handleSeen}
-                  />
-                ))}
-              </div>
-            </section>
-          )
-        })}
+        {!loading && visibleRecs.length > 0 && (
+          <div className={styles.grid}>
+            {visibleRecs.map((movie) => (
+              <RecCard
+                key={movie.tmdb_id}
+                movie={movie}
+                onNotInterested={handleNotInterested}
+                onSeen={handleSeen}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
