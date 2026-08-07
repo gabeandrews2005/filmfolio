@@ -17,16 +17,45 @@ export default function About() {
               scrolling through five different apps.
             </p>
             <p className={styles.para}>
-              Built as a father-son project, FilmFolio blends a love of film with a passion
-              for building things from the ground up. What began as a shared weekend project
-              has grown into a full-fledged platform for tracking, rating, and discovering
-              movies — designed by people who actually use it themselves.
+              But the real origin goes back further than that. When I was 15, I started a movie
+              list on a Google Sheet — nothing fancy, just a way to keep track of what I'd
+              watched. Over the years, that spreadsheet grew. And grew. What started as a single
+              running list turned into dozens of specialty lists, categories, and rankings, until
+              it became this sprawling, slightly out-of-control document that somehow still made
+              sense to me.
             </p>
             <p className={styles.para}>
-              Whether you're logging a classic you just rewatched, building out a list of
-              everything you want to see this year, or just looking for your next favorite
-              film, FilmFolio is built to make that process simple, fast, and genuinely
-              enjoyable.
+              I started showing it to friends, and before long I had a bit of a reputation as the
+              "movie guy" — the person people came to when they wanted a recommendation. I loved
+              that. What I wanted next was for my friends to build their own lists too, even the
+              ones who weren't nearly as obsessed with film as I was. But every time I tried to
+              get someone to start one, it turned into this daunting, overwhelming task. Too many
+              categories, too much effort, not enough payoff. The thing that worked so well for
+              me wasn't working for anyone else.
+            </p>
+            <p className={styles.para}>
+              That idea sat in the back of my head for a while — until I got to college. I
+              remember sitting in my dorm room those first few months feeling confused,
+              homesick, and pretty alone. So I did what felt natural: I put myself to work. I
+              sketched out a rough plan for a website — something that could do what my
+              spreadsheet did, but simpler, more visual, and actually usable by people who didn't
+              want to build a 12-tab spreadsheet just to track their movie nights. I spent days
+              on it, then eventually made friends, started feeling more like myself, and the
+              website idea quietly got shelved.
+            </p>
+            <p className={styles.para}>
+              A couple years later, I got a call from my dad. He'd built a working prototype —
+              based on that same website plan I'd sent him years earlier and had almost
+              completely forgotten about. Seeing it again lit the fire right back up. I started
+              sending him updates and ideas, and over time the project moved fully into my hands,
+              growing into what FilmFolio is today.
+            </p>
+            <p className={styles.para}>
+              Built as a father-son project, FilmFolio blends a love of film with a passion for
+              building things from the ground up. It's designed by someone who actually uses it —
+              obsessively — and it's built to make tracking, rating, and discovering movies
+              simple, fast, and genuinely enjoyable, without needing a 15-year-old's Google Sheet
+              habit to make it work.
             </p>
             <p className={styles.para}>
               This is a project that's still growing — new features, refinements, and ideas
