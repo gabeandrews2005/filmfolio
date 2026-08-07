@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
 import seedMovies from '../data/movies.json'
-import { enrichMovie, getMovieDetails, safeSetItem } from '../api/tmdb'
+import { enrichMovie, getMovieDetails, getMovieKeywords, safeSetItem } from '../api/tmdb'
 
 const FilmContext = createContext(null)
 
@@ -159,6 +159,47 @@ export function FilmProvider({ children }) {
           const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
           if (idx === -1 || results[idx] === null) return m
           return { ...m, genres: results[idx] }
+        })
+        saveLS(LS_MYLIST, next)
+        return next
+      })
+    }
+    backfill()
+    return () => { cancelled = true }
+  }, [myList])
+
+  // Backfill TMDB keywords on myList items that don't have them — these are
+  // the "themes" the Picks For You page weights by rank to build a taste
+  // profile. Same pattern as the genres backfill above: throttled retry,
+  // leaves an item without a keywords field (instead of poisoning it with
+  // an empty array) on total failure so it's retried next pass.
+  useEffect(() => {
+    const missing = myList.filter((m) => !m.keywords && m.tmdb_id)
+    if (missing.length === 0) return
+    let cancelled = false
+    async function fetchKeywordsWithRetry(tmdbId, attempt = 0) {
+      const keywords = await getMovieKeywords(tmdbId)
+      if (keywords && keywords.length > 0) return keywords
+      if (attempt >= 2) return keywords ?? null // genuinely no keywords vs. failed fetch
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+      return fetchKeywordsWithRetry(tmdbId, attempt + 1)
+    }
+    async function backfill() {
+      const results = new Array(missing.length)
+      let index = 0
+      async function run() {
+        while (index < missing.length) {
+          const current = index++
+          results[current] = await fetchKeywordsWithRetry(missing[current].tmdb_id)
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
+      if (cancelled) return
+      setMyList((prev) => {
+        const next = prev.map((m) => {
+          const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
+          if (idx === -1 || results[idx] === null) return m
+          return { ...m, keywords: results[idx] }
         })
         saveLS(LS_MYLIST, next)
         return next

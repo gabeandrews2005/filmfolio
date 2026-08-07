@@ -88,15 +88,6 @@ export async function getMovieCredits(tmdbId) {
   return data;
 }
 
-export async function getMovieRecommendations(tmdbId) {
-  const key = `ff_tmdb_r_${tmdbId}`;
-  const cached = getCached(key);
-  if (cached) return cached;
-  const data = await fetchTMDB(`/movie/${tmdbId}/recommendations`);
-  if (data) setCache(key, data);
-  return data;
-}
-
 export async function searchMovies(query) {
   const trimmed = query.trim();
   if (!trimmed) return [];
@@ -192,12 +183,19 @@ export async function searchMoviesByGenre(query, genreId) {
   return genreId ? results.filter((r) => r.genre_ids?.includes(genreId)) : results;
 }
 
+// Returns null (not cached) on a failed fetch, distinct from a genuinely
+// empty keyword list — same convention as getMovieDetails/getMovieCredits —
+// so callers doing their own retry logic (the myList keywords backfill)
+// can tell "TMDB says this film really has no keywords" apart from "the
+// request failed, try again," instead of a failure getting silently cached
+// as a confirmed-empty result for 24h.
 export async function getMovieKeywords(tmdbId) {
   const key = `ff_tmdb_kw_${tmdbId}`;
   const cached = getCached(key);
   if (cached) return cached;
   const data = await fetchTMDB(`/movie/${tmdbId}/keywords`);
-  const keywords = data?.keywords ?? [];
+  if (!data) return null;
+  const keywords = data.keywords ?? [];
   setCache(key, keywords);
   return keywords;
 }
@@ -218,7 +216,7 @@ export async function searchHolidayMovies(query) {
   const results = (data?.results ?? []).slice(0, HOLIDAY_SEARCH_CANDIDATE_CAP);
   const keywordLists = await Promise.all(results.map((r) => getMovieKeywords(r.id)));
   return results.filter((_, i) =>
-    keywordLists[i].some((kw) => HOLIDAY_KEYWORD_TERMS.some((term) => kw.name?.toLowerCase().includes(term)))
+    (keywordLists[i] ?? []).some((kw) => HOLIDAY_KEYWORD_TERMS.some((term) => kw.name?.toLowerCase().includes(term)))
   );
 }
 
@@ -288,90 +286,85 @@ export async function enrichMovie(baseMovie) {
   };
 }
 
-export async function buildRecommendations(top10, top100) {
-  const top100Ids = new Set(top100.map((m) => m.tmdb_id));
-  const top10Ids = new Set(top10.map((m) => m.tmdb_id));
+const THEME_DISCOVER_PAGES = 4;
+const THEME_TOP_KEYWORD_COUNT = 10;
+const THEME_CANDIDATE_CONCURRENCY = 6;
 
-  const allResults = await Promise.all(
-    top10.map((m) => getMovieRecommendations(m.tmdb_id))
-  );
-
-  const scoreMap = new Map();
-  allResults.forEach((res) => {
-    res?.results?.forEach((movie) => {
-      if (top10Ids.has(movie.id) || top100Ids.has(movie.id)) return;
-      if (!scoreMap.has(movie.id)) {
-        scoreMap.set(movie.id, {
-          tmdb_id: movie.id,
-          title: movie.title,
-          year: movie.release_date?.slice(0, 4) ?? '',
-          overview: movie.overview,
-          vote_average: movie.vote_average,
-          posterUrl: getPosterUrl(movie.poster_path),
-          score: 0,
-          bonusActors: [],
-          bonusDirectors: [],
-        });
-      }
-      scoreMap.get(movie.id).score += 1;
-    });
+// Bypasses getDiscoverMovies' cache wrapper deliberately — its cache key is
+// the full params object, and the keyword set here changes every time the
+// user's Top 100 changes, so caching it would just accumulate unbounded,
+// never-reused localStorage entries (the exact class of bug that caused a
+// QuotaExceededError crash elsewhere in this app). "|"-joined with_keywords
+// is TMDB's OR — any one of these favorite themes qualifies a candidate.
+async function discoverByKeywords(keywordIds, page) {
+  const data = await fetchTMDB('/discover/movie', {
+    with_keywords: keywordIds.join('|'),
+    'vote_count.gte': 200,
+    sort_by: 'popularity.desc',
+    page,
   });
-
-  return [...scoreMap.values()].sort((a, b) => b.score - a.score);
+  return data?.results ?? [];
 }
 
-export async function buildRecommendationsEnhanced(userList, top100, actorPersonIds = [], directorPersonIds = []) {
-  const actorIdSet = new Set(actorPersonIds);
-  const directorIdSet = new Set(directorPersonIds);
-  const top100Ids = new Set(top100.map((m) => m.tmdb_id));
-  const userListIds = new Set(userList.map((m) => m.tmdb_id));
-
-  const seedList = userList.slice(0, 10);
-  const allResults = await Promise.all(
-    seedList.map((m) => getMovieRecommendations(m.tmdb_id))
-  );
-
-  const scoreMap = new Map();
-  allResults.forEach((res) => {
-    res?.results?.forEach((movie) => {
-      if (userListIds.has(movie.id) || top100Ids.has(movie.id)) return;
-      if (!scoreMap.has(movie.id)) {
-        scoreMap.set(movie.id, {
-          tmdb_id: movie.id,
-          title: movie.title,
-          year: movie.release_date?.slice(0, 4) ?? '',
-          overview: movie.overview,
-          vote_average: movie.vote_average,
-          posterUrl: getPosterUrl(movie.poster_path),
-          score: 0,
-          bonusActors: [],
-          bonusDirectors: [],
-        });
-      }
-      scoreMap.get(movie.id).score += 1;
+// Builds a per-keyword "taste profile" from the user's ranked Top 100 —
+// rank 1 contributes 100 points to each of its TMDB keywords, rank 2
+// contributes 99, ... rank 100 contributes 1 — then discovers and ranks new
+// films by how much they overlap with that weighted profile. No actor/
+// director bonus yet; that's planned as an opt-in filter in a later update.
+export async function buildThemeRecommendations(userList, excludeIds) {
+  const themeScores = new Map(); // keywordId -> { name, score }
+  userList.forEach((movie, i) => {
+    const weight = 101 - (i + 1);
+    (movie.keywords ?? []).forEach((kw) => {
+      const entry = themeScores.get(kw.id) ?? { name: kw.name, score: 0 };
+      entry.score += weight;
+      themeScores.set(kw.id, entry);
     });
   });
 
-  if (actorIdSet.size > 0 || directorIdSet.size > 0) {
-    await Promise.all(
-      [...scoreMap.values()].map(async (m) => {
-        const credits = await getMovieCredits(m.tmdb_id);
-        if (!credits) return;
-        credits.cast?.slice(0, 15).forEach((p) => {
-          if (actorIdSet.has(p.id)) {
-            m.score += 2;
-            if (!m.bonusActors.includes(p.name)) m.bonusActors.push(p.name);
-          }
-        });
-        credits.crew?.filter((p) => p.job === 'Director').forEach((p) => {
-          if (directorIdSet.has(p.id)) {
-            m.score += 2;
-            if (!m.bonusDirectors.includes(p.name)) m.bonusDirectors.push(p.name);
-          }
-        });
-      })
-    );
-  }
+  if (themeScores.size === 0) return [];
 
-  return [...scoreMap.values()].sort((a, b) => b.score - a.score);
+  const topKeywordIds = [...themeScores.entries()]
+    .sort((a, b) => b[1].score - a[1].score)
+    .slice(0, THEME_TOP_KEYWORD_COUNT)
+    .map(([id]) => id);
+
+  const pages = await Promise.all(
+    Array.from({ length: THEME_DISCOVER_PAGES }, (_, i) => discoverByKeywords(topKeywordIds, i + 1))
+  );
+
+  const candidates = new Map();
+  pages.flat().forEach((movie) => {
+    if (excludeIds.has(movie.id) || candidates.has(movie.id)) return;
+    candidates.set(movie.id, {
+      tmdb_id: movie.id,
+      title: movie.title,
+      year: movie.release_date?.slice(0, 4) ?? '',
+      overview: movie.overview,
+      vote_average: movie.vote_average,
+      posterUrl: getPosterUrl(movie.poster_path),
+      score: 0,
+      bonusActors: [],
+      bonusDirectors: [],
+    });
+  });
+
+  const candidateList = [...candidates.values()];
+  let index = 0;
+  async function run() {
+    while (index < candidateList.length) {
+      const current = index++;
+      const movie = candidateList[current];
+      const keywords = await getMovieKeywords(movie.tmdb_id);
+      (keywords ?? []).forEach((kw) => {
+        const entry = themeScores.get(kw.id);
+        if (entry) movie.score += entry.score;
+      });
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(THEME_CANDIDATE_CONCURRENCY, candidateList.length) }, run)
+  );
+
+  return candidateList.filter((m) => m.score > 0).sort((a, b) => b.score - a.score);
 }

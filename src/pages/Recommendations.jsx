@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { buildRecommendationsEnhanced, getMovieExternalIds } from '../api/tmdb'
+import { buildThemeRecommendations, getMovieExternalIds } from '../api/tmdb'
 import { getOmdbRatings } from '../api/omdb'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
@@ -85,14 +85,11 @@ function RecCard({ movie, matchPct: pct, tier, onNotInterested, onSeen }) {
 }
 
 export default function Recommendations() {
-  const { myList, movies, actorsList, directorsList, toggleSeen, addNotInterested } = useFilm()
+  const { myList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested } = useFilm()
   const [allRecs, setAllRecs] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
-
-  const actorPersonIds = actorsList.map((a) => a.person_id)
-  const directorPersonIds = directorsList.map((d) => d.person_id)
 
   useEffect(() => {
     if (myList.length === 0) return
@@ -101,9 +98,16 @@ export default function Recommendations() {
       setLoading(true)
       setError(null)
       try {
-        const recs = await buildRecommendationsEnhanced(
-          myList, movies, actorPersonIds, directorPersonIds
-        )
+        // Never worth recommending: already ranked, already on Gabe's
+        // curated Top 100, already seen/watchlisted, or dismissed before.
+        const excludeIds = new Set([
+          ...myList.map((m) => m.tmdb_id),
+          ...movies.map((m) => m.tmdb_id),
+          ...seenList,
+          ...watchlist.map((m) => m.tmdb_id),
+          ...notInterested,
+        ])
+        const recs = await buildThemeRecommendations(myList, excludeIds)
         if (!cancelled) setAllRecs(recs)
       } catch {
         if (!cancelled) setError('Could not load recommendations. Check your API key.')
@@ -159,7 +163,7 @@ export default function Recommendations() {
         {loading && (
           <div className={styles.loading}>
             <div className={styles.spinner} />
-            <p>Fetching recommendations from {Math.min(myList.length, 10)} films…</p>
+            <p>Analyzing your taste from {myList.length} film{myList.length === 1 ? '' : 's'}…</p>
           </div>
         )}
 
