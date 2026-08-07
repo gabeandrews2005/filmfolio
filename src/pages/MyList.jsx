@@ -7,7 +7,7 @@ import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import styles from './MyList.module.css'
 
-function SortablePoster({ movie, index }) {
+function SortablePoster({ movie, index, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(movie.tmdb_id),
   })
@@ -26,12 +26,17 @@ function SortablePoster({ movie, index }) {
       className={`${styles.gridItem} ${isDragging ? styles.gridDragging : ''}`}
     >
       <FilmCard movie={movie} rankBadge={index + 1} showAddToList={false} />
+      <button
+        className={styles.removeOverlay}
+        onClick={(e) => { e.stopPropagation(); onRemove() }}
+        aria-label={`Remove ${movie.title} from My List`}
+      >×</button>
     </div>
   )
 }
 
 export default function MyList() {
-  const { myList, addToList, reorderList } = useFilm()
+  const { myList, addToList, removeFromList, reorderList } = useFilm()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -185,7 +190,12 @@ export default function MyList() {
             <SortableContext items={myList.map((m) => String(m.tmdb_id))} strategy={rectSortingStrategy}>
               <div className={styles.posterGrid}>
                 {myList.map((movie, index) => (
-                  <SortablePoster key={movie.tmdb_id} movie={movie} index={index} />
+                  <SortablePoster
+                    key={movie.tmdb_id}
+                    movie={movie}
+                    index={index}
+                    onRemove={() => removeFromList('myList', movie.tmdb_id)}
+                  />
                 ))}
               </div>
             </SortableContext>
