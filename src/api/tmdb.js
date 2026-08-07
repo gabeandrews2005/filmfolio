@@ -344,15 +344,17 @@ async function discoverByKeyword(keywordId, page) {
 // films by how much they overlap with that weighted profile. No actor/
 // director bonus yet; that's planned as an opt-in filter in a later update.
 export async function buildThemeRecommendations(userList, excludeIds) {
-  const themeScores = new Map(); // keywordId -> { name, score, occurrences }
+  const themeScores = new Map(); // keywordId -> { name, score, occurrences, sources }
   userList.forEach((movie, i) => {
     const weight = 101 - (i + 1);
     (movie.keywords ?? []).forEach((kw) => {
       const name = kw.name?.toLowerCase();
       if (!name || GENERIC_KEYWORD_STOPLIST.has(name)) return;
-      const entry = themeScores.get(kw.id) ?? { name: kw.name, score: 0, occurrences: 0 };
-      entry.score += weight * repeatMultiplier(entry.occurrences);
+      const entry = themeScores.get(kw.id) ?? { name: kw.name, score: 0, occurrences: 0, sources: [] };
+      const contribution = weight * repeatMultiplier(entry.occurrences);
+      entry.score += contribution;
       entry.occurrences += 1;
+      entry.sources.push({ title: movie.title, contribution });
       themeScores.set(kw.id, entry);
     });
   });
@@ -381,6 +383,8 @@ export async function buildThemeRecommendations(userList, excludeIds) {
       vote_average: movie.vote_average,
       posterUrl: getPosterUrl(movie.poster_path),
       score: 0,
+      matchedThemes: [],
+      sourceMovies: [],
       bonusActors: [],
       bonusDirectors: [],
     });
@@ -393,10 +397,28 @@ export async function buildThemeRecommendations(userList, excludeIds) {
       const current = index++;
       const movie = candidateList[current];
       const keywords = await getMovieKeywords(movie.tmdb_id);
+      const matched = [];
       (keywords ?? []).forEach((kw) => {
         const entry = themeScores.get(kw.id);
-        if (entry) movie.score += entry.score;
+        if (!entry) return;
+        movie.score += entry.score;
+        matched.push(entry);
       });
+      matched.sort((a, b) => b.score - a.score);
+      movie.matchedThemes = matched.slice(0, 5).map((entry) => entry.name);
+      // Pull the strongest contributing Top 100 films from each matched
+      // theme (already sorted highest-contribution-first within a theme),
+      // deduped, so the modal can say what specifically sparked the pick.
+      const sourceMovies = [];
+      matched.slice(0, 3).forEach((entry) => {
+        [...entry.sources]
+          .sort((a, b) => b.contribution - a.contribution)
+          .slice(0, 2)
+          .forEach(({ title }) => {
+            if (!sourceMovies.includes(title)) sourceMovies.push(title);
+          });
+      });
+      movie.sourceMovies = sourceMovies.slice(0, 4);
     }
   }
   await Promise.all(

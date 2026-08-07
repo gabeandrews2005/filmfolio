@@ -21,6 +21,50 @@
   gap: 20px;
 }
 
+/* "Why we picked this" — Picks For You detail modal */
+.whySection {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.whyTitle {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.themeChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.themeChip {
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: rgba(201,168,76,0.12);
+  border: 1px solid rgba(201,168,76,0.35);
+  color: var(--accent-gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.whySources {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.whySources strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* Individual rec card */
 .card {
   background: var(--bg-secondary);

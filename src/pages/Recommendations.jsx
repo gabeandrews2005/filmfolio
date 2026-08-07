@@ -5,12 +5,90 @@ import { buildThemeRecommendations, getMovieExternalIds } from '../api/tmdb'
 import { getOmdbRatings } from '../api/omdb'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
+import filmCardStyles from '../components/FilmCard.module.css'
 
 const RESULTS_CAP = 60
+
+function RecModal({ movie, onClose, onNotInterested, onSeen }) {
+  useEffect(() => {
+    const handler = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  function handleBackdrop(e) {
+    if (e.target === e.currentTarget) onClose()
+  }
+
+  const hasWhy = movie.matchedThemes?.length > 0 || movie.sourceMovies?.length > 0
+
+  return (
+    <div className={filmCardStyles.modalBackdrop} onClick={handleBackdrop}>
+      <div className={filmCardStyles.modal}>
+        <button className={filmCardStyles.modalClose} onClick={onClose} aria-label="Close">×</button>
+
+        <div className={filmCardStyles.modalContent}>
+          <div className={filmCardStyles.modalPosterCol}>
+            <img src={movie.posterUrl} alt={movie.title} className={filmCardStyles.modalPoster} />
+          </div>
+
+          <div className={filmCardStyles.modalInfoCol}>
+            <h2 className={filmCardStyles.modalTitle}>{movie.title}</h2>
+
+            <div className={filmCardStyles.modalMeta}>
+              {movie.year && <span>{movie.year}</span>}
+              {movie.vote_average > 0 && (
+                <span className={filmCardStyles.modalRating}>★ {movie.vote_average.toFixed(1)}</span>
+              )}
+            </div>
+
+            {movie.overview && (
+              <p className={filmCardStyles.modalOverview}>{movie.overview}</p>
+            )}
+
+            {hasWhy && (
+              <div className={styles.whySection}>
+                <h3 className={styles.whyTitle}>Why we picked this</h3>
+                {movie.matchedThemes?.length > 0 && (
+                  <div className={styles.themeChips}>
+                    {movie.matchedThemes.map((theme) => (
+                      <span key={theme} className={styles.themeChip}>{theme}</span>
+                    ))}
+                  </div>
+                )}
+                {movie.sourceMovies?.length > 0 && (
+                  <p className={styles.whySources}>
+                    Sparked by <strong>{movie.sourceMovies.join(', ')}</strong> on your list.
+                  </p>
+                )}
+              </div>
+            )}
+
+            <div className={filmCardStyles.modalActions}>
+              <button
+                className={filmCardStyles.seenBtn}
+                onClick={(e) => { e.stopPropagation(); onSeen(movie.tmdb_id); onClose() }}
+              >
+                Seen It
+              </button>
+              <button
+                className={filmCardStyles.separateListBtn}
+                onClick={(e) => { e.stopPropagation(); onNotInterested(movie.tmdb_id); onClose() }}
+              >
+                Not Interested
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function RecCard({ movie, onNotInterested, onSeen }) {
   const [ratings, setRatings] = useState(null)
   const [loadingRatings, setLoadingRatings] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -31,43 +109,61 @@ function RecCard({ movie, onNotInterested, onSeen }) {
   }, [movie.tmdb_id])
 
   return (
-    <div className={styles.card}>
-      <div className={styles.cardPosterWrap}>
-        <img
-          src={movie.posterUrl}
-          alt={movie.title}
-          className={styles.cardPoster}
-          loading="lazy"
-        />
-        {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
-          <div className={styles.starBadge}>★</div>
-        )}
-      </div>
-      <div className={styles.cardBody}>
-        <h3 className={styles.cardTitle}>{movie.title}</h3>
-        <p className={styles.cardYear}>{movie.year}</p>
-        {!loadingRatings && (
-          <RatingDisplay
-            rtScore={ratings?.rtScore}
-            imdbRating={ratings?.imdbRating}
-            tmdbScore={movie.vote_average}
+    <>
+      <div
+        className={styles.card}
+        onClick={() => setModalOpen(true)}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter') setModalOpen(true) }}
+        aria-label={`${movie.title} — click for details`}
+      >
+        <div className={styles.cardPosterWrap}>
+          <img
+            src={movie.posterUrl}
+            alt={movie.title}
+            className={styles.cardPoster}
+            loading="lazy"
           />
-        )}
-        {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
-          <p className={styles.bonusText}>
-            ★ {[...movie.bonusActors, ...movie.bonusDirectors].filter(Boolean).slice(0,2).join(', ')}
-          </p>
-        )}
-        <div className={styles.cardActions}>
-          <button className={styles.seenBtn} onClick={() => onSeen(movie.tmdb_id)}>
-            Seen It
-          </button>
-          <button className={styles.notBtn} onClick={() => onNotInterested(movie.tmdb_id)}>
-            Not Interested
-          </button>
+          {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+            <div className={styles.starBadge}>★</div>
+          )}
+        </div>
+        <div className={styles.cardBody}>
+          <h3 className={styles.cardTitle}>{movie.title}</h3>
+          <p className={styles.cardYear}>{movie.year}</p>
+          {!loadingRatings && (
+            <RatingDisplay
+              rtScore={ratings?.rtScore}
+              imdbRating={ratings?.imdbRating}
+              tmdbScore={movie.vote_average}
+            />
+          )}
+          {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+            <p className={styles.bonusText}>
+              ★ {[...movie.bonusActors, ...movie.bonusDirectors].filter(Boolean).slice(0,2).join(', ')}
+            </p>
+          )}
+          <div className={styles.cardActions}>
+            <button className={styles.seenBtn} onClick={(e) => { e.stopPropagation(); onSeen(movie.tmdb_id) }}>
+              Seen It
+            </button>
+            <button className={styles.notBtn} onClick={(e) => { e.stopPropagation(); onNotInterested(movie.tmdb_id) }}>
+              Not Interested
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {modalOpen && (
+        <RecModal
+          movie={movie}
+          onClose={() => setModalOpen(false)}
+          onNotInterested={onNotInterested}
+          onSeen={onSeen}
+        />
+      )}
+    </>
   )
 }
 
