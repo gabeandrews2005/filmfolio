@@ -51,12 +51,16 @@ export default function Universe() {
   }), [])
 
   // Shooting stars — long total cycle, only visibly streaking across a
-  // short window of it, staggered so they don't all fire in sync.
+  // short window of it, staggered so they don't all fire in sync. Angle is
+  // 8–172°, which (with the rotate+translateX approach in CSS) is any
+  // direction from steep down-right to steep down-left, but always with a
+  // downward component. Travel distance is in vmax so every one crosses
+  // the whole screen regardless of angle or viewport size.
   const shootingStars = useMemo(() => Array.from({ length: 6 }, (_, i) => ({
     id: i,
-    top: Math.random() * 55,
-    left: Math.random() * 55,
-    angle: 18 + Math.random() * 24,
+    top: -5 + Math.random() * 35,
+    left: Math.random() * 100,
+    angle: 8 + Math.random() * 164,
     duration: 5 + Math.random() * 6,
     delay: -(Math.random() * 16),
   })), [])

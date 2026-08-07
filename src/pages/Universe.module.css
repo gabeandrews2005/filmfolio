@@ -143,12 +143,15 @@
   transform: translateY(-50%);
 }
 
+/* translateX distances are in vmax (1vmax = 1% of the larger viewport
+   dimension) so every star fully crosses the screen — a diagonal at any
+   angle is at most ~141vmax — regardless of viewport size or angle. */
 @keyframes shootingStarFly {
   0%   { opacity: 0; transform: rotate(var(--angle, 25deg)) translateX(0); }
-  3%   { opacity: 1; }
-  18%  { opacity: 1; transform: rotate(var(--angle, 25deg)) translateX(420px); }
-  23%  { opacity: 0; transform: rotate(var(--angle, 25deg)) translateX(440px); }
-  100% { opacity: 0; transform: rotate(var(--angle, 25deg)) translateX(440px); }
+  2%   { opacity: 1; }
+  30%  { opacity: 1; transform: rotate(var(--angle, 25deg)) translateX(145vmax); }
+  34%  { opacity: 0; transform: rotate(var(--angle, 25deg)) translateX(155vmax); }
+  100% { opacity: 0; transform: rotate(var(--angle, 25deg)) translateX(155vmax); }
 }
 
 @media (prefers-reduced-motion: reduce) {
