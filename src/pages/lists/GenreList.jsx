@@ -4,7 +4,7 @@ import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, us
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
-import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER, safeSetItem } from '../../api/tmdb'
+import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER, safeSetItem, HOLIDAY_KEYWORD_TERMS } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import ConfirmModal from '../../components/ConfirmModal'
@@ -343,8 +343,21 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
   // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones.
   // These lead the combined list and carry the gold "from your Top 100" border.
   // Once separated, this stays empty — the list no longer auto-pulls anything.
+  // Seasonal has no TMDB genre to match against (GENRE_MAP.seasonal is
+  // null) — it uses the same keyword-based holiday check the search box
+  // already runs (HOLIDAY_KEYWORD_TERMS), against each film's backfilled
+  // keywords, so e.g. Love Actually on the Top 100 surfaces here as a
+  // Christmas movie instead of never being eligible at all.
   const myListSourced = useMemo(() => {
     if (separated) return []
+    if (listType === 'seasonal') {
+      return myList.filter((m) =>
+        !derivedExclusions.has(m.tmdb_id) &&
+        (m.keywords ?? []).some((kw) =>
+          HOLIDAY_KEYWORD_TERMS.some((term) => kw.name?.toLowerCase().includes(term))
+        )
+      )
+    }
     const genres = GENRE_MAP[listType]
     if (!genres) return []
     return myList

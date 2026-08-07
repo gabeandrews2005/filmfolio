@@ -122,18 +122,24 @@ export function FilmProvider({ children }) {
     return () => { cancelled = true }
   }, [])
 
-  // Backfill genres on myList items that don't have them — films added via
-  // My List's own search bar (rather than Explore's "+") historically didn't
-  // carry genre data, which silently broke the Horror/Comedies/Animated/
-  // Seasonal pages' "auto-derive matches from Top 100" feature for them.
-  // Runs whenever myList changes; converges once every item has a genres
-  // array. A failed lookup (bad network, momentary rate limit) is retried a
-  // couple times before giving up for this pass — and even then it's left
-  // without a genres field rather than poisoned with an empty one, so it
-  // gets picked up again on the next list change or page load instead of
-  // being silently stuck forever.
+  // Backfill genres + TMDB keywords together on myList items missing either
+  // — films added via My List's own search bar (rather than Explore's "+")
+  // historically didn't carry genre data, which silently broke the Horror/
+  // Comedies/Animated/Seasonal pages' "auto-derive matches from Top 100"
+  // feature for them; keywords are the "themes" Picks For You weights by
+  // rank. These used to be two separate effects, both depending on
+  // [myList] and both calling setMyList on completion — which meant
+  // whichever finished first triggered a myList change that cancelled the
+  // other one mid-flight (its in-progress fetches got discarded once
+  // resolved) and restarted it from scratch, sometimes for several rounds
+  // in a row. That could stall a freshly-added film's genres backfill long
+  // enough that it silently never showed up on its genre page. One effect,
+  // one final write, no self-cancellation. A failed lookup (bad network,
+  // momentary rate limit) is retried a couple times before giving up for
+  // this pass — and even then left without that field rather than poisoned
+  // with an empty one, so it's picked up again next pass instead of stuck.
   useEffect(() => {
-    const missing = myList.filter((m) => !m.genres && m.tmdb_id)
+    const missing = myList.filter((m) => (!m.genres || !m.keywords) && m.tmdb_id)
     if (missing.length === 0) return
     let cancelled = false
     async function fetchGenresWithRetry(tmdbId, attempt = 0) {
@@ -143,40 +149,6 @@ export function FilmProvider({ children }) {
       await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
       return fetchGenresWithRetry(tmdbId, attempt + 1)
     }
-    async function backfill() {
-      const results = new Array(missing.length)
-      let index = 0
-      async function run() {
-        while (index < missing.length) {
-          const current = index++
-          results[current] = await fetchGenresWithRetry(missing[current].tmdb_id)
-        }
-      }
-      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
-      if (cancelled) return
-      setMyList((prev) => {
-        const next = prev.map((m) => {
-          const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
-          if (idx === -1 || results[idx] === null) return m
-          return { ...m, genres: results[idx] }
-        })
-        saveLS(LS_MYLIST, next)
-        return next
-      })
-    }
-    backfill()
-    return () => { cancelled = true }
-  }, [myList])
-
-  // Backfill TMDB keywords on myList items that don't have them — these are
-  // the "themes" the Picks For You page weights by rank to build a taste
-  // profile. Same pattern as the genres backfill above: throttled retry,
-  // leaves an item without a keywords field (instead of poisoning it with
-  // an empty array) on total failure so it's retried next pass.
-  useEffect(() => {
-    const missing = myList.filter((m) => !m.keywords && m.tmdb_id)
-    if (missing.length === 0) return
-    let cancelled = false
     async function fetchKeywordsWithRetry(tmdbId, attempt = 0) {
       const keywords = await getMovieKeywords(tmdbId)
       if (keywords && keywords.length > 0) return keywords
@@ -185,21 +157,32 @@ export function FilmProvider({ children }) {
       return fetchKeywordsWithRetry(tmdbId, attempt + 1)
     }
     async function backfill() {
-      const results = new Array(missing.length)
+      const genresResults = new Map()
+      const keywordsResults = new Map()
       let index = 0
       async function run() {
         while (index < missing.length) {
-          const current = index++
-          results[current] = await fetchKeywordsWithRetry(missing[current].tmdb_id)
+          const m = missing[index++]
+          const [genres, keywords] = await Promise.all([
+            m.genres ? Promise.resolve(undefined) : fetchGenresWithRetry(m.tmdb_id),
+            m.keywords ? Promise.resolve(undefined) : fetchKeywordsWithRetry(m.tmdb_id),
+          ])
+          if (genres !== undefined) genresResults.set(m.tmdb_id, genres)
+          if (keywords !== undefined) keywordsResults.set(m.tmdb_id, keywords)
         }
       }
       await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
       if (cancelled) return
       setMyList((prev) => {
         const next = prev.map((m) => {
-          const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
-          if (idx === -1 || results[idx] === null) return m
-          return { ...m, keywords: results[idx] }
+          let patched = m
+          if (genresResults.has(m.tmdb_id) && genresResults.get(m.tmdb_id) !== null) {
+            patched = { ...patched, genres: genresResults.get(m.tmdb_id) }
+          }
+          if (keywordsResults.has(m.tmdb_id) && keywordsResults.get(m.tmdb_id) !== null) {
+            patched = { ...patched, keywords: keywordsResults.get(m.tmdb_id) }
+          }
+          return patched
         })
         saveLS(LS_MYLIST, next)
         return next

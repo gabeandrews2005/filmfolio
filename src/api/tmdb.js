@@ -204,7 +204,11 @@ export async function getMovieKeywords(tmdbId) {
 // title search and keeps only results whose keywords actually mark them as
 // holiday movies. Keyword lookups are capped and run in parallel to keep a
 // live search box responsive.
-const HOLIDAY_KEYWORD_TERMS = [
+// Exported so GenreList can run the same holiday check against a myList
+// item's already-backfilled keywords, instead of re-implementing the term
+// list — one definition of "counts as a holiday movie" for both the search
+// box and the Top 100 auto-derive.
+export const HOLIDAY_KEYWORD_TERMS = [
   'christmas', 'santa', 'xmas', 'holiday', "new year's eve", 'new year',
   'hanukkah', 'thanksgiving', 'yuletide', 'advent calendar',
 ];
