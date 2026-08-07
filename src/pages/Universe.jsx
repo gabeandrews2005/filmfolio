@@ -35,12 +35,44 @@ export default function Universe() {
     delay: -(Math.random() * 6),
   })), [])
 
+  // A denser, brighter cluster of stars scattered within the galaxy's disc,
+  // on top of the ambient field, to sell the "star-dense spiral arms" look.
+  const galaxyClusterStars = useMemo(() => Array.from({ length: 45 }, (_, i) => {
+    const angle = Math.random() * Math.PI * 2
+    const radius = Math.random() * 46
+    return {
+      id: i,
+      left: 78 + Math.cos(angle) * radius * 0.9,
+      top: 22 + Math.sin(angle) * radius * 0.45,
+      size: 1 + Math.random() * 2,
+      duration: 2 + Math.random() * 4,
+      delay: -(Math.random() * 6),
+    }
+  }), [])
+
+  // Shooting stars — long total cycle, only visibly streaking across a
+  // short window of it, staggered so they don't all fire in sync.
+  const shootingStars = useMemo(() => Array.from({ length: 6 }, (_, i) => ({
+    id: i,
+    top: Math.random() * 55,
+    left: Math.random() * 55,
+    angle: 18 + Math.random() * 24,
+    duration: 5 + Math.random() * 6,
+    delay: -(Math.random() * 16),
+  })), [])
+
   return (
     <div className={styles.page}>
       <div className={styles.galaxyScene} aria-hidden="true">
         <div className={styles.nebula1} />
         <div className={styles.nebula2} />
         <div className={styles.nebula3} />
+
+        <div className={styles.galaxy}>
+          <div className={styles.galaxyArms} />
+          <div className={styles.galaxyCore} />
+        </div>
+
         {stars.map((s) => (
           <span
             key={s.id}
@@ -50,6 +82,35 @@ export default function Universe() {
               top: `${s.top}%`,
               width: `${s.size}px`,
               height: `${s.size}px`,
+              animationDuration: `${s.duration}s`,
+              animationDelay: `${s.delay}s`,
+            }}
+          />
+        ))}
+
+        {galaxyClusterStars.map((s) => (
+          <span
+            key={`cluster-${s.id}`}
+            className={styles.star}
+            style={{
+              left: `${s.left}%`,
+              top: `${s.top}%`,
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              animationDuration: `${s.duration}s`,
+              animationDelay: `${s.delay}s`,
+            }}
+          />
+        ))}
+
+        {shootingStars.map((s) => (
+          <span
+            key={`shoot-${s.id}`}
+            className={styles.shootingStar}
+            style={{
+              top: `${s.top}%`,
+              left: `${s.left}%`,
+              '--angle': `${s.angle}deg`,
               animationDuration: `${s.duration}s`,
               animationDelay: `${s.delay}s`,
             }}
