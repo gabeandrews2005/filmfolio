@@ -129,19 +129,29 @@ export function FilmProvider({ children }) {
   // carry genre data, which silently broke the Horror/Comedies/Animated/
   // Seasonal pages' "auto-derive matches from Top 100" feature for them.
   // Runs whenever myList changes; converges once every item has a genres
-  // array (even an empty one, so lookup failures don't retry forever).
+  // array. A failed lookup (bad network, momentary rate limit) is retried a
+  // couple times before giving up for this pass — and even then it's left
+  // without a genres field rather than poisoned with an empty one, so it
+  // gets picked up again on the next list change or page load instead of
+  // being silently stuck forever.
   useEffect(() => {
     const missing = myList.filter((m) => !m.genres && m.tmdb_id)
     if (missing.length === 0) return
     let cancelled = false
+    async function fetchGenresWithRetry(tmdbId, attempt = 0) {
+      const details = await getMovieDetails(tmdbId)
+      if (details) return details.genres?.map((g) => g.name) ?? []
+      if (attempt >= 2) return null // failed — leave ungenred, retry next pass
+      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+      return fetchGenresWithRetry(tmdbId, attempt + 1)
+    }
     async function backfill() {
       const results = new Array(missing.length)
       let index = 0
       async function run() {
         while (index < missing.length) {
           const current = index++
-          const details = await getMovieDetails(missing[current].tmdb_id)
-          results[current] = details?.genres?.map((g) => g.name) ?? []
+          results[current] = await fetchGenresWithRetry(missing[current].tmdb_id)
         }
       }
       await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
@@ -149,7 +159,8 @@ export function FilmProvider({ children }) {
       setMyList((prev) => {
         const next = prev.map((m) => {
           const idx = missing.findIndex((mm) => mm.tmdb_id === m.tmdb_id)
-          return idx === -1 ? m : { ...m, genres: results[idx] }
+          if (idx === -1 || results[idx] === null) return m
+          return { ...m, genres: results[idx] }
         })
         saveLS(LS_MYLIST, next)
         return next
