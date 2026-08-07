@@ -1,7 +1,76 @@
 .page {
+  position: relative;
   padding-top: var(--nav-height);
   min-height: 100vh;
   padding-bottom: 80px;
+  background: linear-gradient(180deg, #05040c 0%, #0b0a1c 45%, #05040c 100%);
+  overflow: hidden;
+}
+
+/* Direct children sit above the fixed star field behind them. */
+.page > * {
+  position: relative;
+  z-index: 1;
+}
+
+.galaxyScene {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.nebula1,
+.nebula2,
+.nebula3 {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.55;
+}
+
+.nebula1 {
+  top: -10%;
+  left: -8%;
+  width: 55vw;
+  height: 55vw;
+  background: radial-gradient(circle, rgba(107,70,193,0.55) 0%, rgba(107,70,193,0) 70%);
+}
+
+.nebula2 {
+  bottom: -15%;
+  right: -10%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(41,98,178,0.5) 0%, rgba(41,98,178,0) 70%);
+}
+
+.nebula3 {
+  top: 35%;
+  left: 45%;
+  width: 40vw;
+  height: 40vw;
+  background: radial-gradient(circle, rgba(178,66,140,0.35) 0%, rgba(178,66,140,0) 70%);
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 0 4px 1px rgba(255,255,255,0.7);
+  animation-name: starTwinkle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.15); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .star { animation: none; opacity: 0.7; }
 }
 
 .heroSection {

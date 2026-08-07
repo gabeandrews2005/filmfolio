@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
 import UniverseSection from '../components/UniverseSection'
@@ -24,8 +25,38 @@ export default function Universe() {
 
   const hasAnything = filledSections.length > 0
 
+  // Randomized once per mount so stars don't jitter to new positions on re-render.
+  const stars = useMemo(() => Array.from({ length: 140 }, (_, i) => ({
+    id: i,
+    left: Math.random() * 100,
+    top: Math.random() * 100,
+    size: 1 + Math.random() * 2.2,
+    duration: 2 + Math.random() * 4,
+    delay: -(Math.random() * 6),
+  })), [])
+
   return (
     <div className={styles.page}>
+      <div className={styles.galaxyScene} aria-hidden="true">
+        <div className={styles.nebula1} />
+        <div className={styles.nebula2} />
+        <div className={styles.nebula3} />
+        {stars.map((s) => (
+          <span
+            key={s.id}
+            className={styles.star}
+            style={{
+              left: `${s.left}%`,
+              top: `${s.top}%`,
+              width: `${s.size}px`,
+              height: `${s.size}px`,
+              animationDuration: `${s.duration}s`,
+              animationDelay: `${s.delay}s`,
+            }}
+          />
+        ))}
+      </div>
+
       <div className={styles.heroSection}>
         <div className="container">
           <h1 className={styles.heroTitle}>My Universe</h1>
