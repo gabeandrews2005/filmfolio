@@ -43,6 +43,24 @@ export default function About() {
               on it, then eventually made friends, started feeling more like myself, and the
               website idea quietly got shelved.
             </p>
+            <p className={styles.para}>
+              A couple years later, I got a call from my dad. He'd built a working prototype —
+              based on that same website plan I'd sent him years earlier and had almost
+              completely forgotten about. Seeing it again lit the fire right back up. I started
+              sending him updates and ideas, and over time the project moved fully into my hands,
+              growing into what FilmFolio is today.
+            </p>
+            <p className={styles.para}>
+              Built as a father-son project, FilmFolio blends a love of film with a passion for
+              building things from the ground up. It's designed by someone who actually uses it —
+              obsessively — and it's built to make tracking, rating, and discovering movies
+              simple, fast, and genuinely enjoyable, without needing a 15-year-old's Google Sheet
+              habit to make it work.
+            </p>
+            <p className={styles.para}>
+              This is a project that's still growing — new features, refinements, and ideas
+              are always in the works. Thanks for checking it out.
+            </p>
 
             <div className={styles.contact}>
               <div className={styles.contactLinks}>
@@ -66,25 +84,6 @@ export default function About() {
                 </a>
               </div>
             </div>
-
-            <p className={styles.para}>
-              A couple years later, I got a call from my dad. He'd built a working prototype —
-              based on that same website plan I'd sent him years earlier and had almost
-              completely forgotten about. Seeing it again lit the fire right back up. I started
-              sending him updates and ideas, and over time the project moved fully into my hands,
-              growing into what FilmFolio is today.
-            </p>
-            <p className={styles.para}>
-              Built as a father-son project, FilmFolio blends a love of film with a passion for
-              building things from the ground up. It's designed by someone who actually uses it —
-              obsessively — and it's built to make tracking, rating, and discovering movies
-              simple, fast, and genuinely enjoyable, without needing a 15-year-old's Google Sheet
-              habit to make it work.
-            </p>
-            <p className={styles.para}>
-              This is a project that's still growing — new features, refinements, and ideas
-              are always in the works. Thanks for checking it out.
-            </p>
           </div>
         </div>
       </div>
