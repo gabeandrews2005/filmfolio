@@ -4,12 +4,26 @@ import { PLACEHOLDER_POSTER } from '../api/tmdb'
 import StarSignal from './StarSignal'
 import styles from './FilmCard.module.css'
 
+const SEPARATE_LISTS = [
+  { key: 'horrorList',   label: 'Horror',   max: 50 },
+  { key: 'comediesList', label: 'Comedies', max: 50 },
+  { key: 'animatedList', label: 'Animated', max: 50 },
+  { key: 'seasonalList', label: 'Seasonal', max: 25 },
+]
+
 function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList }) {
-  const { seenList, toggleSeen, myList, addToList, removeFromList, watchlist, addToWatchlist, removeFromWatchlist } = useFilm()
+  const {
+    seenList, toggleSeen, myList, addToList, removeFromList,
+    watchlist, addToWatchlist, removeFromWatchlist,
+    horrorList, comediesList, animatedList, seasonalList,
+  } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
   const listFull = myList.length >= 100
   const inWatchlist = watchlist.some((m) => m.tmdb_id === movie.tmdb_id)
+  const [showSeparateBar, setShowSeparateBar] = useState(false)
+
+  const separateListData = { horrorList, comediesList, animatedList, seasonalList }
 
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -31,6 +45,14 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
     e.stopPropagation()
     if (inWatchlist) removeFromWatchlist(movie.tmdb_id)
     else addToWatchlist(movie)
+  }
+
+  function handleSeparateListToggle(e, key, max) {
+    e.stopPropagation()
+    const list = separateListData[key]
+    const inThatList = list.some((m) => m.tmdb_id === movie.tmdb_id)
+    if (inThatList) removeFromList(key, movie.tmdb_id)
+    else if (list.length < max) addToList(key, movie)
   }
 
   return (
@@ -103,7 +125,35 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
               >
                 {inWatchlist ? '✓ In Watchlist' : '+ Watchlist'}
               </button>
+
+              <button
+                className={`${styles.separateListBtn} ${showSeparateBar ? styles.separateListBtnOpen : ''}`}
+                onClick={(e) => { e.stopPropagation(); setShowSeparateBar((v) => !v) }}
+              >
+                + Separate List
+              </button>
             </div>
+
+            {showSeparateBar && (
+              <div className={styles.separateListBar}>
+                {SEPARATE_LISTS.map(({ key, label, max }) => {
+                  const list = separateListData[key]
+                  const inThatList = list.some((m) => m.tmdb_id === movie.tmdb_id)
+                  const full = list.length >= max
+                  return (
+                    <button
+                      key={key}
+                      className={`${styles.separateListOption} ${inThatList ? styles.inSeparateList : ''}`}
+                      onClick={(e) => handleSeparateListToggle(e, key, max)}
+                      disabled={!inThatList && full}
+                      title={!inThatList && full ? `${label} list is full (${max}/${max})` : undefined}
+                    >
+                      {inThatList ? `✓ ${label}` : full ? `${label} Full` : `+ ${label}`}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>

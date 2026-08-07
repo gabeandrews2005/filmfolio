@@ -339,6 +339,69 @@
   border-color: var(--border);
 }
 
+.separateListBtn {
+  padding: 9px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.separateListBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.separateListBtnOpen {
+  color: var(--accent-gold);
+  border-color: rgba(201,168,76,0.4);
+  background: rgba(201,168,76,0.08);
+}
+
+.separateListBar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  animation: separateListBarIn 180ms ease;
+}
+
+@keyframes separateListBarIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.separateListOption {
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 0.78rem;
+  font-weight: 600;
+  transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition);
+}
+
+.separateListOption:hover:not(:disabled) {
+  background: rgba(201,168,76,0.1);
+}
+
+.separateListOption:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.inSeparateList {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-color: var(--border);
+}
+
 @media (max-width: 600px) {
   .modalContent {
     flex-direction: column;
