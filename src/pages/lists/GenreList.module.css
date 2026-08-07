@@ -987,6 +987,7 @@
   will-change: transform;
 }
 
+/* Pterodactyls bob in a gentle arc as they cross. */
 @keyframes flyRight {
   0%   { transform: translateX(-15vw) translateY(0) rotate(0deg); }
   50%  { transform: translateX(50vw) translateY(-30px) rotate(3deg); }
@@ -999,13 +1000,140 @@
   100% { transform: translateX(-15vw) translateY(0) rotate(2deg) scaleX(-1); }
 }
 
-.dino1 { top: 12%; font-size: 3.4rem; animation: flyRight 22s linear infinite; animation-delay: -2s; }
-.dino2 { top: 30%; font-size: 2.6rem; animation: flyLeft 28s linear infinite; animation-delay: -10s; }
-.dino3 { top: 48%; font-size: 3rem;   animation: flyRight 34s linear infinite; animation-delay: -18s; }
+/* Planes fly a dead-straight horizontal line — no bob, no tilt. The leveled
+   plane glyphs (see .planeIconBig/.planeIconSmall below) point left by
+   default, so flying left needs no mirroring and flying right does. */
+@keyframes flyRightStraight {
+  from { transform: translateX(-15vw) scaleX(-1); }
+  to   { transform: translateX(115vw) scaleX(-1); }
+}
 
-.plane1 { top: 8%;  font-size: 2.4rem; animation: flyLeft 18s linear infinite; animation-delay: -4s; }
-.plane2 { top: 22%; font-size: 2rem;   animation: flyRight 24s linear infinite; animation-delay: -14s; }
-.plane3 { top: 40%; font-size: 2.2rem; animation: flyLeft 30s linear infinite; animation-delay: -8s; }
+@keyframes flyLeftStraight {
+  from { transform: translateX(115vw); }
+  to   { transform: translateX(-15vw); }
+}
+
+.ptero1 { top: 12%; animation: flyRight 22s linear infinite; animation-delay: -2s; }
+.ptero2 { top: 30%; animation: flyLeft 28s linear infinite; animation-delay: -10s; }
+.ptero3 { top: 48%; animation: flyRight 34s linear infinite; animation-delay: -18s; }
+
+.ptero1 .pteroScale { transform: scale(1.25); }
+.ptero2 .pteroScale { transform: scale(0.95); }
+.ptero3 .pteroScale { transform: scale(1.1); }
+
+.pteroScale {
+  position: relative;
+  width: 40px;
+  height: 30px;
+}
+
+.pteroBody {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 28px;
+  height: 8px;
+  background: #35302a;
+  border-radius: 50% 50% 40% 40%;
+  transform: translate(-50%, -50%);
+}
+
+.pteroBody::before {
+  content: '';
+  position: absolute;
+  top: 1px;
+  right: -13px;
+  border-style: solid;
+  border-width: 3px 0 3px 13px;
+  border-color: transparent transparent transparent #35302a;
+}
+
+.pteroBody::after {
+  content: '';
+  position: absolute;
+  top: -9px;
+  right: -6px;
+  border-style: solid;
+  border-width: 0 3px 9px 3px;
+  border-color: transparent transparent #35302a transparent;
+  transform: rotate(25deg);
+}
+
+.pteroWing {
+  position: absolute;
+  top: 50%;
+  width: 24px;
+  height: 22px;
+  background: #4a433a;
+}
+
+.pteroWingLeft {
+  right: 50%;
+  clip-path: polygon(100% 100%, 0% 85%, 60% 0%);
+  transform-origin: 100% 90%;
+  animation: pteroFlapLeft 0.5s ease-in-out infinite;
+}
+
+.pteroWingRight {
+  left: 50%;
+  clip-path: polygon(0% 100%, 100% 85%, 40% 0%);
+  transform-origin: 0% 90%;
+  animation: pteroFlapRight 0.5s ease-in-out infinite;
+}
+
+@keyframes pteroFlapLeft {
+  0%, 100% { transform: translateY(-90%) rotate(-32deg); }
+  50%      { transform: translateY(-90%) rotate(22deg); }
+}
+
+@keyframes pteroFlapRight {
+  0%, 100% { transform: translateY(-90%) rotate(32deg); }
+  50%      { transform: translateY(-90%) rotate(-22deg); }
+}
+
+.plane1 { top: 8%;  font-size: 2.4rem; animation: flyLeftStraight 18s linear infinite; animation-delay: -4s; }
+.plane2 { top: 22%; font-size: 2rem;   animation: flyRightStraight 24s linear infinite; animation-delay: -14s; }
+.plane3 { top: 40%; font-size: 2.2rem; animation: flyLeftStraight 30s linear infinite; animation-delay: -8s; }
+
+/* Trails from the tail end — the right side of the box, since the leveled
+   glyph's nose points left (see .planeIconBig/.planeIconSmall). */
+.planeSmoke {
+  position: absolute;
+  top: 55%;
+  right: 4px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.8);
+  transform: translateY(-50%);
+  animation: planeSmokeTrail 1.1s ease-out infinite;
+}
+
+.planeSmoke:nth-child(1) { animation-delay: 0s; }
+.planeSmoke:nth-child(2) { animation-delay: 0.22s; }
+.planeSmoke:nth-child(3) { animation-delay: 0.44s; }
+
+@keyframes planeSmokeTrail {
+  0%   { opacity: 0.85; transform: translate(0, -50%) scale(0.5); }
+  100% { opacity: 0;    transform: translate(46px, -50%) scale(2); }
+}
+
+/* Both plane glyphs are drawn at a steep diagonal by default — counter-
+   rotate each to level it (nose pointing left), since the flight path (on
+   .flyer) is now a dead-straight horizontal line. Verified per-glyph since
+   ✈️ and 🛩️ aren't drawn at the same inherent angle. */
+.planeIconBig,
+.planeIconSmall {
+  display: inline-block;
+}
+
+.planeIconBig {
+  transform: rotate(-30deg);
+}
+
+.planeIconSmall {
+  transform: rotate(-125deg);
+}
 
 .volcano {
   position: fixed;

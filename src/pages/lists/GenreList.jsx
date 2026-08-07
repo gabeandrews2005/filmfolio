@@ -571,12 +571,45 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       {/* Animated page — busy, playful ambient background scene */}
       {listType === 'animated' && (
         <div className={styles.animatedScene} aria-hidden="true">
-          <span className={`${styles.flyer} ${styles.dino1}`}>🦕</span>
-          <span className={`${styles.flyer} ${styles.dino2}`}>🦖</span>
-          <span className={`${styles.flyer} ${styles.dino3}`}>🦕</span>
-          <span className={`${styles.flyer} ${styles.plane1}`}>✈️</span>
-          <span className={`${styles.flyer} ${styles.plane2}`}>🛩️</span>
-          <span className={`${styles.flyer} ${styles.plane3}`}>✈️</span>
+          <span className={`${styles.flyer} ${styles.ptero1}`}>
+            <span className={styles.pteroScale}>
+              <span className={`${styles.pteroWing} ${styles.pteroWingLeft}`} />
+              <span className={styles.pteroBody} />
+              <span className={`${styles.pteroWing} ${styles.pteroWingRight}`} />
+            </span>
+          </span>
+          <span className={`${styles.flyer} ${styles.ptero2}`}>
+            <span className={styles.pteroScale}>
+              <span className={`${styles.pteroWing} ${styles.pteroWingLeft}`} />
+              <span className={styles.pteroBody} />
+              <span className={`${styles.pteroWing} ${styles.pteroWingRight}`} />
+            </span>
+          </span>
+          <span className={`${styles.flyer} ${styles.ptero3}`}>
+            <span className={styles.pteroScale}>
+              <span className={`${styles.pteroWing} ${styles.pteroWingLeft}`} />
+              <span className={styles.pteroBody} />
+              <span className={`${styles.pteroWing} ${styles.pteroWingRight}`} />
+            </span>
+          </span>
+          <span className={`${styles.flyer} ${styles.plane1}`}>
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeIconBig}>✈️</span>
+          </span>
+          <span className={`${styles.flyer} ${styles.plane2}`}>
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeIconSmall}>🛩️</span>
+          </span>
+          <span className={`${styles.flyer} ${styles.plane3}`}>
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeSmoke} />
+            <span className={styles.planeIconBig}>✈️</span>
+          </span>
           <span className={`${styles.volcano} ${styles.volcano1}`}>🌋</span>
           <span className={`${styles.volcano} ${styles.volcano2}`}>🌋</span>
           <span className={`${styles.volcanoSmoke} ${styles.smoke1a}`}>💨</span>
