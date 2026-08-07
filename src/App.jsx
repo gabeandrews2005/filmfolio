@@ -38,19 +38,19 @@ function AppRoutes() {
         <Route path="/statistics" element={<Statistics />} />
         <Route
           path="/lists/horror"
-          element={<GenreList listType="horror" title="Horror" maxItems={50} />}
+          element={<GenreList key="horror" listType="horror" title="Horror" maxItems={50} />}
         />
         <Route
           path="/lists/comedies"
-          element={<GenreList listType="comedies" title="Comedies" maxItems={50} />}
+          element={<GenreList key="comedies" listType="comedies" title="Comedies" maxItems={50} />}
         />
         <Route
           path="/lists/animated"
-          element={<GenreList listType="animated" title="Animated" maxItems={50} />}
+          element={<GenreList key="animated" listType="animated" title="Animated" maxItems={50} />}
         />
         <Route
           path="/lists/seasonal"
-          element={<GenreList listType="seasonal" title="Seasonal" maxItems={25} />}
+          element={<GenreList key="seasonal" listType="seasonal" title="Seasonal" maxItems={25} />}
         />
         <Route
           path="/lists/actors"
