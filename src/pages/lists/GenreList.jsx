@@ -104,6 +104,17 @@ const HILL_BUMPS = {
 // Conservative max bottom-% at each band's bump center (measured empirically).
 const HILL_BAND_PEAK = { near: 20, mid: 13, far: 8 }
 
+// Comedies — whimsical speech bubbles in a banner strip at the top of the
+// page. Laid out in-flow (not fixed/absolute) so they can never end up
+// hidden behind the search bar or grid at typical viewport widths.
+const COMEDY_QUOTES = [
+  { text: "I'll have what she's having", rotate: -4 },
+  { text: "Who's on first?", rotate: 3 },
+  { text: "It's just a flesh wound", rotate: -3 },
+  { text: 'Well, that escalated quickly', rotate: 4 },
+  { text: 'Alrighty then', rotate: -2 },
+]
+
 const GENRE_TMDB_IDS = {
   horror:   27,
   comedies: 35,
@@ -574,6 +585,21 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       )}
 
       <div className="container">
+        {/* Comedies — whimsical speech bubbles, in-flow so they're always visible */}
+        {listType === 'comedies' && (
+          <div className={styles.comedyScene} aria-hidden="true">
+            {COMEDY_QUOTES.map((q, i) => (
+              <div
+                key={i}
+                className={styles.comedyBubble}
+                style={{ transform: `rotate(${q.rotate}deg)` }}
+              >
+                {q.text}
+              </div>
+            ))}
+          </div>
+        )}
+
         <div className={styles.header}>
           <div>
             <h1 className={`${styles.title} ${listType === 'horror' ? styles.titleBleeding : ''}`}>{title}</h1>
