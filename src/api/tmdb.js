@@ -158,14 +158,45 @@ export async function getPersonMovieCredits(personId) {
   return data;
 }
 
+// TMDB's /search/movie endpoint has no genre filter — it silently ignores a
+// with_genres param entirely, so this used to just be a plain text search
+// wearing a genre-filtered name. Search results do carry genre_ids though,
+// so the filtering has to happen client-side after the fact.
 export async function searchMoviesByGenre(query, genreId) {
   if (!query.trim()) return [];
-  const data = await fetchTMDB('/search/movie', {
-    query: query.trim(),
-    page: 1,
-    with_genres: genreId,
-  });
-  return data?.results ?? [];
+  const data = await fetchTMDB('/search/movie', { query: query.trim(), page: 1 });
+  const results = data?.results ?? [];
+  return genreId ? results.filter((r) => r.genre_ids?.includes(genreId)) : results;
+}
+
+export async function getMovieKeywords(tmdbId) {
+  const key = `ff_tmdb_kw_${tmdbId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/movie/${tmdbId}/keywords`);
+  const keywords = data?.keywords ?? [];
+  setCache(key, keywords);
+  return keywords;
+}
+
+// TMDB has no "holiday" genre, so "Seasonal" search instead runs a plain
+// title search and keeps only results whose keywords actually mark them as
+// holiday movies. Keyword lookups are capped and run in parallel to keep a
+// live search box responsive.
+const HOLIDAY_KEYWORD_TERMS = [
+  'christmas', 'santa', 'xmas', 'holiday', "new year's eve", 'new year',
+  'hanukkah', 'thanksgiving', 'yuletide', 'advent calendar',
+];
+const HOLIDAY_SEARCH_CANDIDATE_CAP = 15;
+
+export async function searchHolidayMovies(query) {
+  if (!query.trim()) return [];
+  const data = await fetchTMDB('/search/movie', { query: query.trim(), page: 1 });
+  const results = (data?.results ?? []).slice(0, HOLIDAY_SEARCH_CANDIDATE_CAP);
+  const keywordLists = await Promise.all(results.map((r) => getMovieKeywords(r.id)));
+  return results.filter((_, i) =>
+    keywordLists[i].some((kw) => HOLIDAY_KEYWORD_TERMS.some((term) => kw.name?.toLowerCase().includes(term)))
+  );
 }
 
 export function getPosterUrl(path) {

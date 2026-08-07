@@ -4,7 +4,7 @@ import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, us
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
-import { searchMoviesByGenre, searchMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
+import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
@@ -365,7 +365,9 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
       setSearching(true)
       const results = genreId
         ? await searchMoviesByGenre(value, genreId)
-        : await searchMovies(value)
+        : listType === 'seasonal'
+          ? await searchHolidayMovies(value)
+          : await searchMovies(value)
       setSearchResults(results.slice(0, 8))
       setSearching(false)
     }, 350)
