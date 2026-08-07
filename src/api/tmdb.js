@@ -355,6 +355,14 @@ function buildPersonScores(list, max) {
   return scores;
 }
 
+async function getCreditsWithRetry(tmdbId, attempt = 0) {
+  const credits = await getMovieCredits(tmdbId);
+  if (credits) return credits;
+  if (attempt >= 2) return null;
+  await new Promise((resolve) => setTimeout(resolve, 400 * (attempt + 1)));
+  return getCreditsWithRetry(tmdbId, attempt + 1);
+}
+
 // Builds a per-keyword "taste profile" from the user's ranked Top 100 —
 // rank 1 contributes 100 points to each of its TMDB keywords, rank 2
 // contributes 99, ... rank 100 contributes 1 — then discovers and ranks new
@@ -475,7 +483,14 @@ export async function buildThemeRecommendations(userList, excludeIds, personFilt
       movie.sourceMovies = sourceMovies.slice(0, 4);
 
       if (hasPersonSignal) {
-        const credits = await getMovieCredits(movie.tmdb_id);
+        // A film only reaches this loop because it's already confirmed to be
+        // in a favorite person's own filmography — a bare, unretried credits
+        // fetch here can transiently fail (network hiccup, rate limit) and
+        // silently drop that attribution while the film's own theme score
+        // still keeps it in the results, unbadged and unexplained. Retry
+        // before accepting a miss, and the final strict filter below still
+        // drops it rather than show it unattributed if all retries fail.
+        const credits = await getCreditsWithRetry(movie.tmdb_id);
         if (includeActors) {
           (credits?.cast ?? []).forEach((c) => {
             const entry = actorScores.get(c.id);
@@ -501,5 +516,12 @@ export async function buildThemeRecommendations(userList, excludeIds, personFilt
     Array.from({ length: Math.min(THEME_CANDIDATE_CONCURRENCY, candidateList.length) }, run)
   );
 
-  return candidateList.filter((m) => m.score > 0).sort((a, b) => b.score - a.score);
+  return candidateList
+    .filter((m) => m.score > 0)
+    // With a person filter on, this is a hard requirement, not a
+    // preference — a film that slipped in via theme score alone, with no
+    // confirmed actor/director attribution (transient fetch failure, data
+    // mismatch, whatever), gets dropped rather than shown unexplained.
+    .filter((m) => !hasPersonSignal || m.bonusActors.length > 0 || m.bonusDirectors.length > 0)
+    .sort((a, b) => b.score - a.score);
 }

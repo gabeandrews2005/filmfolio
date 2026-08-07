@@ -112,7 +112,7 @@ function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist }) {
   )
 }
 
-function RecCard({ movie, onNotInterested, onSeen, onWatchlist }) {
+function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge }) {
   const [ratings, setRatings] = useState(null)
   const [loadingRatings, setLoadingRatings] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
@@ -152,7 +152,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist }) {
             className={styles.cardPoster}
             loading="lazy"
           />
-          {(movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
+          {showStarBadge && (movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0) && (
             <div className={styles.starBadge}>★</div>
           )}
         </div>
@@ -346,6 +346,7 @@ export default function Recommendations() {
                 onNotInterested={handleNotInterested}
                 onSeen={handleSeen}
                 onWatchlist={handleWatchlist}
+                showStarBadge={!includeActors && !includeDirectors}
               />
             ))}
           </div>
