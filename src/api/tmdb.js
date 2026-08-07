@@ -286,21 +286,53 @@ export async function enrichMovie(baseMovie) {
   };
 }
 
-const THEME_DISCOVER_PAGES = 4;
-const THEME_TOP_KEYWORD_COUNT = 10;
+const THEME_TOP_KEYWORD_COUNT = 8;
+const THEME_DISCOVER_PAGES_PER_KEYWORD = 2;
+const THEME_CANDIDATE_CAP = 200;
 const THEME_CANDIDATE_CONCURRENCY = 6;
+
+// TMDB tags nearly every franchise film with the same handful of
+// production/marketing keywords ("superhero," "based on comic," "sequel,"
+// "marvel cinematic universe"...). Those describe what a film IS, not what
+// it's ABOUT, so a user with even a handful of franchise films gets that
+// franchise's keywords stacking weight from every one of them and drowning
+// out everything more specific and personal. Excluded from scoring entirely.
+const GENERIC_KEYWORD_STOPLIST = new Set([
+  'aftercreditsstinger', 'duringcreditsstinger', 'post-credits scene', 'mid-credits scene',
+  'based on comic', 'based on comic book', 'based on graphic novel',
+  'superhero', 'superhero team', 'supervillain', 'shared universe', 'origin story',
+  'sequel', 'prequel', 'spin off', 'reboot', 'remake', 'live action remake',
+  'based on video game', 'video game', 'based on toy', 'franchise',
+  'marvel cinematic universe', 'dc extended universe', 'dc comics', 'marvel comics',
+  'imax', '3d', 'cgi', 'blockbuster',
+]);
+
+// A repeat occurrence of the same keyword across the Top 100 is still a real
+// signal (it should score higher than a one-off), but each additional hit
+// counts for less. Without this, a small cluster of similar films (e.g. 6
+// superhero movies) linearly piles their rank-weight onto a few shared
+// keywords and mathematically dominates the whole taste profile, no matter
+// how small a slice of the user's actual taste that cluster represents.
+const REPEAT_OCCURRENCE_MULTIPLIERS = [1, 0.6, 0.4, 0.25, 0.15];
+function repeatMultiplier(occurrenceIndex) {
+  return REPEAT_OCCURRENCE_MULTIPLIERS[occurrenceIndex] ?? 0.1;
+}
 
 // Bypasses getDiscoverMovies' cache wrapper deliberately — its cache key is
 // the full params object, and the keyword set here changes every time the
 // user's Top 100 changes, so caching it would just accumulate unbounded,
 // never-reused localStorage entries (the exact class of bug that caused a
-// QuotaExceededError crash elsewhere in this app). "|"-joined with_keywords
-// is TMDB's OR — any one of these favorite themes qualifies a candidate.
-async function discoverByKeywords(keywordIds, page) {
+// QuotaExceededError crash elsewhere in this app). Each theme is queried on
+// its own (not OR'd together) so a single dominant keyword can't flood out
+// every other theme's candidates, and results are sorted by rating rather
+// than popularity so this surfaces well-regarded films the user hasn't
+// necessarily heard of, not just whatever's currently a big blockbuster.
+async function discoverByKeyword(keywordId, page) {
   const data = await fetchTMDB('/discover/movie', {
-    with_keywords: keywordIds.join('|'),
-    'vote_count.gte': 200,
-    sort_by: 'popularity.desc',
+    with_keywords: String(keywordId),
+    'vote_count.gte': 100,
+    'vote_average.gte': 6.5,
+    sort_by: 'vote_average.desc',
     page,
   });
   return data?.results ?? [];
@@ -312,12 +344,15 @@ async function discoverByKeywords(keywordIds, page) {
 // films by how much they overlap with that weighted profile. No actor/
 // director bonus yet; that's planned as an opt-in filter in a later update.
 export async function buildThemeRecommendations(userList, excludeIds) {
-  const themeScores = new Map(); // keywordId -> { name, score }
+  const themeScores = new Map(); // keywordId -> { name, score, occurrences }
   userList.forEach((movie, i) => {
     const weight = 101 - (i + 1);
     (movie.keywords ?? []).forEach((kw) => {
-      const entry = themeScores.get(kw.id) ?? { name: kw.name, score: 0 };
-      entry.score += weight;
+      const name = kw.name?.toLowerCase();
+      if (!name || GENERIC_KEYWORD_STOPLIST.has(name)) return;
+      const entry = themeScores.get(kw.id) ?? { name: kw.name, score: 0, occurrences: 0 };
+      entry.score += weight * repeatMultiplier(entry.occurrences);
+      entry.occurrences += 1;
       themeScores.set(kw.id, entry);
     });
   });
@@ -329,12 +364,14 @@ export async function buildThemeRecommendations(userList, excludeIds) {
     .slice(0, THEME_TOP_KEYWORD_COUNT)
     .map(([id]) => id);
 
-  const pages = await Promise.all(
-    Array.from({ length: THEME_DISCOVER_PAGES }, (_, i) => discoverByKeywords(topKeywordIds, i + 1))
+  const pageSets = await Promise.all(
+    topKeywordIds.flatMap((id) =>
+      Array.from({ length: THEME_DISCOVER_PAGES_PER_KEYWORD }, (_, i) => discoverByKeyword(id, i + 1))
+    )
   );
 
   const candidates = new Map();
-  pages.flat().forEach((movie) => {
+  pageSets.flat().forEach((movie) => {
     if (excludeIds.has(movie.id) || candidates.has(movie.id)) return;
     candidates.set(movie.id, {
       tmdb_id: movie.id,
@@ -349,7 +386,7 @@ export async function buildThemeRecommendations(userList, excludeIds) {
     });
   });
 
-  const candidateList = [...candidates.values()];
+  const candidateList = [...candidates.values()].slice(0, THEME_CANDIDATE_CAP);
   let index = 0;
   async function run() {
     while (index < candidateList.length) {
