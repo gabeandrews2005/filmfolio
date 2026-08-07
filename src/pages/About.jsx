@@ -43,6 +43,30 @@ export default function About() {
               on it, then eventually made friends, started feeling more like myself, and the
               website idea quietly got shelved.
             </p>
+
+            <div className={styles.contact}>
+              <div className={styles.contactLinks}>
+                <a
+                  href="https://docs.google.com/spreadsheets/d/185hXbV7gVaARgN3kzKRY-XCvfLg4Bb9KyHQdBoIggQA/edit?usp=drivesdk"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.contactLink}
+                >
+                  <span className={styles.contactIcon}>📊</span>
+                  The original spreadsheet, from age 15
+                </a>
+                <a
+                  href="https://docs.google.com/document/d/1xTfp6ySHHrqdMvNzmIinvPhwCCIORsy9QK-Q8xPL0Rs/edit?tab=t.0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={styles.contactLink}
+                >
+                  <span className={styles.contactIcon}>📝</span>
+                  The original website layout, sketched in that dorm room
+                </a>
+              </div>
+            </div>
+
             <p className={styles.para}>
               A couple years later, I got a call from my dad. He'd built a working prototype —
               based on that same website plan I'd sent him years earlier and had almost
