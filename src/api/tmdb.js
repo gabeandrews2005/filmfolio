@@ -338,12 +338,63 @@ async function discoverByKeyword(keywordId, page) {
   return data?.results ?? [];
 }
 
+const PERSON_TOP_COUNT = 8;
+const PERSON_DISCOVER_PAGES = 2;
+
+// Same rating-first, popularity-second philosophy as discoverByKeyword —
+// this is an opt-in filter, so it's fine for it to reach into a favorite
+// actor/director's more obscure work rather than just their biggest hits.
+async function discoverByCast(personId, page) {
+  const data = await fetchTMDB('/discover/movie', {
+    with_cast: String(personId),
+    'vote_count.gte': 50,
+    sort_by: 'vote_average.desc',
+    page,
+  });
+  return data?.results ?? [];
+}
+
+async function discoverByCrew(personId, page) {
+  const data = await fetchTMDB('/discover/movie', {
+    with_crew: String(personId),
+    'vote_count.gte': 50,
+    sort_by: 'vote_average.desc',
+    page,
+  });
+  return data?.results ?? [];
+}
+
+// A person's list position becomes their weight the same way film rank
+// does for themes: #1 is worth the list's own max slots, #2 one less, etc.
+// (actorsList tops out at 50, directorsList at 25 — see LIST_MAX in
+// FilmContext.jsx) — so the two scales stay proportional to how much room
+// each list actually has.
+function buildPersonScores(list, max) {
+  const scores = new Map(); // person_id -> { name, weight }
+  list.forEach((person, i) => {
+    if (!person.person_id || i >= max) return;
+    scores.set(person.person_id, { name: person.name, weight: max - i });
+  });
+  return scores;
+}
+
 // Builds a per-keyword "taste profile" from the user's ranked Top 100 —
 // rank 1 contributes 100 points to each of its TMDB keywords, rank 2
 // contributes 99, ... rank 100 contributes 1 — then discovers and ranks new
-// films by how much they overlap with that weighted profile. No actor/
-// director bonus yet; that's planned as an opt-in filter in a later update.
-export async function buildThemeRecommendations(userList, excludeIds) {
+// films by how much they overlap with that weighted profile.
+//
+// `personFilters` is the opt-in actor/director layer: when enabled, films
+// starring/directed by people on the user's ranked Actors/Directors lists
+// get discovered as their own candidates (so a film can surface purely on
+// a favorite person even with a thin thematic match) and score a rank-
+// weighted bonus on top of their theme score — so among several films with
+// the same favorite actor, the one that also fits the taste profile still
+// wins out.
+export async function buildThemeRecommendations(userList, excludeIds, personFilters = {}) {
+  const {
+    actorsList = [], directorsList = [],
+    includeActors = false, includeDirectors = false,
+  } = personFilters;
   const themeScores = new Map(); // keywordId -> { name, score, occurrences, sources }
   userList.forEach((movie, i) => {
     const weight = 101 - (i + 1);
@@ -359,18 +410,30 @@ export async function buildThemeRecommendations(userList, excludeIds) {
     });
   });
 
-  if (themeScores.size === 0) return [];
+  const actorScores = includeActors ? buildPersonScores(actorsList, 50) : new Map();
+  const directorScores = includeDirectors ? buildPersonScores(directorsList, 25) : new Map();
+  const hasPersonSignal = actorScores.size > 0 || directorScores.size > 0;
+
+  if (themeScores.size === 0 && !hasPersonSignal) return [];
 
   const topKeywordIds = [...themeScores.entries()]
     .sort((a, b) => b[1].score - a[1].score)
     .slice(0, THEME_TOP_KEYWORD_COUNT)
     .map(([id]) => id);
+  const topActorIds = [...actorScores.keys()].slice(0, PERSON_TOP_COUNT);
+  const topDirectorIds = [...directorScores.keys()].slice(0, PERSON_TOP_COUNT);
 
-  const pageSets = await Promise.all(
-    topKeywordIds.flatMap((id) =>
+  const pageSets = await Promise.all([
+    ...topKeywordIds.flatMap((id) =>
       Array.from({ length: THEME_DISCOVER_PAGES_PER_KEYWORD }, (_, i) => discoverByKeyword(id, i + 1))
-    )
-  );
+    ),
+    ...topActorIds.flatMap((id) =>
+      Array.from({ length: PERSON_DISCOVER_PAGES }, (_, i) => discoverByCast(id, i + 1))
+    ),
+    ...topDirectorIds.flatMap((id) =>
+      Array.from({ length: PERSON_DISCOVER_PAGES }, (_, i) => discoverByCrew(id, i + 1))
+    ),
+  ]);
 
   const candidates = new Map();
   pageSets.flat().forEach((movie) => {
@@ -419,6 +482,28 @@ export async function buildThemeRecommendations(userList, excludeIds) {
           });
       });
       movie.sourceMovies = sourceMovies.slice(0, 4);
+
+      if (hasPersonSignal) {
+        const credits = await getMovieCredits(movie.tmdb_id);
+        if (includeActors) {
+          (credits?.cast ?? []).forEach((c) => {
+            const entry = actorScores.get(c.id);
+            if (!entry) return;
+            movie.score += entry.weight;
+            movie.bonusActors.push(entry.name);
+          });
+        }
+        if (includeDirectors) {
+          (credits?.crew ?? [])
+            .filter((c) => c.job === 'Director')
+            .forEach((c) => {
+              const entry = directorScores.get(c.id);
+              if (!entry) return;
+              movie.score += entry.weight;
+              movie.bonusDirectors.push(entry.name);
+            });
+        }
+      }
     }
   }
   await Promise.all(

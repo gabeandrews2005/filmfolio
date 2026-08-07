@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { buildThemeRecommendations, getMovieExternalIds } from '../api/tmdb'
+import { buildThemeRecommendations, getMovieExternalIds, safeSetItem } from '../api/tmdb'
 import { getOmdbRatings } from '../api/omdb'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
 import filmCardStyles from '../components/FilmCard.module.css'
 
 const RESULTS_CAP = 60
+const LS_REC_FILTERS = 'ff_rec_filters'
+
+function loadRecFilters() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(LS_REC_FILTERS) || '{}')
+    return { actors: !!saved.actors, directors: !!saved.directors }
+  } catch {
+    return { actors: false, directors: false }
+  }
+}
 
 function RecModal({ movie, onClose, onNotInterested, onSeen }) {
   useEffect(() => {
@@ -20,7 +30,8 @@ function RecModal({ movie, onClose, onNotInterested, onSeen }) {
     if (e.target === e.currentTarget) onClose()
   }
 
-  const hasWhy = movie.matchedThemes?.length > 0 || movie.sourceMovies?.length > 0
+  const hasPersonMatch = movie.bonusActors?.length > 0 || movie.bonusDirectors?.length > 0
+  const hasWhy = movie.matchedThemes?.length > 0 || movie.sourceMovies?.length > 0 || hasPersonMatch
 
   return (
     <div className={filmCardStyles.modalBackdrop} onClick={handleBackdrop}>
@@ -59,6 +70,16 @@ function RecModal({ movie, onClose, onNotInterested, onSeen }) {
                 {movie.sourceMovies?.length > 0 && (
                   <p className={styles.whySources}>
                     Sparked by <strong>{movie.sourceMovies.join(', ')}</strong> on your list.
+                  </p>
+                )}
+                {movie.bonusActors?.length > 0 && (
+                  <p className={styles.whySources}>
+                    ★ Stars <strong>{movie.bonusActors.join(', ')}</strong> from your Actors list.
+                  </p>
+                )}
+                {movie.bonusDirectors?.length > 0 && (
+                  <p className={styles.whySources}>
+                    ★ Directed by <strong>{movie.bonusDirectors.join(', ')}</strong>, on your Directors list.
                   </p>
                 )}
               </div>
@@ -168,11 +189,21 @@ function RecCard({ movie, onNotInterested, onSeen }) {
 }
 
 export default function Recommendations() {
-  const { myList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested } = useFilm()
+  const {
+    myList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
+    actorsList, directorsList,
+  } = useFilm()
   const [allRecs, setAllRecs] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [includeActors, setIncludeActors] = useState(() => loadRecFilters().actors)
+  const [includeDirectors, setIncludeDirectors] = useState(() => loadRecFilters().directors)
+
+  useEffect(() => {
+    safeSetItem(LS_REC_FILTERS, JSON.stringify({ actors: includeActors, directors: includeDirectors }))
+  }, [includeActors, includeDirectors])
 
   useEffect(() => {
     if (myList.length === 0) return
@@ -190,7 +221,9 @@ export default function Recommendations() {
           ...watchlist.map((m) => m.tmdb_id),
           ...notInterested,
         ])
-        const recs = await buildThemeRecommendations(myList, excludeIds)
+        const recs = await buildThemeRecommendations(myList, excludeIds, {
+          actorsList, directorsList, includeActors, includeDirectors,
+        })
         if (!cancelled) setAllRecs(recs)
       } catch {
         if (!cancelled) setError('Could not load recommendations. Check your API key.')
@@ -201,7 +234,7 @@ export default function Recommendations() {
     load()
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myList, movies])
+  }, [myList, movies, includeActors, includeDirectors])
 
   const visibleRecs = allRecs
     .filter((m) => !dismissed.has(m.tmdb_id))
@@ -238,6 +271,40 @@ export default function Recommendations() {
       <div className="container">
         <div className={styles.header}>
           <h1 className={styles.title}>Picks For You</h1>
+          <div className={styles.filterBar}>
+            <button
+              className={`${styles.filterBtn} ${filtersOpen ? styles.filterBtnOpen : ''}`}
+              onClick={() => setFiltersOpen((v) => !v)}
+            >
+              Filters
+              {(includeActors || includeDirectors) &&
+                ` (${[includeActors, includeDirectors].filter(Boolean).length})`}
+            </button>
+            {filtersOpen && (
+              <div className={styles.filterPanel}>
+                <button
+                  className={`${styles.filterOption} ${includeActors ? styles.filterOptionActive : ''}`}
+                  onClick={() => setIncludeActors((v) => !v)}
+                  disabled={actorsList.length === 0}
+                  title={actorsList.length === 0
+                    ? 'Add actors to your list first'
+                    : 'Boost films starring your favorite actors'}
+                >
+                  {includeActors ? '✓ Actors' : '+ Actors'}
+                </button>
+                <button
+                  className={`${styles.filterOption} ${includeDirectors ? styles.filterOptionActive : ''}`}
+                  onClick={() => setIncludeDirectors((v) => !v)}
+                  disabled={directorsList.length === 0}
+                  title={directorsList.length === 0
+                    ? 'Add directors to your list first'
+                    : 'Boost films from your favorite directors'}
+                >
+                  {includeDirectors ? '✓ Directors' : '+ Directors'}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {loading && (
