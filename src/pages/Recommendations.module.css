@@ -20,6 +20,11 @@
   margin-top: 16px;
 }
 
+.filterRow {
+  display: flex;
+  gap: 10px;
+}
+
 .filterBtn {
   padding: 8px 16px;
   border-radius: 6px;
@@ -40,6 +45,27 @@
   color: var(--accent-gold);
   border-color: rgba(201,168,76,0.4);
   background: rgba(201,168,76,0.08);
+}
+
+.refreshBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  transition: color var(--transition), border-color var(--transition), background var(--transition);
+}
+
+.refreshBtn:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--text-secondary);
+}
+
+.refreshBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .filterPanel {

@@ -205,6 +205,7 @@ export default function Recommendations() {
   } = useFilm()
   const [allRecs, setAllRecs] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
+  const [batchOffset, setBatchOffset] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -252,7 +253,10 @@ export default function Recommendations() {
         const recs = await buildThemeRecommendations(myList, excludeIds, {
           actorsList, directorsList, includeActors, includeDirectors,
         }, selectedGenre)
-        if (!cancelled) setAllRecs(recs)
+        if (!cancelled) {
+          setAllRecs(recs)
+          setBatchOffset(0)
+        }
       } catch {
         if (!cancelled) setError('Could not load recommendations. Check your API key.')
       } finally {
@@ -264,9 +268,21 @@ export default function Recommendations() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myList, movies, includeActors, includeDirectors, selectedGenre])
 
-  const visibleRecs = allRecs
-    .filter((m) => !dismissed.has(m.tmdb_id))
-    .slice(0, RESULTS_CAP)
+  const remainingRecs = allRecs.filter((m) => !dismissed.has(m.tmdb_id))
+  const visibleRecs = remainingRecs.slice(batchOffset, batchOffset + RESULTS_CAP)
+  const hasMoreBatches = remainingRecs.length > RESULTS_CAP
+
+  // Steps forward into the next unseen slice of the already-scored pool
+  // (there's usually well over 60 candidates scored, just not all shown at
+  // once) rather than re-running the algorithm — which is deterministic
+  // and would hand back the exact same top 60. Wraps back to the start
+  // once the pool runs out.
+  function handleRefresh() {
+    setBatchOffset((prev) => {
+      const next = prev + RESULTS_CAP
+      return next >= remainingRecs.length ? 0 : next
+    })
+  }
 
   function handleNotInterested(tmdbId) {
     setDismissed((prev) => new Set([...prev, tmdbId]))
@@ -305,14 +321,24 @@ export default function Recommendations() {
         <div className={styles.header}>
           <h1 className={styles.title}>Picks For You</h1>
           <div className={styles.filterBar}>
-            <button
-              className={`${styles.filterBtn} ${filtersOpen ? styles.filterBtnOpen : ''}`}
-              onClick={() => setFiltersOpen((v) => !v)}
-            >
-              Filters
-              {(includeActors || includeDirectors) &&
-                ` (${[includeActors, includeDirectors].filter(Boolean).length})`}
-            </button>
+            <div className={styles.filterRow}>
+              <button
+                className={`${styles.filterBtn} ${filtersOpen ? styles.filterBtnOpen : ''}`}
+                onClick={() => setFiltersOpen((v) => !v)}
+              >
+                Filters
+                {(includeActors || includeDirectors) &&
+                  ` (${[includeActors, includeDirectors].filter(Boolean).length})`}
+              </button>
+              <button
+                className={styles.refreshBtn}
+                onClick={handleRefresh}
+                disabled={loading || !hasMoreBatches}
+                title={hasMoreBatches ? 'Load a new batch of recommendations' : 'No more recommendations to cycle through right now'}
+              >
+                ↻ Refresh
+              </button>
+            </div>
             {filtersOpen && (
               <div className={styles.filterPanel}>
                 <button
