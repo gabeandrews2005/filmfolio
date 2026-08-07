@@ -362,6 +362,21 @@
   transition: color var(--transition), border-color var(--transition);
 }
 
+.separateBtn {
+  padding: 8px 16px;
+  border: 1px solid var(--accent-red);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--accent-red);
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+
+.separateBtn:hover {
+  background: var(--accent-red);
+  color: #ffffff;
+}
+
 .toggleViewBtn:hover {
   color: var(--text-primary);
   border-color: var(--text-secondary);

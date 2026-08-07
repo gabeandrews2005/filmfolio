@@ -7,6 +7,7 @@ import { useFilm } from '../../context/FilmContext'
 import { searchMoviesByGenre, searchMovies, searchHolidayMovies, getMovieDetails, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
 import FilmCard from '../../components/FilmCard'
 import RankPickerModal from '../../components/RankPickerModal'
+import ConfirmModal from '../../components/ConfirmModal'
 import RECOMMENDED_ANIMATED from '../../data/recommendedAnimated.json'
 import RECOMMENDED_HORROR from '../../data/recommendedHorror.json'
 import RECOMMENDED_COMEDIES from '../../data/recommendedComedies.json'
@@ -144,7 +145,7 @@ const THEMES = {
 
 // Manually-added film in the grid — the only kind that's drag-reorderable;
 // films sourced from the user's Top 100 keep their position fixed above.
-function SortableManualCard({ movie, rank, onRemove }) {
+function SortableManualCard({ movie, rank, onRemove, inTop100 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: String(movie.tmdb_id),
   })
@@ -160,7 +161,7 @@ function SortableManualCard({ movie, rank, onRemove }) {
       style={style}
       {...attributes}
       {...listeners}
-      className={`${styles.gridItem} ${styles.manualRing} ${styles.sortableItem} ${isDragging ? styles.gridDragging : ''}`}
+      className={`${styles.gridItem} ${inTop100 ? styles.top100Ring : styles.manualRing} ${styles.sortableItem} ${isDragging ? styles.gridDragging : ''}`}
     >
       <FilmCard movie={movie} rankBadge={rank} showAddToList={false} />
       <button
@@ -187,6 +188,17 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
 
   // Per-session exclusions: tmdb_ids the user has removed from the derived section
   const [derivedExclusions, setDerivedExclusions] = useState(() => new Set())
+
+  // Once separated, this list stops auto-pulling matching films from the
+  // user's Top 100 — it's a one-way switch, persisted per list type.
+  const [separated, setSeparated] = useState(() => localStorage.getItem(`ff_separated_${listType}`) === 'true')
+  const [showSeparateModal, setShowSeparateModal] = useState(false)
+
+  function confirmSeparate() {
+    localStorage.setItem(`ff_separated_${listType}`, 'true')
+    setSeparated(true)
+    setShowSeparateModal(false)
+  }
 
   const theme = THEMES[listType] ?? {}
   const genreId = GENRE_TMDB_IDS[listType]
@@ -323,7 +335,9 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
 
   // Films from myList that match this genre, ordered by myList rank, excluding user-removed ones.
   // These lead the combined list and carry the gold "from your Top 100" border.
+  // Once separated, this stays empty — the list no longer auto-pulls anything.
   const myListSourced = useMemo(() => {
+    if (separated) return []
     const genres = GENRE_MAP[listType]
     if (!genres) return []
     return myList
@@ -331,12 +345,17 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
         m.genres?.some((g) => genres.includes(g)) &&
         !derivedExclusions.has(m.tmdb_id)
       )
-  }, [myList, listType, derivedExclusions])
+  }, [myList, listType, derivedExclusions, separated])
 
   const myListSourcedIds = useMemo(
     () => new Set(myListSourced.map((m) => m.tmdb_id)),
     [myListSourced]
   )
+
+  // Every tmdb_id currently on the user's Top 100, regardless of genre —
+  // used only to decide whether a manually-added film still gets the gold
+  // "also on your Top 100" ring, independent of the auto-derive/separated state.
+  const top100Ids = useMemo(() => new Set(myList.map((m) => m.tmdb_id)), [myList])
 
   // Manually added films: stored userList items not also in the derived section.
   // These follow the derived films, in the order they were added / reordered.
@@ -466,6 +485,28 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
             setRankPickerMovie(null)
           }}
           onCancel={() => setRankPickerMovie(null)}
+        />
+      )}
+
+      {showSeparateModal && (
+        <ConfirmModal
+          title="Separate from My List?"
+          message={
+            <>
+              If you'd like to separate your {title} list from your Top 100, you can do that here.
+              The films that currently show up here automatically because they're on your Top 100
+              will be removed, and it'll become a clean, independent list.
+              <br /><br />
+              This doesn't mean you can't add those same films back — you still can, and once added
+              they won't jump to the top or lock in place; they can be moved to any position like any
+              other film here. If a film you add is also on your Top 100, its gold border will still
+              show that.
+            </>
+          }
+          confirmLabel="Separate List"
+          destructive
+          onConfirm={confirmSeparate}
+          onCancel={() => setShowSeparateModal(false)}
         />
       )}
 
@@ -655,6 +696,14 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
             <h1 className={`${styles.title} ${listType === 'horror' ? styles.titleBleeding : ''}`}>{title}</h1>
           </div>
           <div className={styles.headerActions}>
+            {!separated && (
+              <button
+                className={styles.separateBtn}
+                onClick={() => setShowSeparateModal(true)}
+              >
+                Separate from My List
+              </button>
+            )}
             {hasAnyContent && (
               <button
                 className={styles.toggleViewBtn}
@@ -733,6 +782,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
                     movie={movie}
                     rank={myListSourced.length + i + 1}
                     onRemove={() => removeFromList(listKey, movie.tmdb_id)}
+                    inTop100={top100Ids.has(movie.tmdb_id)}
                   />
                 ))}
               </SortableContext>
@@ -769,7 +819,7 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
                         <li
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`${styles.listItem} ${snapshot.isDragging ? styles.dragging : ''}`}
+                          className={`${styles.listItem} ${snapshot.isDragging ? styles.dragging : ''} ${top100Ids.has(movie.tmdb_id) ? styles.top100ListItem : ''}`}
                         >
                           <span className={styles.dragHandle} {...provided.dragHandleProps}>⠿</span>
                           <span className={styles.rank}>#{myListSourced.length + i + 1}</span>
