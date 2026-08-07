@@ -596,19 +596,34 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
-            <span className={styles.planeIconBig}>✈️</span>
+            <span className={styles.planeShape}>
+              <span className={styles.planeTail} />
+              <span className={styles.planeWing} />
+              <span className={styles.planeBody} />
+              <span className={styles.planeNose} />
+            </span>
           </span>
           <span className={`${styles.flyer} ${styles.plane2}`}>
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
-            <span className={styles.planeIconSmall}>🛩️</span>
+            <span className={styles.planeShape}>
+              <span className={styles.planeTail} />
+              <span className={styles.planeWing} />
+              <span className={styles.planeBody} />
+              <span className={styles.planeNose} />
+            </span>
           </span>
           <span className={`${styles.flyer} ${styles.plane3}`}>
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
             <span className={styles.planeSmoke} />
-            <span className={styles.planeIconBig}>✈️</span>
+            <span className={styles.planeShape}>
+              <span className={styles.planeTail} />
+              <span className={styles.planeWing} />
+              <span className={styles.planeBody} />
+              <span className={styles.planeNose} />
+            </span>
           </span>
           <span className={`${styles.volcano} ${styles.volcano1}`}>🌋</span>
           <span className={`${styles.volcano} ${styles.volcano2}`}>🌋</span>

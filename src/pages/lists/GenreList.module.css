@@ -1000,17 +1000,17 @@
   100% { transform: translateX(-15vw) translateY(0) rotate(2deg) scaleX(-1); }
 }
 
-/* Planes fly a dead-straight horizontal line — no bob, no tilt. The leveled
-   plane glyphs (see .planeIconBig/.planeIconSmall below) point left by
-   default, so flying left needs no mirroring and flying right does. */
+/* Planes fly a dead-straight horizontal line — no bob, no tilt. The plane
+   shape (see .planeShape below) points right by default, so flying right
+   needs no mirroring and flying left does. */
 @keyframes flyRightStraight {
-  from { transform: translateX(-15vw) scaleX(-1); }
-  to   { transform: translateX(115vw) scaleX(-1); }
+  from { transform: translateX(-15vw); }
+  to   { transform: translateX(115vw); }
 }
 
 @keyframes flyLeftStraight {
-  from { transform: translateX(115vw); }
-  to   { transform: translateX(-15vw); }
+  from { transform: translateX(115vw) scaleX(-1); }
+  to   { transform: translateX(-15vw) scaleX(-1); }
 }
 
 .ptero1 { top: 12%; animation: flyRight 22s linear infinite; animation-delay: -2s; }
@@ -1033,7 +1033,6 @@
   left: 50%;
   width: 28px;
   height: 8px;
-  background: #35302a;
   border-radius: 50% 50% 40% 40%;
   transform: translate(-50%, -50%);
 }
@@ -1045,7 +1044,6 @@
   right: -13px;
   border-style: solid;
   border-width: 3px 0 3px 13px;
-  border-color: transparent transparent transparent #35302a;
 }
 
 .pteroBody::after {
@@ -1055,7 +1053,7 @@
   right: -6px;
   border-style: solid;
   border-width: 0 3px 9px 3px;
-  border-color: transparent transparent #35302a transparent;
+  border-color: transparent transparent currentColor transparent;
   transform: rotate(25deg);
 }
 
@@ -1064,8 +1062,23 @@
   top: 50%;
   width: 24px;
   height: 22px;
-  background: #4a433a;
 }
+
+/* Colored instead of black/near-black, one hue per pterodactyl. */
+.ptero1 .pteroBody,
+.ptero1 .pteroWing { background: #3f8f5c; }
+.ptero1 .pteroBody::before { border-color: transparent transparent transparent #3f8f5c; }
+.ptero1 .pteroBody::after { color: #2f6b45; }
+
+.ptero2 .pteroBody,
+.ptero2 .pteroWing { background: #c9713f; }
+.ptero2 .pteroBody::before { border-color: transparent transparent transparent #c9713f; }
+.ptero2 .pteroBody::after { color: #a8582c; }
+
+.ptero3 .pteroBody,
+.ptero3 .pteroWing { background: #6a5acd; }
+.ptero3 .pteroBody::before { border-color: transparent transparent transparent #6a5acd; }
+.ptero3 .pteroBody::after { color: #4d3f9e; }
 
 .pteroWingLeft {
   right: 50%;
@@ -1091,16 +1104,19 @@
   50%      { transform: translateY(-90%) rotate(-22deg); }
 }
 
-.plane1 { top: 8%;  font-size: 2.4rem; animation: flyLeftStraight 18s linear infinite; animation-delay: -4s; }
-.plane2 { top: 22%; font-size: 2rem;   animation: flyRightStraight 24s linear infinite; animation-delay: -14s; }
-.plane3 { top: 40%; font-size: 2.2rem; animation: flyLeftStraight 30s linear infinite; animation-delay: -8s; }
+.plane1 { top: 8%;  animation: flyLeftStraight 18s linear infinite; animation-delay: -4s; }
+.plane2 { top: 22%; animation: flyRightStraight 24s linear infinite; animation-delay: -14s; }
+.plane3 { top: 40%; animation: flyLeftStraight 30s linear infinite; animation-delay: -8s; }
 
-/* Trails from the tail end — the right side of the box, since the leveled
-   glyph's nose points left (see .planeIconBig/.planeIconSmall). */
+.plane2 .planeShape { transform: scale(0.85); }
+.plane3 .planeShape { transform: scale(0.92); }
+
+/* Trails from the tail end — the left side of the box, since the plane
+   shape's nose points right by default. */
 .planeSmoke {
   position: absolute;
   top: 55%;
-  right: 4px;
+  left: 0;
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -1115,25 +1131,77 @@
 
 @keyframes planeSmokeTrail {
   0%   { opacity: 0.85; transform: translate(0, -50%) scale(0.5); }
-  100% { opacity: 0;    transform: translate(46px, -50%) scale(2); }
+  100% { opacity: 0;    transform: translate(-46px, -50%) scale(2); }
 }
 
-/* Both plane glyphs are drawn at a steep diagonal by default — counter-
-   rotate each to level it (nose pointing left), since the flight path (on
-   .flyer) is now a dead-straight horizontal line. Verified per-glyph since
-   ✈️ and 🛩️ aren't drawn at the same inherent angle. */
-.planeIconBig,
-.planeIconSmall {
+/* A hand-built plane silhouette instead of the ✈️/🛩️ emoji — those glyphs
+   are drawn at a steep diagonal by default (and at a different angle per
+   platform/browser emoji font), which made "counter-rotate it level" an
+   unreliable fix. This shape is horizontal by construction, always. */
+.planeShape {
+  position: relative;
   display: inline-block;
+  width: 46px;
+  height: 24px;
 }
 
-.planeIconBig {
-  transform: rotate(-30deg);
+.planeBody {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  width: 32px;
+  height: 9px;
+  border-radius: 5px 50% 50% 5px;
+  transform: translateY(-50%);
 }
 
-.planeIconSmall {
-  transform: rotate(-125deg);
+.planeNose {
+  position: absolute;
+  top: 50%;
+  left: 34px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 4px 0 4px 9px;
+  border-color: transparent;
+  transform: translateY(-50%);
 }
+
+.planeWing {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  width: 20px;
+  height: 20px;
+  clip-path: polygon(0% 40%, 100% 5%, 100% 95%, 0% 60%);
+  transform: translateY(-50%);
+}
+
+.planeTail {
+  position: absolute;
+  top: -1px;
+  left: 3px;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 3px 9px 3px;
+  border-color: transparent;
+}
+
+.plane1 .planeBody { background: #e05252; }
+.plane1 .planeNose { border-left-color: #e05252; }
+.plane1 .planeWing { background: #b53c3c; }
+.plane1 .planeTail { border-bottom-color: #b53c3c; }
+
+.plane2 .planeBody { background: #4a90d9; }
+.plane2 .planeNose { border-left-color: #4a90d9; }
+.plane2 .planeWing { background: #3672b0; }
+.plane2 .planeTail { border-bottom-color: #3672b0; }
+
+.plane3 .planeBody { background: #e8a33d; }
+.plane3 .planeNose { border-left-color: #e8a33d; }
+.plane3 .planeWing { background: #c8842a; }
+.plane3 .planeTail { border-bottom-color: #c8842a; }
 
 .volcano {
   position: fixed;
