@@ -7,6 +7,7 @@ const FilmContext = createContext(null)
 const LS_SEEN        = 'ff_seen'
 const LS_SEEN_DATA    = 'ff_seen_data'
 const LS_WATCHLIST   = 'ff_watchlist'
+const LS_RECOMMENDATION_PICKS = 'ff_recommendation_picks'
 const LS_NOT_INT     = 'ff_not_interested'
 const LS_USER        = 'ff_user'
 const LS_MYLIST      = 'ff_top100'
@@ -195,6 +196,39 @@ export function FilmProvider({ children }) {
   // whatever happens to also live on another list right now.
   const [seenFilmsData, setSeenFilmsData] = useState(() => loadLS(LS_SEEN_DATA, {}))
   const [watchlist, setWatchlist] = useState(() => loadLS(LS_WATCHLIST, []))
+  // Permanent record of tmdb_ids ever watchlisted from Picks For You —
+  // survives the watchlist entry itself being removed (e.g. once the film
+  // graduates onto a real list), so the "FilmFolio Pick!" badge can still
+  // be computed from a film's current list membership at any point later.
+  const [recommendationPicks, setRecommendationPicks] = useState(() => new Set(loadLS(LS_RECOMMENDATION_PICKS, [])))
+
+  // A film leaving "want to watch" the moment it's actually watched or
+  // ranked — called from toggleSeen and from every movie-list add path
+  // below, not just the explicit Remove button. Declared up here (ahead of
+  // toggleSeen/addToList/insertAtRank) because useCallback's dependency
+  // array is evaluated immediately during render, not deferred like the
+  // callback body — referencing a `const` declared later in the component
+  // throws (confirmed: "Cannot access before initialization" when this was
+  // declared below its callers instead).
+  const removeFromWatchlistIfPresent = useCallback((tmdbId) => {
+    setWatchlist((prev) => {
+      if (!prev.some((m) => m.tmdb_id === tmdbId)) return prev
+      const next = prev.filter((m) => m.tmdb_id !== tmdbId)
+      saveLS(LS_WATCHLIST, next)
+      return next
+    })
+  }, [])
+
+  const markRecommendationPick = useCallback((tmdbId) => {
+    setRecommendationPicks((prev) => {
+      if (prev.has(tmdbId)) return prev
+      const next = new Set(prev)
+      next.add(tmdbId)
+      saveLS(LS_RECOMMENDATION_PICKS, [...next])
+      return next
+    })
+  }, [])
+
   const [notInterested, setNotInterested] = useState(() => loadLS(LS_NOT_INT, []))
   const [user, setUserState]      = useState(() => loadLS(LS_USER, null))
 
@@ -273,6 +307,7 @@ export function FilmProvider({ children }) {
   // doesn't have the object handy).
   const toggleSeen = useCallback((movieOrId) => {
     const tmdbId = typeof movieOrId === 'object' ? movieOrId.tmdb_id : movieOrId
+    const willBeSeen = !seenList.has(tmdbId)
     setSeenList((prev) => {
       const next = new Set(prev)
       if (next.has(tmdbId)) next.delete(tmdbId)
@@ -281,7 +316,10 @@ export function FilmProvider({ children }) {
       return next
     })
     if (typeof movieOrId === 'object') recordSeenData(movieOrId)
-  }, [recordSeenData])
+    // A film marked seen (not un-marked) no longer needs to be on the
+    // "want to watch" list.
+    if (willBeSeen) removeFromWatchlistIfPresent(tmdbId)
+  }, [recordSeenData, seenList, removeFromWatchlistIfPresent])
 
   // ── User profile ───────────────────────────────────────────────────────────
   const setUser = useCallback((userData) => {
@@ -316,9 +354,10 @@ export function FilmProvider({ children }) {
         return next
       })
       recordSeenData(item)
+      removeFromWatchlistIfPresent(item.tmdb_id)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [LIST_SETTERS, recordSeenData])
+  }, [LIST_SETTERS, recordSeenData, removeFromWatchlistIfPresent])
 
   // Inserts an item at a specific 1-based rank, shifting everything at and
   // below that rank down — including off the end if the list is already at
@@ -345,9 +384,10 @@ export function FilmProvider({ children }) {
         return next2
       })
       recordSeenData(item)
+      removeFromWatchlistIfPresent(item.tmdb_id)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [LIST_SETTERS, recordSeenData])
+  }, [LIST_SETTERS, recordSeenData, removeFromWatchlistIfPresent])
 
   const removeFromList = useCallback((listName, id) => {
     const config = LIST_SETTERS[listName]
@@ -526,6 +566,8 @@ export function FilmProvider({ children }) {
       watchlist,
       addToWatchlist,
       removeFromWatchlist,
+      recommendationPicks,
+      markRecommendationPick,
       // Not interested
       notInterested,
       addNotInterested,

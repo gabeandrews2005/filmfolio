@@ -4,17 +4,7 @@ import FilmCard from '../components/FilmCard'
 import styles from './Watchlist.module.css'
 
 export default function Watchlist() {
-  const { watchlist, myList, quickList, horrorList, comediesList, animatedList, seasonalList } = useFilm()
-
-  // A watchlist film only earns the "FilmFolio Pick!" badge once it was
-  // added from Picks For You (fromRecommendations) AND has since made its
-  // way onto one of the user's own lists — proof the algorithm's pick
-  // actually panned out, not just a recommendation sitting unused.
-  const userListPools = [myList, quickList, horrorList, comediesList, animatedList, seasonalList]
-  function isFilmFolioPick(movie) {
-    if (!movie.fromRecommendations) return false
-    return userListPools.some((list) => list.some((m) => m.tmdb_id === movie.tmdb_id))
-  }
+  const { watchlist } = useFilm()
 
   return (
     <div className={styles.page}>
@@ -34,12 +24,7 @@ export default function Watchlist() {
         ) : (
           <div className={styles.grid}>
             {watchlist.map((movie) => (
-              <FilmCard
-                key={movie.tmdb_id}
-                movie={movie}
-                showAddToList
-                filmFolioPick={isFilmFolioPick(movie)}
-              />
+              <FilmCard key={movie.tmdb_id} movie={movie} showAddToList />
             ))}
           </div>
         )}

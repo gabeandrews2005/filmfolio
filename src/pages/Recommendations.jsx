@@ -191,7 +191,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge })
 export default function Recommendations() {
   const {
     myList, quickList, savedQuickLists, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
-    actorsList, directorsList, addToWatchlist,
+    actorsList, directorsList, addToWatchlist, markRecommendationPick,
   } = useFilm()
   const [allRecs, setAllRecs] = useState([])
   const [dismissed, setDismissed] = useState(new Set())
@@ -314,10 +314,11 @@ export default function Recommendations() {
 
   function handleWatchlist(movie) {
     setDismissed((prev) => new Set([...prev, movie.tmdb_id]))
-    // Tagged so Watchlist can show a "FilmFolio Pick!" badge if this film
-    // later also lands on one of the user's own lists — a sign the
-    // algorithm's pick actually panned out.
-    addToWatchlist({ ...movie, fromRecommendations: true })
+    addToWatchlist(movie)
+    // Recorded permanently (not just on the watchlist entry) so the
+    // "FilmFolio Pick!" badge still shows once this film graduates onto a
+    // real list and its watchlist entry gets auto-removed.
+    markRecommendationPick(movie.tmdb_id)
   }
 
   if (myList.length === 0 && quickList.length === 0) {

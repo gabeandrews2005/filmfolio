@@ -211,12 +211,22 @@ export default function FilmCard({
   showAddToList = true,
   actorMatches = [],
   directorMatches = [],
-  filmFolioPick = false,
 }) {
   const [modalOpen, setModalOpen] = useState(false)
-  const { seenList } = useFilm()
+  const {
+    seenList, recommendationPicks,
+    myList, quickList, horrorList, comediesList, animatedList, seasonalList,
+  } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const hasSignal = actorMatches.length > 0 || directorMatches.length > 0
+  // A film only earns this once it was watchlisted from Picks For You AND
+  // has since made it onto one of the user's own lists — proof the
+  // algorithm's pick actually panned out, not just sitting on a wishlist.
+  // Computed here (not passed in) so it shows up wherever the film is
+  // rendered, not only on the page it happened to be added from.
+  const filmFolioPick = recommendationPicks.has(movie.tmdb_id) &&
+    [myList, quickList, horrorList, comediesList, animatedList, seasonalList]
+      .some((list) => list.some((m) => m.tmdb_id === movie.tmdb_id))
   const { ratings } = useOmdbRatings(movie.tmdb_id)
 
   return (
