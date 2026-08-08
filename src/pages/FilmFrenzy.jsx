@@ -9,11 +9,17 @@ import ConfirmModal from '../components/ConfirmModal'
 import styles from './FilmFrenzy.module.css'
 
 const LS_KEY = 'ff_film_frenzy'
+// Bumped when the board/clue shape changes in a way older saved boards
+// can't render (e.g. category count/order, multiple-choice fields) — a
+// version mismatch discards the stale save instead of rendering it broken.
+const BOARD_VERSION = 2
 
 function loadSaved() {
   try {
     const raw = localStorage.getItem(LS_KEY)
-    return raw ? JSON.parse(raw) : null
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    return parsed.version === BOARD_VERSION ? parsed : null
   } catch {
     return null
   }
@@ -28,7 +34,9 @@ export default function FilmFrenzy() {
   const [answered, setAnswered] = useState(() => saved?.answered ?? {})
   const [score, setScore] = useState(() => saved?.score ?? 0)
   const [activeClue, setActiveClue] = useState(null) // { catIdx, clueIdx }
-  const [revealed, setRevealed] = useState(false)
+  const [pendingResult, setPendingResult] = useState(null) // 'correct' | 'incorrect' | null
+  const [selectedChoice, setSelectedChoice] = useState(null)
+  const [numericInput, setNumericInput] = useState('')
   const [showNewGameConfirm, setShowNewGameConfirm] = useState(false)
 
   // Whether myList's stats-backfill has actually landed — checked against
@@ -56,16 +64,26 @@ export default function FilmFrenzy() {
     () => (board || !readyForClues ? [] : getQualifyingPersonIds(myList)),
     [myList, board, readyForClues]
   )
-  const { peopleData, loading: peopleLoading } = useFilmFrenzyPeople(qualifyingIds)
+  const { peopleData } = useFilmFrenzyPeople(qualifyingIds)
+  // Gate on the data itself, not useFilmFrenzyPeople's own `loading` flag —
+  // the same staleness trap as isMyListStatsReady above: when qualifyingIds
+  // flips from [] to real ids, this effect and the hook's internal fetch
+  // effect commit together, but `loading` only flips to true once that
+  // internal effect runs, one render after this one already read it as
+  // still false. Reading peopleData's actual keys instead sidesteps the gap
+  // (confirmed via testing: without this, boards built with a placeOfBirth
+  // in the very first sentence rendered "an undisclosed location" for every
+  // person even though the real bio data arrived moments later).
+  const peopleDataReady = qualifyingIds.length === 0 || qualifyingIds.every((id) => peopleData.has(id))
 
   useEffect(() => {
-    if (board || myList.length === 0 || !readyForClues || peopleLoading) return
+    if (board || myList.length === 0 || !readyForClues || !peopleDataReady) return
     setBoard(buildBoard(myList, peopleData))
-  }, [board, myList, peopleData, peopleLoading, readyForClues])
+  }, [board, myList, peopleData, peopleDataReady, readyForClues])
 
   useEffect(() => {
     if (!board) return
-    safeSetItem(LS_KEY, JSON.stringify({ board, answered, score }))
+    safeSetItem(LS_KEY, JSON.stringify({ version: BOARD_VERSION, board, answered, score }))
   }, [board, answered, score])
 
   function openClue(catIdx, clueIdx) {
@@ -74,12 +92,16 @@ export default function FilmFrenzy() {
     const clue = board.categories[catIdx].clues[clueIdx]
     if (!clue.clue) return
     setActiveClue({ catIdx, clueIdx })
-    setRevealed(false)
+    setPendingResult(null)
+    setSelectedChoice(null)
+    setNumericInput('')
   }
 
   function closeModal() {
     setActiveClue(null)
-    setRevealed(false)
+    setPendingResult(null)
+    setSelectedChoice(null)
+    setNumericInput('')
   }
 
   function gradeClue(result) {
@@ -89,6 +111,29 @@ export default function FilmFrenzy() {
     setAnswered((prev) => ({ ...prev, [key]: result }))
     if (result === 'correct') setScore((prev) => prev + clue.points)
     closeModal()
+  }
+
+  function submitChoice(choice) {
+    if (pendingResult) return
+    setSelectedChoice(choice)
+    setPendingResult(choice === activeClueData.answer ? 'correct' : 'incorrect')
+  }
+
+  function submitBinary(choice) {
+    if (pendingResult) return
+    setSelectedChoice(choice)
+    setPendingResult(choice === activeClueData.answer ? 'correct' : 'incorrect')
+  }
+
+  function submitNumeric() {
+    if (pendingResult || numericInput.trim() === '') return
+    const guess = parseInt(numericInput, 10)
+    const correct = !Number.isNaN(guess) && guess === parseInt(activeClueData.answer, 10)
+    setPendingResult(correct ? 'correct' : 'incorrect')
+  }
+
+  function confirmAnswer() {
+    gradeClue(pendingResult)
   }
 
   function confirmNewGame() {
@@ -103,6 +148,7 @@ export default function FilmFrenzy() {
   const isBuilding = hasList && !board
   const activeClueData = activeClue ? board.categories[activeClue.catIdx].clues[activeClue.clueIdx] : null
   const activeCategoryName = activeClue ? board.categories[activeClue.catIdx].name : ''
+  const activeCategoryType = activeClue ? board.categories[activeClue.catIdx].type : null
 
   return (
     <div className={styles.page}>
@@ -173,21 +219,68 @@ export default function FilmFrenzy() {
             <button className={styles.modalClose} onClick={closeModal} aria-label="Close">×</button>
             <p className={styles.modalCategory}>{activeCategoryName} · {activeClueData.points} pts</p>
             <p className={styles.modalClueText}>{activeClueData.clue}</p>
-            {activeClueData.hint && <p className={styles.modalHint}>{activeClueData.hint}</p>}
 
-            {!revealed ? (
-              <button className={styles.revealBtn} onClick={() => setRevealed(true)}>Reveal Answer</button>
-            ) : (
+            {activeCategoryType === 'multipleChoice' && (
+              <div className={styles.choiceGrid}>
+                {activeClueData.choices.map((choice) => {
+                  const isCorrectChoice = pendingResult && choice === activeClueData.answer
+                  const isWrongSelected = pendingResult && choice === selectedChoice && choice !== activeClueData.answer
+                  return (
+                    <button
+                      key={choice}
+                      className={`${styles.choiceBtn} ${isCorrectChoice ? styles.choiceCorrect : ''} ${isWrongSelected ? styles.choiceWrong : ''}`}
+                      onClick={() => submitChoice(choice)}
+                      disabled={!!pendingResult}
+                    >
+                      {choice}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {activeCategoryType === 'binary' && (
+              <div className={styles.binaryRow}>
+                {['higher', 'lower'].map((choice) => {
+                  const isCorrectChoice = pendingResult && choice === activeClueData.answer
+                  const isWrongSelected = pendingResult && choice === selectedChoice && choice !== activeClueData.answer
+                  return (
+                    <button
+                      key={choice}
+                      className={`${styles.choiceBtn} ${isCorrectChoice ? styles.choiceCorrect : ''} ${isWrongSelected ? styles.choiceWrong : ''}`}
+                      onClick={() => submitBinary(choice)}
+                      disabled={!!pendingResult}
+                    >
+                      {choice === 'higher' ? 'Higher' : 'Lower'}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+
+            {!pendingResult && activeCategoryType === 'numeric' && (
+              <form className={styles.numericRow} onSubmit={(e) => { e.preventDefault(); submitNumeric() }}>
+                <input
+                  type="number"
+                  min="1"
+                  value={numericInput}
+                  onChange={(e) => setNumericInput(e.target.value)}
+                  placeholder="Rank #"
+                  className={styles.numericInput}
+                  autoFocus
+                />
+                <button type="submit" className={styles.revealBtn}>Submit</button>
+              </form>
+            )}
+
+            {pendingResult && (
               <>
-                <p className={styles.modalAnswer}>Answer: <strong>{activeClueData.answer}</strong></p>
-                <div className={styles.gradeActions}>
-                  <button className={styles.correctBtn} onClick={() => gradeClue('correct')}>
-                    Got it right (+{activeClueData.points})
-                  </button>
-                  <button className={styles.incorrectBtn} onClick={() => gradeClue('incorrect')}>
-                    Got it wrong
-                  </button>
-                </div>
+                <p className={`${styles.modalAnswer} ${pendingResult === 'correct' ? styles.answerCorrect : styles.answerIncorrect}`}>
+                  {pendingResult === 'correct' ? 'Correct!' : 'Not quite.'} The answer was <strong>{activeClueData.answer}</strong>.
+                </p>
+                <button className={styles.correctBtn} onClick={confirmAnswer}>
+                  Continue{pendingResult === 'correct' ? ` (+${activeClueData.points})` : ''}
+                </button>
               </>
             )}
           </div>

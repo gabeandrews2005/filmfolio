@@ -39,7 +39,7 @@ async function fetchStatsFieldsWithRetry(tmdbId, attempt = 0) {
     collection: details.belongs_to_collection
       ? { id: details.belongs_to_collection.id, name: details.belongs_to_collection.name }
       : null,
-    cast: credits.cast?.slice(0, CAST_LIMIT).map((p) => ({ id: p.id, name: p.name })) ?? [],
+    cast: credits.cast?.slice(0, CAST_LIMIT).map((p) => ({ id: p.id, name: p.name, character: p.character || '' })) ?? [],
     director: directorCrew?.name ?? '',
     directorId: directorCrew?.id ?? null,
     imdbId,
@@ -75,7 +75,14 @@ export default function useStatsBackfill(myList, patchListItems) {
   const [progress, setProgress] = useState({ done: 0, total: 0 })
 
   useEffect(() => {
-    const missing = myList.filter((m) => !m.statsBackfilled && m.tmdb_id)
+    // Films backfilled before `character` was added to the cast patch are
+    // re-swept once (cast entries missing the key entirely) so Film Frenzy's
+    // actor clues can reference a role without needing every existing user
+    // to reset their board — self-healing, stops once `character` is present
+    // (even as '') on every cast entry.
+    const missing = myList.filter(
+      (m) => (!m.statsBackfilled || !m.cast?.every((c) => 'character' in c)) && m.tmdb_id
+    )
     if (missing.length === 0) {
       setBackfilling(false)
       return
