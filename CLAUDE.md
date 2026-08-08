@@ -4,7 +4,7 @@
 
 **FilmFolio** is Gabe's personal movie curator web app. It showcases his curated Top 100 film list, lets visitors mark what they've seen, build their own ranked list (up to 100 films), and receive TMDB-powered recommendations enhanced by favorite actor and director signals. A full "Universe" dashboard lets users build and manage their own genre lists, person lists, and show lists alongside Gabe's picks.
 
-**Status:** Phase 2 complete. Fully built, deployed, and live on Vercel. GitHub repo: `jmandrews1975/filmfolio`.
+**Status:** Phase 2 complete; Phase 3 accounts + Friends complete (see Phase 3 below). Fully built, deployed, and live on Vercel. GitHub repo: `jmandrews1975/filmfolio`.
 
 **Division of labor:** Engineering via Claude Code. Creative direction by Gabe (site owner).
 
@@ -44,10 +44,11 @@ Personal film journal feel — darkened theater, warm light, Criterion booklet t
 |---|---|
 | Framework | React 18 + Vite 5 |
 | Styling | CSS Modules + custom design tokens |
-| State | React Context + `localStorage` |
+| State | React Context + `localStorage`, cloud-synced to Supabase when signed in |
 | Routing | React Router v6 |
 | Drag-to-rank | `@dnd-kit` (My List, Actors/Directors, Shows poster grids — supports reordering within a wrapping grid); `@hello-pangea/dnd` (single-column lists and GenreList grids) |
 | API | TMDB v3 (Bearer JWT auth) |
+| Backend | Supabase (Postgres + email/password auth) — accounts, cross-device sync, Friends. Optional: the app runs in pure guest/localStorage mode if unconfigured. |
 | Deployment | Vercel (auto-deploy from `main` branch) |
 
 ---
@@ -141,9 +142,11 @@ These files exist for reference but the live supplementary lists are now **user-
 filmfolio/
 ├── src/
 │   ├── api/
-│   │   └── tmdb.js                    # TMDB fetches, cache, enrichment, recommendations
+│   │   ├── tmdb.js                    # TMDB fetches, cache, enrichment, recommendations
+│   │   └── supabase.js                # Supabase client + profiles/user_data/friendships queries
 │   ├── context/
-│   │   └── FilmContext.jsx            # global state — all lists, generic CRUD, migration
+│   │   ├── FilmContext.jsx            # global state — all lists, generic CRUD, cloud sync
+│   │   └── AuthContext.jsx            # session/profile, sign up/in/out, profile+phone updates
 │   ├── data/
 │   │   ├── movies.json                # Gabe's Top 100 — SACRED
 │   │   ├── shows.json
@@ -177,9 +180,9 @@ filmfolio/
 │   │   ├── MyList.jsx + MyList.module.css        # drag-to-rank, up to 100 films
 │   │   ├── Recommendations.jsx + Recommendations.module.css
 │   │   ├── Universe.jsx + Universe.module.css    # user dashboard, filled lists
-│   │   ├── Friends.jsx + Friends.module.css      # demo profiles, social foundation
-│   │   ├── Profile.jsx + Profile.module.css      # user profile with avatar + stats
-│   │   ├── Account.jsx + Account.module.css      # create/edit account (username, avatar), sign out
+│   │   ├── Friends.jsx + Friends.module.css      # real search/request/accept via Supabase
+│   │   ├── Profile.jsx + Profile.module.css      # self or any :username, avatar + stats
+│   │   ├── Account.jsx + Account.module.css      # real sign up/log in/out (Supabase Auth)
 │   │   ├── About.jsx + About.module.css
 │   │   └── lists/
 │   │       ├── GenreList.jsx + .module.css        # horror, comedies, animated, seasonal
@@ -218,13 +221,13 @@ Calls `buildRecommendationsEnhanced` with actor/director person IDs from context
 Personal dashboard: stats strip (total films ranked, people, shows, seen count). Horizontal scroll strips for each list that has at least 1 item. Empty state with links to start building. Links to individual list edit pages.
 
 ### `/friends` — Friends
-Demo profiles (gabe_films, alex_films, maya_watches, dev_cinema) with avatars, bios, and top 10 poster grids. Search bar filters profiles. Notice banner that social features are coming. Foundation for Phase 3 social layer.
+Real accounts now (Supabase — see State & Persistence below). Debounced username search against `profiles`; Add/Pending/Friends state per result; incoming requests with Accept/Decline; accepted friends list linking to `/profile/:username`. Requires being signed in — shows a "Sign In / Sign Up" prompt otherwise.
 
-### `/profile` — Profile
-Avatar circle (base64 or initial letter). Username, stats (films ranked, seen count). Link to Universe. All filled lists as horizontal UniverseSection strips. Redirects to `/account` if no user set.
+### `/profile` and `/profile/:username` — Profile
+`/profile` (no username) redirects to `/profile/:yourUsername` once known. `:username` matching the signed-in user renders the live self-view (editable elsewhere, via `/my-list` etc.); any other username fetches that user's `profiles` + `user_data` rows read-only and renders the same `UniverseSection` strips with no edit links. Requires being signed in (redirects to `/account` otherwise) — `user_data` is readable by any authenticated user, not just accepted friends.
 
 ### `/account` — Account
-Dedicated page (not a popup) to create or edit the local profile: username + optional avatar upload. Pre-fills from `user` when editing. "Sign out" clears `ff_user` (lists/other data are untouched) and returns to `/`. Linked from the hamburger menu — "Create Account" CTA when no user is set, "Account" link when one exists.
+Real sign-up/log-in (email + password via Supabase Auth), not just a local profile form. Sign-up also takes a username (live-checked for availability against `profiles`) and an optional phone number (stored in Supabase Auth's `user_metadata`, never exposed to other users) and avatar. If the device already has local guest data at signup time, a modal asks whether to import it into the new account or start fresh — either way nothing on-device gets deleted. Signed-in view edits username/avatar/phone and has "Sign out" (a hard reload, not an in-place state clear — see State & Persistence). Linked from the hamburger menu.
 
 ### `/about` — About
 Placeholder for Gabe's personal story, photo, contact info.
@@ -248,14 +251,17 @@ GenreList auto-populates matching films from `myList` using `GENRE_MAP` (horror�
 
 ## State & Persistence
 
-All state lives in `localStorage` (no backend). Managed via `FilmContext.jsx`.
+Two layers, additive — `localStorage` is still the primary read/write path for every list, and a Supabase backend layers cloud sync on top when signed in. **Guest mode (no account) behaves exactly as it always has**, zero network calls beyond a harmless session check.
 
 ### localStorage keys
 
 | Key | Type | Contents |
 |---|---|---|
 | `ff_seen` | JSON array | tmdb_ids of seen films |
+| `ff_seen_data` | JSON object | id → movie, denormalized cache so Seen Films can show films not on any other list |
 | `ff_top100` | JSON array | user's full ranked list (up to 100, replaces ff_top10) |
+| `ff_quicklist` | JSON array | Quick List (up to 10) |
+| `ff_saved_quicklists` | JSON array | named Quick List snapshots |
 | `ff_actors` | JSON array | user's actors list `{ person_id, name, headshot_path }` |
 | `ff_shows` | JSON array | user's shows list |
 | `ff_directors` | JSON array | user's directors list |
@@ -263,10 +269,28 @@ All state lives in `localStorage` (no backend). Managed via `FilmContext.jsx`.
 | `ff_seasonal` | JSON array | user's seasonal picks |
 | `ff_comedies` | JSON array | user's comedies |
 | `ff_animated` | JSON array | user's animated films |
+| `ff_watchlist` | JSON array | want-to-watch list |
+| `ff_recommendation_picks` | JSON array | tmdb_ids ever watchlisted from Picks For You (permanent — powers the "FilmFolio Pick!" badge even after the watchlist entry itself is gone) |
 | `ff_not_interested` | JSON array | tmdb_ids dismissed from recommendations |
-| `ff_user` | JSON object | `{ username, avatar (base64), createdAt }` |
+| `ff_last_synced_at` | ISO timestamp | when this device last successfully pushed to the cloud (see Cloud sync below) |
 
-**Migration:** `loadMyList()` reads `ff_top100` first, falls back to legacy `ff_top10` and migrates it.
+**Migration:** `loadMyList()` reads `ff_top100` first, falls back to legacy `ff_top10` and migrates it. No `ff_user` key anymore — identity now comes from Supabase Auth/`AuthContext`, not localStorage.
+
+### Cloud sync (Supabase)
+
+Real accounts (`src/context/AuthContext.jsx`, `src/api/supabase.js`) layer on top of the localStorage model above without changing it — every `addToList`/`removeFromList`/`reorderList`/`patchListItems`/`insertAtRank` and the dedicated seen/watchlist/quickList functions in `FilmContext.jsx` are untouched, still just `useState` + `localStorage`.
+
+**Tables** (Postgres, RLS-protected):
+- `profiles` — `id` (= `auth.users.id`), `username` (unique, case-insensitive), `avatar_url` (base64, same as before). Readable by any signed-in user (needed for Friends search), writable only by the owner.
+- `user_data` — `user_id`, `data` (one JSONB blob holding all ~15 fields above), `updated_at`. Readable by any signed-in user (matches the existing "Friends browse anyone's ranked list" / shareable-Profile design — not gated behind an accepted friendship), writable only by the owner.
+- `friendships` — `requester_id`, `addressee_id`, `status` (`pending`/`accepted`/`declined`). One relationship row per pair; only the addressee can accept/decline.
+
+Email lives only in Supabase's own `auth.users`; phone lives only in that same table's private `user_metadata` (via `supabase.auth.updateUser({ data: { phone } })`) — neither is ever exposed through any query another user could run.
+
+**Sync effects in `FilmContext.jsx`:**
+- **Hydrate** (on session change) — fetches the `user_data` row and applies it to every local `useState` (mirroring into `localStorage` too), *unless* this device has unsynced local changes newer than what the cloud has (tracked via `ff_last_synced_at` + a `dirtyRef`) — otherwise a stale cloud pull could silently discard a real edit made just before a tab closed. A brand-new account with no cloud row yet and non-empty local data shows a migration prompt (`ConfirmModal`, "Import My Lists" / "Start Fresh") instead of guessing.
+- **Debounced push** (~800ms), gated on a `hydrated` flag so it can never fire against a pre-hydration snapshot and clobber real cloud data. Also flushes immediately (non-debounced, `keepalive: true`) on `visibilitychange` → hidden, to shrink the window an edit could be lost in.
+- **Sign-out/sign-in** does a hard `window.location.href = '/'`, not an in-place state reset — needed so a second person signing into a different account on the same shared browser never sees (or overwrites the cloud with) the first person's cached lists.
 
 ### Context API
 
@@ -290,7 +314,7 @@ All state lives in `localStorage` (no backend). Managed via `FilmContext.jsx`.
 ```
 
 ### Account setup
-No auto-popup — account creation/editing lives entirely on the `/account` page (see Pages & Routes above), reached via the hamburger menu.
+No auto-popup — sign-up/login/editing lives entirely on the `/account` page (see Pages & Routes above), reached via the hamburger menu. Identity comes from `useAuth()` (`src/context/AuthContext.jsx`), not `useFilm()` — `session`/`profile`/`signUp`/`signIn`/`signOut`/`updateProfile`/`updatePhone`/`resetPassword`.
 
 ---
 
@@ -303,7 +327,7 @@ Unified card used across Explore, My List grid, and genre list grids. Props: `mo
 Props: `actors, directors, compact`. `compact=true` → small gold ★ badge (tooltip on hover). `compact=false` → gold bar "★ Directed by X · Features Y". Returns null if both empty.
 
 ### `HamburgerMenu`
-Slide-out drawer from right. Overflow links: Actors, Directors, Shows, Animated, Horror, Comedies, Seasonal, Seen Films, Watchlist, Universe, Friends, Statistics, About — plus "Account" prepended when a user is set. Header shows profile avatar/username linking to `/profile/:username` if user set, otherwise a "Create Account" CTA linking to `/account`. Locks body scroll, closes on Escape key.
+Slide-out drawer from right. Overflow links: Actors, Directors, Shows, Animated, Horror, Comedies, Seasonal, Seen Films, Watchlist, Universe, Friends, Statistics, About — plus "Account" prepended when signed in (`useAuth()`'s `profile`). Header shows profile avatar/username linking to `/profile/:username` if signed in, otherwise a "Sign In / Sign Up" CTA linking to `/account`. Locks body scroll, closes on Escape key.
 
 ### `UniverseSection`
 Horizontal scroll strip with CSS snap. Shows rank badge + title + year per card. Used in Universe and Profile pages.
@@ -318,7 +342,7 @@ npm run build    # production build
 npm run preview  # preview production build locally
 ```
 
-The `.env` file with `VITE_TMDB_READ_TOKEN` must exist locally for TMDB enrichment. Without it the app still renders with placeholder posters.
+The `.env` file with `VITE_TMDB_READ_TOKEN` must exist locally for TMDB enrichment. Without it the app still renders with placeholder posters. `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` are optional the same way — without them, `supabase` (`src/api/supabase.js`) is `null` and the whole app runs in pure guest/localStorage mode, same as before accounts existed.
 
 ---
 
@@ -328,7 +352,7 @@ Live on Vercel. Auto-deploys on every push to `main`.
 
 To update: `git push origin main` — Vercel picks it up automatically.
 
-`VITE_TMDB_READ_TOKEN` is set as an environment variable in Vercel project settings (not in the repo).
+`VITE_TMDB_READ_TOKEN`, `VITE_OMDB_API_KEY`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` are all set as environment variables in Vercel project settings (not in the repo).
 
 ---
 
@@ -336,7 +360,7 @@ To update: `git push origin main` — Vercel picks it up automatically.
 
 1. **Never commit `.env`** — the Bearer token must stay out of git history.
 2. **`movies.json` is sacred** — never auto-generate or overwrite it. Gabe replaces it manually.
-3. **No backend** — all persistence via `localStorage`. Phase 3 plans Supabase auth.
+3. **Guest mode must keep working with zero backend configured** — `localStorage` is still the primary read/write path for every list; Supabase is an additive cloud-sync layer on top when signed in, never a hard requirement to use the site.
 4. **TMDB enrichment is live** — poster URLs are not baked into JSON. Always fetch and cache.
 5. **Recommendation queue** — maintain the full sorted queue beyond 20. "Not Interested" pops from the queue, never re-fetches.
 6. **Mobile first** — poster grid must look good on phones (2 cols minimum).
@@ -346,11 +370,14 @@ To update: `git push origin main` — Vercel picks it up automatically.
 
 ---
 
-## Phase 3 (out of scope now)
+## Phase 3
 
-- Supabase auth — user accounts, cloud-persisted seen list / ranked list / all user lists
-- Extended social: compare lists with friends, shared recommendations, real friend profiles replacing demo profiles
+**Done:** Supabase auth (real accounts, email + password, cross-device cloud sync of every list) and real Friends (search, request/accept, view a friend's ranked list at `/profile/:username`) — see State & Persistence above.
+
+**Still out of scope:**
+- Extended social: compare lists with friends, shared recommendations
 - User reviews and film notes per movie
-- Gabe's personal story / About page copy (currently placeholder)
 - Compound recommendation algorithm feeding on actors, directors, eras, and genres together
 - Fill out the remaining entries in the Top 50 Songs list
+- Realtime/multi-tab conflict resolution for the cloud sync (currently last-write-wins)
+- Moving avatars off base64-in-Postgres to real file storage (Supabase Storage)

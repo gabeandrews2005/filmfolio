@@ -1,6 +1,9 @@
-import { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import seedMovies from '../data/movies.json'
 import { enrichMovie, getMovieDetails, getMovieKeywords, safeSetItem } from '../api/tmdb'
+import { supabase, getUserData, upsertUserData } from '../api/supabase'
+import { useAuth } from './AuthContext'
+import ConfirmModal from '../components/ConfirmModal'
 
 const FilmContext = createContext(null)
 
@@ -9,7 +12,7 @@ const LS_SEEN_DATA    = 'ff_seen_data'
 const LS_WATCHLIST   = 'ff_watchlist'
 const LS_RECOMMENDATION_PICKS = 'ff_recommendation_picks'
 const LS_NOT_INT     = 'ff_not_interested'
-const LS_USER        = 'ff_user'
+const LS_LAST_SYNCED = 'ff_last_synced_at'
 const LS_MYLIST      = 'ff_top100'
 const LS_QUICKLIST   = 'ff_quicklist'
 const LS_SAVED_QUICKLISTS = 'ff_saved_quicklists'
@@ -230,7 +233,6 @@ export function FilmProvider({ children }) {
   }, [])
 
   const [notInterested, setNotInterested] = useState(() => loadLS(LS_NOT_INT, []))
-  const [user, setUserState]      = useState(() => loadLS(LS_USER, null))
 
   // All ranked lists
   const [myList,       setMyList]       = useState(() => loadMyList())
@@ -320,12 +322,6 @@ export function FilmProvider({ children }) {
     // "want to watch" list.
     if (willBeSeen) removeFromWatchlistIfPresent(tmdbId)
   }, [recordSeenData, seenList, removeFromWatchlistIfPresent])
-
-  // ── User profile ───────────────────────────────────────────────────────────
-  const setUser = useCallback((userData) => {
-    setUserState(userData)
-    saveLS(LS_USER, userData)
-  }, [])
 
   // ── Generic list operations ────────────────────────────────────────────────
   const getItemId = (item) => item.tmdb_id ?? item.person_id ?? null
@@ -524,6 +520,161 @@ export function FilmProvider({ children }) {
     })
   }, [])
 
+  // ── Cloud sync (Supabase) ────────────────────────────────────────────────
+  // Every list-mutation function above is untouched — it still just writes
+  // to useState + localStorage exactly as it did before accounts existed.
+  // This section is a purely additive layer on top: once a session is
+  // active, hydrate all of the above from the cloud, then keep pushing
+  // changes back up. Guest mode (no session) never calls Supabase at all.
+  const { session } = useAuth()
+  const [hydrated, setHydrated] = useState(false)
+  const [migrationPrompt, setMigrationPrompt] = useState(false)
+  const [syncStatus, setSyncStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
+  // Whether local state has changed since the last successful push FROM
+  // THIS DEVICE — without this, an unconditional "cloud wins on hydrate"
+  // can silently discard a real edit that made it into localStorage but
+  // never made it to the cloud before the tab closed.
+  const dirtyRef = useRef(false)
+  const lastSyncedAtRef = useRef(loadLS(LS_LAST_SYNCED, null))
+
+  function assembleUserDataBlob() {
+    return {
+      myList, quickList, savedQuickLists, actorsList, showsList, directorsList,
+      horrorList, seasonalList, comediesList, animatedList,
+      watchlist, seenList: [...seenList], seenFilmsData,
+      recommendationPicks: [...recommendationPicks], notInterested,
+    }
+  }
+
+  function applyUserDataBlob(blob) {
+    if (blob.myList !== undefined) { setMyList(blob.myList); saveLS(LS_MYLIST, blob.myList) }
+    if (blob.quickList !== undefined) { setQuickList(blob.quickList); saveLS(LS_QUICKLIST, blob.quickList) }
+    if (blob.savedQuickLists !== undefined) { setSavedQuickLists(blob.savedQuickLists); saveLS(LS_SAVED_QUICKLISTS, blob.savedQuickLists) }
+    if (blob.actorsList !== undefined) { setActorsList(blob.actorsList); saveLS(LS_ACTORS, blob.actorsList) }
+    if (blob.showsList !== undefined) { setShowsList(blob.showsList); saveLS(LS_SHOWS, blob.showsList) }
+    if (blob.directorsList !== undefined) { setDirectorsList(blob.directorsList); saveLS(LS_DIRECTORS, blob.directorsList) }
+    if (blob.horrorList !== undefined) { setHorrorList(blob.horrorList); saveLS(LS_HORROR, blob.horrorList) }
+    if (blob.seasonalList !== undefined) { setSeasonalList(blob.seasonalList); saveLS(LS_SEASONAL, blob.seasonalList) }
+    if (blob.comediesList !== undefined) { setComediesList(blob.comediesList); saveLS(LS_COMEDIES, blob.comediesList) }
+    if (blob.animatedList !== undefined) { setAnimatedList(blob.animatedList); saveLS(LS_ANIMATED, blob.animatedList) }
+    if (blob.watchlist !== undefined) { setWatchlist(blob.watchlist); saveLS(LS_WATCHLIST, blob.watchlist) }
+    if (blob.seenList !== undefined) { setSeenList(new Set(blob.seenList)); saveLS(LS_SEEN, blob.seenList) }
+    if (blob.seenFilmsData !== undefined) { setSeenFilmsData(blob.seenFilmsData); saveLS(LS_SEEN_DATA, blob.seenFilmsData) }
+    if (blob.recommendationPicks !== undefined) { setRecommendationPicks(new Set(blob.recommendationPicks)); saveLS(LS_RECOMMENDATION_PICKS, blob.recommendationPicks) }
+    if (blob.notInterested !== undefined) { setNotInterested(blob.notInterested); saveLS(LS_NOT_INT, blob.notInterested) }
+  }
+
+  function isLocalStateNonEmpty() {
+    return myList.length > 0 || quickList.length > 0 || savedQuickLists.length > 0 ||
+      actorsList.length > 0 || showsList.length > 0 || directorsList.length > 0 ||
+      horrorList.length > 0 || seasonalList.length > 0 || comediesList.length > 0 ||
+      animatedList.length > 0 || watchlist.length > 0 || seenList.size > 0 ||
+      notInterested.length > 0
+  }
+
+  // In-memory only — deliberately never touches localStorage, so a "start
+  // fresh" choice at signup still leaves the original local data on disk as
+  // a backup; it just stops being what gets used/synced going forward.
+  function resetAllListsToEmpty() {
+    setMyList([]); setQuickList([]); setSavedQuickLists([])
+    setActorsList([]); setShowsList([]); setDirectorsList([])
+    setHorrorList([]); setSeasonalList([]); setComediesList([]); setAnimatedList([])
+    setWatchlist([]); setSeenList(new Set()); setSeenFilmsData({})
+    setRecommendationPicks(new Set()); setNotInterested([])
+  }
+
+  // Hydrate from the cloud whenever the session changes. Cloud only wins
+  // outright if it's genuinely newer than what this device last pushed (or
+  // this device has never synced this account before) — otherwise an
+  // unsynced local edit from just before a tab closed would get silently
+  // overwritten by a stale cloud row.
+  useEffect(() => {
+    if (!session) { setHydrated(false); return }
+    let cancelled = false
+    setHydrated(false)
+    async function run() {
+      const row = await getUserData(session.user.id)
+      if (cancelled) return
+      if (row) {
+        const cloudIsNewer = !lastSyncedAtRef.current || new Date(row.updated_at) > new Date(lastSyncedAtRef.current)
+        if (cloudIsNewer) {
+          applyUserDataBlob(row.data)
+          lastSyncedAtRef.current = row.updated_at
+          saveLS(LS_LAST_SYNCED, row.updated_at)
+          dirtyRef.current = false
+        }
+        // else: this device already has the latest (or newer, unsynced)
+        // state — leave it alone, the push effect below syncs it up.
+      } else if (isLocalStateNonEmpty()) {
+        // Brand new account, this device has real data — ask before doing
+        // anything with it instead of silently uploading or discarding.
+        setMigrationPrompt(true)
+        return // hydrated stays false until the prompt is resolved
+      }
+      setHydrated(true)
+    }
+    run()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id])
+
+  function resolveMigration(action) {
+    if (action === 'discard') resetAllListsToEmpty()
+    setMigrationPrompt(false)
+    setHydrated(true) // the push effect below takes it from here
+  }
+
+  // Debounced push — gated on `hydrated` so this can never fire against a
+  // stale pre-hydration snapshot and clobber real cloud data. Also flushes
+  // immediately (non-debounced, keepalive) when the tab is about to be
+  // hidden/closed, shrinking the window in which an edit could be lost from
+  // "up to 800ms" down to "only if the OS kills the process outright."
+  useEffect(() => {
+    if (!session || !hydrated || !supabase) return
+    dirtyRef.current = true
+
+    async function push() {
+      setSyncStatus('saving')
+      const blob = assembleUserDataBlob()
+      const updatedAt = await upsertUserData(session.user.id, blob)
+      if (updatedAt) {
+        lastSyncedAtRef.current = updatedAt
+        saveLS(LS_LAST_SYNCED, updatedAt)
+        dirtyRef.current = false
+        setSyncStatus('saved')
+      } else {
+        setSyncStatus('error')
+      }
+    }
+
+    const timer = setTimeout(push, 800)
+
+    function handleVisibility() {
+      if (document.visibilityState !== 'hidden') return
+      const blob = assembleUserDataBlob()
+      fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/user_data?on_conflict=user_id`, {
+        method: 'POST',
+        keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${session.access_token}`,
+          Prefer: 'resolution=merge-duplicates,return=minimal',
+        },
+        body: JSON.stringify({ user_id: session.user.id, data: blob }),
+      }).catch(() => {})
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, session, myList, quickList, savedQuickLists, actorsList, showsList,
+      directorsList, horrorList, seasonalList, comediesList, animatedList,
+      watchlist, seenList, seenFilmsData, recommendationPicks, notInterested])
+
   return (
     <FilmContext.Provider value={{
       // Gabe's curated list (seed, enriched progressively)
@@ -534,9 +685,10 @@ export function FilmProvider({ children }) {
       seenFilmsData,
       recordSeenData,
       toggleSeen,
-      // User profile
-      user,
-      setUser,
+      // Cloud sync status (see hydrate/sync effects below)
+      syncStatus,
+      migrationPrompt,
+      resolveMigration,
       // User's ranked lists
       myList,
       myTop10,     // computed slice of myList[0..9]
@@ -573,6 +725,16 @@ export function FilmProvider({ children }) {
       addNotInterested,
     }}>
       {children}
+      {migrationPrompt && (
+        <ConfirmModal
+          title="Import your existing lists?"
+          message="We found films already saved on this device. Bring them into your new account, or start this account fresh — either way, nothing on this device gets deleted."
+          confirmLabel="Import My Lists"
+          cancelLabel="Start Fresh"
+          onConfirm={() => resolveMigration('upload')}
+          onCancel={() => resolveMigration('discard')}
+        />
+      )}
     </FilmContext.Provider>
   )
 }

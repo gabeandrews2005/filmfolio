@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
-import { useFilm } from '../context/FilmContext'
+import { useAuth } from '../context/AuthContext'
 import styles from './HamburgerMenu.module.css'
 
 const OVERFLOW_LINKS = [
@@ -22,7 +22,7 @@ const OVERFLOW_LINKS = [
 ]
 
 export default function HamburgerMenu({ isOpen, onClose }) {
-  const { user } = useFilm()
+  const { profile } = useAuth()
 
   useEffect(() => {
     if (isOpen) {
@@ -59,16 +59,16 @@ export default function HamburgerMenu({ isOpen, onClose }) {
           </button>
         </div>
 
-        {user ? (
-          <NavLink to={`/profile/${user.username}`} className={styles.profileLink} onClick={onClose}>
+        {profile ? (
+          <NavLink to={`/profile/${profile.username}`} className={styles.profileLink} onClick={onClose}>
             <div className={styles.profileAvatar}>
-              {user.avatar
-                ? <img src={user.avatar} alt={user.username} />
-                : <span>{user.username[0].toUpperCase()}</span>
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt={profile.username} />
+                : <span>{profile.username[0].toUpperCase()}</span>
               }
             </div>
             <div className={styles.profileInfo}>
-              <span className={styles.profileName}>{user.username}</span>
+              <span className={styles.profileName}>{profile.username}</span>
               <span className={styles.profileLabel}>View profile</span>
             </div>
           </NavLink>
@@ -78,14 +78,14 @@ export default function HamburgerMenu({ isOpen, onClose }) {
               <span>?</span>
             </div>
             <div className={styles.profileInfo}>
-              <span className={styles.profileName}>Create Account</span>
-              <span className={styles.profileLabel}>Save your lists</span>
+              <span className={styles.profileName}>Sign In / Sign Up</span>
+              <span className={styles.profileLabel}>Save your lists to the cloud</span>
             </div>
           </NavLink>
         )}
 
         <nav className={styles.links}>
-          {user && (
+          {profile && (
             <NavLink
               to="/account"
               className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}

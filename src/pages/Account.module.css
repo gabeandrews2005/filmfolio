@@ -40,6 +40,57 @@
   gap: 20px;
 }
 
+.tabRow {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 24px;
+}
+
+.tab {
+  flex: 1;
+  padding: 9px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.tabActive {
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+}
+
+.hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.hintOk {
+  font-size: 0.78rem;
+  color: var(--accent-gold);
+}
+
+.linkBtn {
+  align-self: center;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  transition: color var(--transition);
+}
+
+.linkBtn:hover {
+  color: var(--accent-gold);
+}
+
+.readonlyValue {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  padding: 10px 0;
+}
+
 .avatarSection {
   display: flex;
   flex-direction: column;

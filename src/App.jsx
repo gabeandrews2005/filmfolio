@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { AuthProvider } from './context/AuthContext'
 import { FilmProvider } from './context/FilmContext'
 import Nav from './components/Nav'
 import Home from './pages/Home'
@@ -76,9 +77,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <FilmProvider>
-        <AppRoutes />
-      </FilmProvider>
+      <AuthProvider>
+        <FilmProvider>
+          <AppRoutes />
+        </FilmProvider>
+      </AuthProvider>
     </BrowserRouter>
   )
 }
