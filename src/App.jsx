@@ -13,6 +13,7 @@ import Account from './pages/Account'
 import About from './pages/About'
 import SeenFilms from './pages/SeenFilms'
 import Watchlist from './pages/Watchlist'
+import SavedQuickLists from './pages/SavedQuickLists'
 import Statistics from './pages/Statistics'
 import GenreList from './pages/lists/GenreList'
 import PersonList from './pages/lists/PersonList'
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/about" element={<About />} />
         <Route path="/seen" element={<SeenFilms />} />
         <Route path="/watchlist" element={<Watchlist />} />
+        <Route path="/quick-lists" element={<SavedQuickLists />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route
           path="/lists/horror"

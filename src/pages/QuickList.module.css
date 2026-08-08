@@ -1,0 +1,77 @@
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.headerButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.saveBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: rgba(201,168,76,0.1);
+}
+
+.saveBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.clearBtn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--transition), border-color var(--transition), opacity var(--transition);
+}
+
+.clearBtn:hover:not(:disabled) {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+
+.clearBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.saveNameInput {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-bottom: 22px;
+}
+
+.saveNameInput:focus {
+  outline: none;
+  border-color: rgba(201,168,76,0.5);
+}
+
+@media (max-width: 640px) {
+  .headerActions {
+    align-items: flex-start;
+    width: 100%;
+  }
+}

@@ -1,12 +1,46 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../context/FilmContext'
 import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
+import ConfirmModal from '../components/ConfirmModal'
 import styles from './MyList.module.css'
+import modalStyles from '../components/ConfirmModal.module.css'
+import qlStyles from './QuickList.module.css'
+
+function SaveQuickListModal({ defaultName, onSave, onCancel }) {
+  const [name, setName] = useState(defaultName)
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    const trimmed = name.trim()
+    if (trimmed) onSave(trimmed)
+  }
+
+  return (
+    <div className={modalStyles.overlay} onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
+      <form className={modalStyles.box} onSubmit={handleSubmit}>
+        <h2 className={modalStyles.title}>Save Quick List</h2>
+        <p className={modalStyles.text}>Give this batch of films a name so you can find it later.</p>
+        <input
+          type="text"
+          className={qlStyles.saveNameInput}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="e.g. Rainy Day Picks"
+          autoFocus
+        />
+        <div className={modalStyles.actions}>
+          <button type="button" className={modalStyles.cancelBtn} onClick={onCancel}>Cancel</button>
+          <button type="submit" className={modalStyles.confirmBtn} disabled={!name.trim()}>Save</button>
+        </div>
+      </form>
+    </div>
+  )
+}
 
 const QUICK_LIST_MAX = 10
 
@@ -50,11 +84,14 @@ function SortablePoster({ movie, index, onRemove }) {
 }
 
 export default function QuickList() {
-  const { quickList, addToList, removeFromList, reorderList } = useFilm()
+  const { quickList, addToList, removeFromList, reorderList, saveQuickList, clearQuickList } = useFilm()
+  const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [showSaveModal, setShowSaveModal] = useState(false)
+  const [showClearModal, setShowClearModal] = useState(false)
   const debounceRef = useRef(null)
   const searchWrapRef = useRef(null)
 
@@ -131,8 +168,38 @@ export default function QuickList() {
     reorderList('quickList', arrayMove(quickList, oldIndex, newIndex))
   }
 
+  function handleSaveConfirm(name) {
+    saveQuickList(name)
+    setShowSaveModal(false)
+    navigate('/quick-lists')
+  }
+
+  function handleClearConfirm() {
+    clearQuickList()
+    setShowClearModal(false)
+  }
+
   return (
     <div className={styles.page}>
+      {showSaveModal && (
+        <SaveQuickListModal
+          defaultName={`Quick List — ${new Date().toLocaleDateString()}`}
+          onSave={handleSaveConfirm}
+          onCancel={() => setShowSaveModal(false)}
+        />
+      )}
+
+      {showClearModal && (
+        <ConfirmModal
+          title="Clear Quick List?"
+          message="This empties your current Quick List. If you want to keep it, save it first — clearing does not save a copy."
+          confirmLabel="Clear Quick List"
+          destructive
+          onConfirm={handleClearConfirm}
+          onCancel={() => setShowClearModal(false)}
+        />
+      )}
+
       <div className="container">
         <div className={styles.header}>
           <div>
@@ -142,7 +209,26 @@ export default function QuickList() {
               its taste profile from this instead of your full Top 100.
             </p>
           </div>
-          <span className={styles.countBadge}>{quickList.length} / {QUICK_LIST_MAX}</span>
+          <div className={qlStyles.headerActions}>
+            <span className={styles.countBadge}>{quickList.length} / {QUICK_LIST_MAX}</span>
+            <div className={qlStyles.headerButtons}>
+              <button
+                className={qlStyles.saveBtn}
+                onClick={() => setShowSaveModal(true)}
+                disabled={quickList.length === 0}
+                title={quickList.length === 0 ? 'Add films to your Quick List first' : undefined}
+              >
+                Save Quick List
+              </button>
+              <button
+                className={qlStyles.clearBtn}
+                onClick={() => setShowClearModal(true)}
+                disabled={quickList.length === 0}
+              >
+                Clear Quick List
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Inline search bar */}

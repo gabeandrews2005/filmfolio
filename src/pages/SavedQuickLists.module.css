@@ -1,0 +1,80 @@
+.page {
+  padding-top: calc(var(--nav-height) + 40px);
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--text-primary);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.empty {
+  padding: 80px 0;
+  text-align: center;
+}
+
+.emptyText {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+}
+
+.exploreLink {
+  color: var(--accent-gold);
+  font-size: 0.9rem;
+  transition: opacity var(--transition);
+}
+
+.exploreLink:hover {
+  opacity: 0.8;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.listBlock {
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.listBlockMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+  margin-bottom: -8px;
+}
+
+.savedDate {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.deleteBtn {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+
+.deleteBtn:hover {
+  color: var(--accent-red);
+}

@@ -10,6 +10,7 @@ const LS_NOT_INT     = 'ff_not_interested'
 const LS_USER        = 'ff_user'
 const LS_MYLIST      = 'ff_top100'
 const LS_QUICKLIST   = 'ff_quicklist'
+const LS_SAVED_QUICKLISTS = 'ff_saved_quicklists'
 const LS_ACTORS      = 'ff_actors'
 const LS_SHOWS       = 'ff_shows'
 const LS_DIRECTORS   = 'ff_directors'
@@ -156,6 +157,8 @@ export function FilmProvider({ children }) {
   // instead (same rank-weighted theme algorithm, just a smaller/faster-to-
   // build input than committing to a full ranked Top 100).
   const [quickList,    setQuickList]    = useState(() => loadLS(LS_QUICKLIST, []))
+  // Named snapshots of the Quick List, saved off to their own archive page.
+  const [savedQuickLists, setSavedQuickLists] = useState(() => loadLS(LS_SAVED_QUICKLISTS, []))
   const [actorsList,   setActorsList]   = useState(() => loadLS(LS_ACTORS, []))
   const [showsList,    setShowsList]    = useState(() => loadLS(LS_SHOWS, []))
   const [directorsList,setDirectorsList]= useState(() => loadLS(LS_DIRECTORS, []))
@@ -353,6 +356,33 @@ export function FilmProvider({ children }) {
     })
   }, [])
 
+  // ── Quick List save/clear ─────────────────────────────────────────────────
+  const clearQuickList = useCallback(() => {
+    setQuickList([])
+    saveLS(LS_QUICKLIST, [])
+  }, [])
+
+  // Snapshots the current Quick List under a name — doesn't clear the
+  // working list, so saving and clearing stay two separate, deliberate
+  // actions instead of save always wiping what you just built.
+  const saveQuickList = useCallback((name) => {
+    setSavedQuickLists((prev) => {
+      const entry = { id: `${Date.now()}`, name, createdAt: new Date().toISOString(), films: quickList }
+      const next = [...prev, entry]
+      saveLS(LS_SAVED_QUICKLISTS, next)
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quickList])
+
+  const deleteSavedQuickList = useCallback((id) => {
+    setSavedQuickLists((prev) => {
+      const next = prev.filter((l) => l.id !== id)
+      saveLS(LS_SAVED_QUICKLISTS, next)
+      return next
+    })
+  }, [])
+
   // ── Not Interested ─────────────────────────────────────────────────────────
   const addNotInterested = useCallback((tmdbId) => {
     setNotInterested((prev) => {
@@ -378,6 +408,10 @@ export function FilmProvider({ children }) {
       myList,
       myTop10,     // computed slice of myList[0..9]
       quickList,
+      clearQuickList,
+      savedQuickLists,
+      saveQuickList,
+      deleteSavedQuickList,
       actorsList,
       showsList,
       directorsList,

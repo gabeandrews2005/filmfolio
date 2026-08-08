@@ -13,13 +13,15 @@ const SEPARATE_LISTS = [
 
 function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList }) {
   const {
-    seenList, toggleSeen, myList, addToList, removeFromList,
+    seenList, toggleSeen, myList, quickList, addToList, removeFromList,
     watchlist, addToWatchlist, removeFromWatchlist,
     horrorList, comediesList, animatedList, seasonalList,
   } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
   const listFull = myList.length >= 100
+  const inQuickList = quickList.some((m) => m.tmdb_id === movie.tmdb_id)
+  const quickListFull = quickList.length >= 10
   const inWatchlist = watchlist.some((m) => m.tmdb_id === movie.tmdb_id)
   const [showSeparateBar, setShowSeparateBar] = useState(false)
 
@@ -45,6 +47,12 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
     e.stopPropagation()
     if (inWatchlist) removeFromWatchlist(movie.tmdb_id)
     else addToWatchlist(movie)
+  }
+
+  function handleQuickList(e) {
+    e.stopPropagation()
+    if (inQuickList) removeFromList('quickList', movie.tmdb_id)
+    else if (!quickListFull) addToList('quickList', movie)
   }
 
   function handleSeparateListToggle(e, key, max) {
@@ -131,6 +139,15 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
                 onClick={(e) => { e.stopPropagation(); setShowSeparateBar((v) => !v) }}
               >
                 + Separate List
+              </button>
+
+              <button
+                className={`${styles.quickListBtn} ${inQuickList ? styles.inQuickList : ''}`}
+                onClick={handleQuickList}
+                disabled={!inQuickList && quickListFull}
+                title={!inQuickList && quickListFull ? 'Quick List is full (10/10) — remove a film to add more' : undefined}
+              >
+                {inQuickList ? '✓ Quick List' : quickListFull ? 'Quick List Full' : '+ Quick List'}
               </button>
             </div>
 
