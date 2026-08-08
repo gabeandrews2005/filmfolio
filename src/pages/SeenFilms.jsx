@@ -1,10 +1,11 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { PLACEHOLDER_POSTER, getMovieDetails, getPosterUrl } from '../api/tmdb'
+import { PLACEHOLDER_POSTER, getMovieDetails, getPosterUrl, searchMovies, TMDB_GENRE_MAP } from '../api/tmdb'
 import useOmdbRatings from '../hooks/useOmdbRatings'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './SeenFilms.module.css'
+import searchStyles from './MyList.module.css'
 
 async function fetchSeenFilmDataWithRetry(tmdbId, attempt = 0) {
   const details = await getMovieDetails(tmdbId)
@@ -81,8 +82,71 @@ export default function SeenFilms() {
   const ctx = useFilm()
   const {
     seenList, seenFilmsData, recordSeenData, movies, myList, quickList, watchlist,
-    horrorList, comediesList, animatedList, seasonalList,
+    horrorList, comediesList, animatedList, seasonalList, toggleSeen,
   } = ctx
+
+  const [query, setQuery] = useState('')
+  const [searchResults, setSearchResults] = useState([])
+  const [searching, setSearching] = useState(false)
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const debounceRef = useRef(null)
+  const searchWrapRef = useRef(null)
+
+  function handleSearch(value) {
+    setQuery(value)
+    clearTimeout(debounceRef.current)
+    if (!value.trim()) {
+      setSearchResults([])
+      setDropdownOpen(false)
+      return
+    }
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true)
+      const results = await searchMovies(value)
+      setSearchResults(results.slice(0, 8))
+      setDropdownOpen(true)
+      setSearching(false)
+    }, 300)
+  }
+
+  function handleAdd(r) {
+    if (seenList.has(r.id)) return
+    toggleSeen({
+      tmdb_id: r.id,
+      title: r.title,
+      year: r.release_date?.slice(0, 4) ?? '',
+      posterUrl: getPosterUrl(r.poster_path),
+      overview: r.overview,
+      vote_average: r.vote_average,
+      director: '',
+      genres: (r.genre_ids ?? []).map((id) => TMDB_GENRE_MAP[id]).filter(Boolean),
+    })
+    handleClear()
+  }
+
+  function handleClear() {
+    setQuery('')
+    setSearchResults([])
+    setDropdownOpen(false)
+  }
+
+  useEffect(() => {
+    function onClickOutside(e) {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  useEffect(() => {
+    function onEscape(e) {
+      if (e.key === 'Escape') handleClear()
+    }
+    document.addEventListener('keydown', onEscape)
+    return () => document.removeEventListener('keydown', onEscape)
+  }, [])
 
   // Build a map of all known films from all sources
   const filmMap = useMemo(() => {
@@ -144,6 +208,51 @@ export default function SeenFilms() {
         <div className={styles.header}>
           <h1 className={styles.title}>Seen Films</h1>
           <span className={styles.count}>{seenFilms.length} films</span>
+        </div>
+
+        {/* Inline search bar */}
+        <div className={searchStyles.searchWrap} ref={searchWrapRef}>
+          <div className={searchStyles.searchBox}>
+            <input
+              type="text"
+              className={searchStyles.searchInput}
+              placeholder="Search to mark a film seen…"
+              value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+            />
+            {searching && <span className={searchStyles.spinner}>⟳</span>}
+            {query && !searching && (
+              <button className={searchStyles.clearBtn} onClick={handleClear} aria-label="Clear search">×</button>
+            )}
+          </div>
+
+          {dropdownOpen && searchResults.length > 0 && (
+            <div className={searchStyles.dropdown}>
+              {searchResults.map((r) => {
+                const inList = seenList.has(r.id)
+                return (
+                  <div key={r.id} className={searchStyles.dropdownRow}>
+                    <img
+                      src={getPosterUrl(r.poster_path)}
+                      alt={r.title}
+                      className={searchStyles.thumb}
+                    />
+                    <div className={searchStyles.resultInfo}>
+                      <span className={searchStyles.resultTitle}>{r.title}</span>
+                      <span className={searchStyles.resultYear}>{r.release_date?.slice(0, 4)}</span>
+                    </div>
+                    <button
+                      className={`${searchStyles.addBtn} ${inList ? searchStyles.added : ''}`}
+                      onClick={() => !inList && handleAdd(r)}
+                      disabled={inList}
+                    >
+                      {inList ? '✓' : '+'}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
 
         {seenFilms.length === 0 ? (

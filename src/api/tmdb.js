@@ -8,6 +8,18 @@ const CACHE_TTL = 24 * 60 * 60 * 1000;
 
 export const PLACEHOLDER_POSTER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='500' height='750' viewBox='0 0 500 750'%3E%3Crect width='500' height='750' fill='%23141414'/%3E%3Ctext x='250' y='375' font-family='serif' font-size='48' fill='%232a2520' text-anchor='middle' dominant-baseline='middle'%3E%E2%96%88%3C/text%3E%3C/svg%3E`;
 
+// TMDB's stable, documented movie genre list — search/discover results
+// carry numeric genre_ids, not names. Used anywhere a plain TMDB search
+// result gets turned into a film object that needs `genres` set (so the
+// Horror/Comedies/Animated/Seasonal pages can auto-derive matches).
+export const TMDB_GENRE_MAP = {
+  28: 'Action', 12: 'Adventure', 16: 'Animation', 35: 'Comedy', 80: 'Crime',
+  99: 'Documentary', 18: 'Drama', 10751: 'Family', 14: 'Fantasy', 36: 'History',
+  27: 'Horror', 10402: 'Music', 9648: 'Mystery', 10749: 'Romance',
+  878: 'Science Fiction', 10770: 'TV Movie', 53: 'Thriller', 10752: 'War',
+  37: 'Western',
+};
+
 function getCached(key) {
   try {
     const raw = localStorage.getItem(key);
