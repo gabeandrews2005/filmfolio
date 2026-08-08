@@ -84,7 +84,7 @@ function SortablePoster({ movie, index, onRemove }) {
 }
 
 export default function QuickList() {
-  const { quickList, addToList, removeFromList, reorderList, saveQuickList, clearQuickList } = useFilm()
+  const { quickList, savedQuickLists, addToList, removeFromList, reorderList, saveQuickList, clearQuickList } = useFilm()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -183,7 +183,7 @@ export default function QuickList() {
     <div className={styles.page}>
       {showSaveModal && (
         <SaveQuickListModal
-          defaultName={`Quick List — ${new Date().toLocaleDateString()}`}
+          defaultName={`Quick List ${savedQuickLists.length + 1}`}
           onSave={handleSaveConfirm}
           onCancel={() => setShowSaveModal(false)}
         />

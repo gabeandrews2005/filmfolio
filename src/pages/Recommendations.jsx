@@ -13,9 +13,14 @@ const LS_REC_FILTERS = 'ff_rec_filters'
 function loadRecFilters() {
   try {
     const saved = JSON.parse(localStorage.getItem(LS_REC_FILTERS) || '{}')
-    return { actors: !!saved.actors, directors: !!saved.directors, genre: saved.genre ?? null, quickList: !!saved.quickList }
+    return {
+      actors: !!saved.actors, directors: !!saved.directors, genre: saved.genre ?? null,
+      // 'current' = the live working Quick List, any other string = a saved
+      // Quick List's id, null = not using a Quick List at all (use Top 100).
+      quickListSource: saved.quickListSource ?? null,
+    }
   } catch {
-    return { actors: false, directors: false, genre: null, quickList: false }
+    return { actors: false, directors: false, genre: null, quickListSource: null }
   }
 }
 
@@ -200,7 +205,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge })
 
 export default function Recommendations() {
   const {
-    myList, quickList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
+    myList, quickList, savedQuickLists, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
     actorsList, directorsList, addToWatchlist,
   } = useFilm()
   const [allRecs, setAllRecs] = useState([])
@@ -212,18 +217,36 @@ export default function Recommendations() {
   const [includeActors, setIncludeActors] = useState(() => loadRecFilters().actors)
   const [includeDirectors, setIncludeDirectors] = useState(() => loadRecFilters().directors)
   const [selectedGenre, setSelectedGenre] = useState(() => loadRecFilters().genre)
-  const [useQuickList, setUseQuickList] = useState(() => loadRecFilters().quickList)
+  const [quickListSource, setQuickListSource] = useState(() => loadRecFilters().quickListSource)
+  const [quickListPanelOpen, setQuickListPanelOpen] = useState(false)
 
   useEffect(() => {
     safeSetItem(LS_REC_FILTERS, JSON.stringify({
-      actors: includeActors, directors: includeDirectors, genre: selectedGenre, quickList: useQuickList,
+      actors: includeActors, directors: includeDirectors, genre: selectedGenre, quickListSource,
     }))
-  }, [includeActors, includeDirectors, selectedGenre, useQuickList])
+  }, [includeActors, includeDirectors, selectedGenre, quickListSource])
 
-  // Picks For You can build its taste profile from the full ranked Top 100
-  // or, if toggled on, the smaller Quick List instead — same algorithm,
-  // smaller/faster-to-build input.
-  const themeSourceList = useQuickList ? quickList : myList
+  // A selected saved Quick List can get deleted out from under this choice
+  // (from the archive page, another tab, etc.) — fall back to the Top 100
+  // rather than silently keep pointing at a list that no longer exists.
+  useEffect(() => {
+    if (quickListSource && quickListSource !== 'current' && !savedQuickLists.some((l) => l.id === quickListSource)) {
+      setQuickListSource(null)
+    }
+  }, [quickListSource, savedQuickLists])
+
+  const selectedSavedList = quickListSource && quickListSource !== 'current'
+    ? savedQuickLists.find((l) => l.id === quickListSource)
+    : null
+
+  // Picks For You can build its taste profile from the full ranked Top 100,
+  // the live working Quick List, or any saved Quick List snapshot — same
+  // algorithm either way, just a different (usually smaller) input.
+  const themeSourceList = quickListSource === 'current'
+    ? quickList
+    : selectedSavedList
+      ? selectedSavedList.films
+      : myList
 
   // Genres actually present on whichever list is currently feeding the
   // algorithm — no point offering a tab for a genre nothing on that list has.
@@ -352,18 +375,59 @@ export default function Recommendations() {
               >
                 ↻ Refresh
               </button>
-              <button
-                className={`${styles.refreshBtn} ${useQuickList ? styles.filterOptionActive : ''}`}
-                onClick={() => setUseQuickList((v) => !v)}
-                disabled={quickList.length === 0}
-                title={quickList.length === 0
-                  ? 'Build a Quick List first'
-                  : useQuickList
-                    ? 'Switch back to your full Top 100'
-                    : 'Pull the taste profile from your Quick List instead of your Top 100'}
-              >
-                {useQuickList ? '✓ Use Quick List' : 'Use Quick List'}
-              </button>
+              <div className={styles.quickListPicker}>
+                <button
+                  className={`${styles.refreshBtn} ${quickListSource ? styles.filterOptionActive : ''}`}
+                  onClick={() => setQuickListPanelOpen((v) => !v)}
+                  disabled={quickList.length === 0 && savedQuickLists.length === 0}
+                  title={quickList.length === 0 && savedQuickLists.length === 0
+                    ? 'Build a Quick List first'
+                    : undefined}
+                >
+                  {quickListSource === 'current'
+                    ? '✓ Quick List: Current'
+                    : selectedSavedList
+                      ? `✓ Quick List: ${selectedSavedList.name}`
+                      : 'Use Quick List'}
+                </button>
+
+                {quickListPanelOpen && (
+                  <div className={styles.quickListDropdown}>
+                    <button
+                      className={`${styles.quickListOption} ${!quickListSource ? styles.quickListOptionActive : ''}`}
+                      onClick={() => { setQuickListSource(null); setQuickListPanelOpen(false) }}
+                    >
+                      Top 100 (default)
+                    </button>
+                    <button
+                      className={`${styles.quickListOption} ${quickListSource === 'current' ? styles.quickListOptionActive : ''}`}
+                      onClick={() => { setQuickListSource('current'); setQuickListPanelOpen(false) }}
+                      disabled={quickList.length === 0}
+                    >
+                      Current Quick List ({quickList.length})
+                    </button>
+                    {savedQuickLists.length > 0 && (
+                      <>
+                        <div className={styles.quickListDivider}>Saved Quick Lists</div>
+                        {savedQuickLists.map((list) => (
+                          <button
+                            key={list.id}
+                            className={`${styles.quickListOption} ${quickListSource === list.id ? styles.quickListOptionActive : ''}`}
+                            onClick={() => { setQuickListSource(list.id); setQuickListPanelOpen(false) }}
+                          >
+                            {list.name} ({list.films.length})
+                          </button>
+                        ))}
+                      </>
+                    )}
+                    {savedQuickLists.length === 0 && quickList.length === 0 && (
+                      <p className={styles.quickListEmptyHint}>
+                        No Quick Lists yet — build one from the Quick List page.
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
             {filtersOpen && (
               <div className={styles.filterPanel}>
@@ -417,7 +481,7 @@ export default function Recommendations() {
             <div className={styles.spinner} />
             <p>
               Analyzing your taste from {themeSourceList.length} film{themeSourceList.length === 1 ? '' : 's'}
-              {useQuickList ? ' (Quick List)' : ''}
+              {quickListSource === 'current' ? ' (Quick List)' : selectedSavedList ? ` (${selectedSavedList.name})` : ''}
               {selectedGenre ? ` (${selectedGenre} only)` : ''}…
             </p>
           </div>

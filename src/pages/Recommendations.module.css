@@ -69,6 +69,66 @@
   cursor: not-allowed;
 }
 
+/* Quick List source picker — dropdown bar under its own button */
+.quickListPicker {
+  position: relative;
+}
+
+.quickListDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  min-width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  animation: filterPanelIn 180ms ease;
+}
+
+.quickListOption {
+  padding: 8px 10px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  transition: background var(--transition), color var(--transition);
+}
+
+.quickListOption:hover:not(:disabled) {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.quickListOption:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.quickListOptionActive {
+  color: var(--accent-gold);
+  background: rgba(201,168,76,0.08);
+}
+
+.quickListDivider {
+  padding: 8px 10px 2px;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.quickListEmptyHint {
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
 .filterPanel {
   display: flex;
   gap: 8px;

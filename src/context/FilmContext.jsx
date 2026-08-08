@@ -74,61 +74,99 @@ function saveLS(key, value) {
 // for this pass — and even then left without that field rather than
 // poisoned with an empty one, so it's picked up again next pass instead of
 // stuck forever.
+async function fetchGenresWithRetry(tmdbId, attempt = 0) {
+  const details = await getMovieDetails(tmdbId)
+  if (details) return details.genres?.map((g) => g.name) ?? []
+  if (attempt >= 2) return null // failed — leave ungenred, retry next pass
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return fetchGenresWithRetry(tmdbId, attempt + 1)
+}
+
+async function fetchKeywordsWithRetry(tmdbId, attempt = 0) {
+  const keywords = await getMovieKeywords(tmdbId)
+  if (keywords && keywords.length > 0) return keywords
+  if (attempt >= 2) return keywords ?? null // genuinely no keywords vs. failed fetch
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return fetchKeywordsWithRetry(tmdbId, attempt + 1)
+}
+
+// Resolves genres+keywords (only the ones actually missing) for a batch of
+// films, throttled to 4 concurrent lookups. Returns two id->value maps the
+// caller merges back into whatever shape its own state is in.
+async function resolveGenresAndKeywords(missing, isCancelled) {
+  const genresResults = new Map()
+  const keywordsResults = new Map()
+  let index = 0
+  async function run() {
+    while (index < missing.length) {
+      const m = missing[index++]
+      const [genres, keywords] = await Promise.all([
+        m.genres ? Promise.resolve(undefined) : fetchGenresWithRetry(m.tmdb_id),
+        m.keywords ? Promise.resolve(undefined) : fetchKeywordsWithRetry(m.tmdb_id),
+      ])
+      if (genres !== undefined) genresResults.set(m.tmdb_id, genres)
+      if (keywords !== undefined) keywordsResults.set(m.tmdb_id, keywords)
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
+  return isCancelled() ? null : { genresResults, keywordsResults }
+}
+
+function patchGenresAndKeywords(movie, genresResults, keywordsResults) {
+  let patched = movie
+  if (genresResults.has(movie.tmdb_id) && genresResults.get(movie.tmdb_id) !== null) {
+    patched = { ...patched, genres: genresResults.get(movie.tmdb_id) }
+  }
+  if (keywordsResults.has(movie.tmdb_id) && keywordsResults.get(movie.tmdb_id) !== null) {
+    patched = { ...patched, keywords: keywordsResults.get(movie.tmdb_id) }
+  }
+  return patched
+}
+
 function useGenreKeywordBackfill(list, setList, saveKey) {
   useEffect(() => {
     const missing = list.filter((m) => (!m.genres || !m.keywords) && m.tmdb_id)
     if (missing.length === 0) return
     let cancelled = false
-    async function fetchGenresWithRetry(tmdbId, attempt = 0) {
-      const details = await getMovieDetails(tmdbId)
-      if (details) return details.genres?.map((g) => g.name) ?? []
-      if (attempt >= 2) return null // failed — leave ungenred, retry next pass
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
-      return fetchGenresWithRetry(tmdbId, attempt + 1)
-    }
-    async function fetchKeywordsWithRetry(tmdbId, attempt = 0) {
-      const keywords = await getMovieKeywords(tmdbId)
-      if (keywords && keywords.length > 0) return keywords
-      if (attempt >= 2) return keywords ?? null // genuinely no keywords vs. failed fetch
-      await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
-      return fetchKeywordsWithRetry(tmdbId, attempt + 1)
-    }
-    async function backfill() {
-      const genresResults = new Map()
-      const keywordsResults = new Map()
-      let index = 0
-      async function run() {
-        while (index < missing.length) {
-          const m = missing[index++]
-          const [genres, keywords] = await Promise.all([
-            m.genres ? Promise.resolve(undefined) : fetchGenresWithRetry(m.tmdb_id),
-            m.keywords ? Promise.resolve(undefined) : fetchKeywordsWithRetry(m.tmdb_id),
-          ])
-          if (genres !== undefined) genresResults.set(m.tmdb_id, genres)
-          if (keywords !== undefined) keywordsResults.set(m.tmdb_id, keywords)
-        }
-      }
-      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
-      if (cancelled) return
+    resolveGenresAndKeywords(missing, () => cancelled).then((result) => {
+      if (!result) return
+      const { genresResults, keywordsResults } = result
       setList((prev) => {
-        const next = prev.map((m) => {
-          let patched = m
-          if (genresResults.has(m.tmdb_id) && genresResults.get(m.tmdb_id) !== null) {
-            patched = { ...patched, genres: genresResults.get(m.tmdb_id) }
-          }
-          if (keywordsResults.has(m.tmdb_id) && keywordsResults.get(m.tmdb_id) !== null) {
-            patched = { ...patched, keywords: keywordsResults.get(m.tmdb_id) }
-          }
-          return patched
-        })
+        const next = prev.map((m) => patchGenresAndKeywords(m, genresResults, keywordsResults))
         saveLS(saveKey, next)
         return next
       })
-    }
-    backfill()
+    })
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [list])
+}
+
+// Saved Quick Lists are frozen snapshots, not a live list any other effect
+// watches — a film saved before its own genres/keywords backfill finished
+// would otherwise be stuck without them forever, silently making that saved
+// list a dead end for Picks For You (no themes to build a taste profile
+// from). Same retry-safe resolver as above, just flattened across every
+// saved list's films and merged back per-list.
+function useSavedQuickListsBackfill(savedQuickLists, setSavedQuickLists) {
+  useEffect(() => {
+    const missing = savedQuickLists.flatMap((l) => l.films.filter((m) => (!m.genres || !m.keywords) && m.tmdb_id))
+    if (missing.length === 0) return
+    let cancelled = false
+    resolveGenresAndKeywords(missing, () => cancelled).then((result) => {
+      if (!result) return
+      const { genresResults, keywordsResults } = result
+      setSavedQuickLists((prev) => {
+        const next = prev.map((l) => ({
+          ...l,
+          films: l.films.map((m) => patchGenresAndKeywords(m, genresResults, keywordsResults)),
+        }))
+        saveLS(LS_SAVED_QUICKLISTS, next)
+        return next
+      })
+    })
+    return () => { cancelled = true }
+  }, [savedQuickLists, setSavedQuickLists])
 }
 
 function loadMyList() {
@@ -208,6 +246,7 @@ export function FilmProvider({ children }) {
 
   useGenreKeywordBackfill(myList, setMyList, LS_MYLIST)
   useGenreKeywordBackfill(quickList, setQuickList, LS_QUICKLIST)
+  useSavedQuickListsBackfill(savedQuickLists, setSavedQuickLists)
 
   // ── Seen list ──────────────────────────────────────────────────────────────
   const toggleSeen = useCallback((tmdbId) => {
