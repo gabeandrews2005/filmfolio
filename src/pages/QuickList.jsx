@@ -7,6 +7,7 @@ import { useFilm } from '../context/FilmContext'
 import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
 import ConfirmModal from '../components/ConfirmModal'
+import RankPickerModal from '../components/RankPickerModal'
 import styles from './MyList.module.css'
 import modalStyles from '../components/ConfirmModal.module.css'
 import qlStyles from './QuickList.module.css'
@@ -84,7 +85,7 @@ function SortablePoster({ movie, index, onRemove }) {
 }
 
 export default function QuickList() {
-  const { quickList, savedQuickLists, addToList, removeFromList, reorderList, saveQuickList, clearQuickList } = useFilm()
+  const { quickList, savedQuickLists, addToList, removeFromList, reorderList, insertAtRank, saveQuickList, clearQuickList } = useFilm()
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -92,6 +93,7 @@ export default function QuickList() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [showSaveModal, setShowSaveModal] = useState(false)
   const [showClearModal, setShowClearModal] = useState(false)
+  const [rankPickerMovie, setRankPickerMovie] = useState(null)
   const debounceRef = useRef(null)
   const searchWrapRef = useRef(null)
 
@@ -115,9 +117,8 @@ export default function QuickList() {
     }, 300)
   }
 
-  function handleAdd(r) {
-    if (quickListIds.has(r.id) || isFull) return
-    addToList('quickList', {
+  function buildMovieItem(r) {
+    return {
       tmdb_id: r.id,
       title: r.title,
       year: r.release_date?.slice(0, 4) ?? '',
@@ -126,7 +127,16 @@ export default function QuickList() {
       vote_average: r.vote_average,
       director: '',
       genres: (r.genre_ids ?? []).map((id) => TMDB_GENRE_MAP[id]).filter(Boolean),
-    })
+    }
+  }
+
+  // A full Quick List no longer blocks adding — it opens the rank picker
+  // instead so the film can be slotted in at a chosen position.
+  function handleAdd(r) {
+    if (quickListIds.has(r.id)) return
+    const item = buildMovieItem(r)
+    if (isFull) { setRankPickerMovie(item); return }
+    addToList('quickList', item)
     handleClear()
   }
 
@@ -200,6 +210,19 @@ export default function QuickList() {
         />
       )}
 
+      {rankPickerMovie && (
+        <RankPickerModal
+          itemName={rankPickerMovie.title}
+          maxRank={QUICK_LIST_MAX}
+          onSubmit={(rank) => {
+            insertAtRank('quickList', rankPickerMovie, rank)
+            setRankPickerMovie(null)
+            handleClear()
+          }}
+          onCancel={() => setRankPickerMovie(null)}
+        />
+      )}
+
       <div className="container">
         <div className={styles.header}>
           <div>
@@ -263,12 +286,12 @@ export default function QuickList() {
                       <span className={styles.resultYear}>{r.release_date?.slice(0, 4)}</span>
                     </div>
                     <button
-                      className={`${styles.addBtn} ${inList ? styles.added : ''} ${!inList && isFull ? styles.full : ''}`}
-                      onClick={() => !inList && !isFull && handleAdd(r)}
-                      disabled={inList || isFull}
-                      title={!inList && isFull ? `Quick List is full (${QUICK_LIST_MAX}/${QUICK_LIST_MAX}) — remove a film to add more` : undefined}
+                      className={`${styles.addBtn} ${inList ? styles.added : ''}`}
+                      onClick={() => !inList && handleAdd(r)}
+                      disabled={inList}
+                      title={!inList && isFull ? `Quick List is full (${QUICK_LIST_MAX}/${QUICK_LIST_MAX}) — choose a rank to slot it in` : undefined}
                     >
-                      {inList ? '✓' : isFull ? '—' : '+'}
+                      {inList ? '✓' : '+'}
                     </button>
                   </div>
                 )

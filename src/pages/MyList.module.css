@@ -185,10 +185,6 @@
   color: var(--accent-gold) !important;
 }
 
-.full {
-  opacity: 0.4;
-}
-
 /* ── Grid view ──────────────────────────────────────────────────────────── */
 .gridHeader {
   display: flex;

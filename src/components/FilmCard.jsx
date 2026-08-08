@@ -4,6 +4,7 @@ import { PLACEHOLDER_POSTER } from '../api/tmdb'
 import useOmdbRatings from '../hooks/useOmdbRatings'
 import StarSignal from './StarSignal'
 import RatingDisplay from './RatingDisplay'
+import RankPickerModal from './RankPickerModal'
 import styles from './FilmCard.module.css'
 
 const SEPARATE_LISTS = [
@@ -15,7 +16,7 @@ const SEPARATE_LISTS = [
 
 function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList, ratings, filmFolioPick }) {
   const {
-    seenList, toggleSeen, myList, quickList, addToList, removeFromList,
+    seenList, toggleSeen, myList, quickList, addToList, removeFromList, insertAtRank,
     watchlist, addToWatchlist, removeFromWatchlist,
     horrorList, comediesList, animatedList, seasonalList,
   } = useFilm()
@@ -26,6 +27,10 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
   const quickListFull = quickList.length >= 10
   const inWatchlist = watchlist.some((m) => m.tmdb_id === movie.tmdb_id)
   const [showSeparateBar, setShowSeparateBar] = useState(false)
+  // Full lists never block adding outright — once full, the "+" buttons
+  // below open this instead, letting the user pick a rank to slot the film
+  // into (bumping everything at and below that rank down a spot).
+  const [rankPicker, setRankPicker] = useState(null) // { listKey, max, label }
 
   const separateListData = { horrorList, comediesList, animatedList, seasonalList }
 
@@ -41,8 +46,9 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
 
   function handleMyList(e) {
     e.stopPropagation()
-    if (inList) removeFromList('myList', movie.tmdb_id)
-    else if (!listFull) addToList('myList', movie)
+    if (inList) { removeFromList('myList', movie.tmdb_id); return }
+    if (listFull) { setRankPicker({ listKey: 'myList', max: 100, label: 'My List' }); return }
+    addToList('myList', movie)
   }
 
   function handleWatchlist(e) {
@@ -53,16 +59,18 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
 
   function handleQuickList(e) {
     e.stopPropagation()
-    if (inQuickList) removeFromList('quickList', movie.tmdb_id)
-    else if (!quickListFull) addToList('quickList', movie)
+    if (inQuickList) { removeFromList('quickList', movie.tmdb_id); return }
+    if (quickListFull) { setRankPicker({ listKey: 'quickList', max: 10, label: 'Quick List' }); return }
+    addToList('quickList', movie)
   }
 
-  function handleSeparateListToggle(e, key, max) {
+  function handleSeparateListToggle(e, key, max, label) {
     e.stopPropagation()
     const list = separateListData[key]
     const inThatList = list.some((m) => m.tmdb_id === movie.tmdb_id)
-    if (inThatList) removeFromList(key, movie.tmdb_id)
-    else if (list.length < max) addToList(key, movie)
+    if (inThatList) { removeFromList(key, movie.tmdb_id); return }
+    if (list.length >= max) { setRankPicker({ listKey: key, max, label }); return }
+    addToList(key, movie)
   }
 
   return (
@@ -124,12 +132,11 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
 
               {showAddToList && (
                 <button
-                  className={`${styles.top10Btn} ${inList ? styles.inTop10 : ''} ${!inList && listFull ? styles.btnDisabled : ''}`}
+                  className={`${styles.top10Btn} ${inList ? styles.inTop10 : ''}`}
                   onClick={handleMyList}
-                  disabled={!inList && listFull}
-                  title={!inList && listFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
+                  title={!inList && listFull ? 'Your list is full (100/100) — choose a rank to slot it in' : undefined}
                 >
-                  {inList ? '✓ In My List' : listFull ? 'List Full (100/100)' : '+ My List'}
+                  {inList ? '✓ In My List' : '+ My List'}
                 </button>
               )}
 
@@ -150,10 +157,9 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
               <button
                 className={`${styles.quickListBtn} ${inQuickList ? styles.inQuickList : ''}`}
                 onClick={handleQuickList}
-                disabled={!inQuickList && quickListFull}
-                title={!inQuickList && quickListFull ? 'Quick List is full (10/10) — remove a film to add more' : undefined}
+                title={!inQuickList && quickListFull ? 'Quick List is full (10/10) — choose a rank to slot it in' : undefined}
               >
-                {inQuickList ? '✓ Quick List' : quickListFull ? 'Quick List Full' : '+ Quick List'}
+                {inQuickList ? '✓ Quick List' : '+ Quick List'}
               </button>
             </div>
 
@@ -167,11 +173,10 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
                     <button
                       key={key}
                       className={`${styles.separateListOption} ${inThatList ? styles.inSeparateList : ''}`}
-                      onClick={(e) => handleSeparateListToggle(e, key, max)}
-                      disabled={!inThatList && full}
-                      title={!inThatList && full ? `${label} list is full (${max}/${max})` : undefined}
+                      onClick={(e) => handleSeparateListToggle(e, key, max, label)}
+                      title={!inThatList && full ? `${label} list is full (${max}/${max}) — choose a rank to slot it in` : undefined}
                     >
-                      {inThatList ? `✓ ${label}` : full ? `${label} Full` : `+ ${label}`}
+                      {inThatList ? `✓ ${label}` : `+ ${label}`}
                     </button>
                   )
                 })}
@@ -180,6 +185,22 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
           </div>
         </div>
       </div>
+
+      {rankPicker && (
+        <RankPickerModal
+          itemName={movie.title}
+          maxRank={rankPicker.max}
+          description={
+            <>Your {rankPicker.label ?? 'list'} is full. Pick a rank for <strong>{movie.title}</strong> — whatever's
+            there (and everything below it) shifts down a spot, and the last one drops off the list.</>
+          }
+          onSubmit={(rank) => {
+            insertAtRank(rankPicker.listKey, movie, rank)
+            setRankPicker(null)
+          }}
+          onCancel={() => setRankPicker(null)}
+        />
+      )}
     </div>
   )
 }

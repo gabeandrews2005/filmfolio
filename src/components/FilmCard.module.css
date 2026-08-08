@@ -320,7 +320,7 @@
   transition: opacity var(--transition);
 }
 
-.top10Btn:hover:not(.btnDisabled) {
+.top10Btn:hover {
   opacity: 0.88;
 }
 
@@ -328,11 +328,6 @@
   background: var(--bg-tertiary) !important;
   color: var(--accent-gold) !important;
   border: 1px solid rgba(201,168,76,0.4);
-}
-
-.btnDisabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .watchlistBtn {
@@ -389,13 +384,8 @@
   transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition);
 }
 
-.quickListBtn:hover:not(:disabled) {
+.quickListBtn:hover {
   background: rgba(201,168,76,0.1);
-}
-
-.quickListBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .inQuickList {
@@ -430,13 +420,8 @@
   transition: background var(--transition), color var(--transition), border-color var(--transition), opacity var(--transition);
 }
 
-.separateListOption:hover:not(:disabled) {
+.separateListOption:hover {
   background: rgba(201,168,76,0.1);
-}
-
-.separateListOption:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }
 
 .inSeparateList {

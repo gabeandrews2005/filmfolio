@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../context/FilmContext'
 import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER } from '../api/tmdb'
 import FilmCard from '../components/FilmCard'
+import RankPickerModal from '../components/RankPickerModal'
 import styles from './MyList.module.css'
 
 // TMDB's stable, documented movie genre list — search results carry
@@ -47,11 +48,12 @@ function SortablePoster({ movie, index, onRemove }) {
 }
 
 export default function MyList() {
-  const { myList, addToList, removeFromList, reorderList } = useFilm()
+  const { myList, addToList, removeFromList, reorderList, insertAtRank } = useFilm()
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [rankPickerMovie, setRankPickerMovie] = useState(null)
   const debounceRef = useRef(null)
   const searchWrapRef = useRef(null)
 
@@ -75,9 +77,8 @@ export default function MyList() {
     }, 300)
   }
 
-  function handleAdd(r) {
-    if (myListIds.has(r.id) || isFull) return
-    addToList('myList', {
+  function buildMovieItem(r) {
+    return {
       tmdb_id: r.id,
       title: r.title,
       year: r.release_date?.slice(0, 4) ?? '',
@@ -86,7 +87,16 @@ export default function MyList() {
       vote_average: r.vote_average,
       director: '',
       genres: (r.genre_ids ?? []).map((id) => TMDB_GENRE_MAP[id]).filter(Boolean),
-    })
+    }
+  }
+
+  // A full list no longer blocks adding — it opens the rank picker instead
+  // so the film can be slotted in at a chosen position.
+  function handleAdd(r) {
+    if (myListIds.has(r.id)) return
+    const item = buildMovieItem(r)
+    if (isFull) { setRankPickerMovie(item); return }
+    addToList('myList', item)
     handleClear()
   }
 
@@ -130,6 +140,19 @@ export default function MyList() {
 
   return (
     <div className={styles.page}>
+      {rankPickerMovie && (
+        <RankPickerModal
+          itemName={rankPickerMovie.title}
+          maxRank={100}
+          onSubmit={(rank) => {
+            insertAtRank('myList', rankPickerMovie, rank)
+            setRankPickerMovie(null)
+            handleClear()
+          }}
+          onCancel={() => setRankPickerMovie(null)}
+        />
+      )}
+
       <div className="container">
         <div className={styles.header}>
           <div>
@@ -171,12 +194,12 @@ export default function MyList() {
                       <span className={styles.resultYear}>{r.release_date?.slice(0, 4)}</span>
                     </div>
                     <button
-                      className={`${styles.addBtn} ${inList ? styles.added : ''} ${!inList && isFull ? styles.full : ''}`}
-                      onClick={() => !inList && !isFull && handleAdd(r)}
-                      disabled={inList || isFull}
-                      title={!inList && isFull ? 'Your list is full (100/100) — remove a film to add more' : undefined}
+                      className={`${styles.addBtn} ${inList ? styles.added : ''}`}
+                      onClick={() => !inList && handleAdd(r)}
+                      disabled={inList}
+                      title={!inList && isFull ? 'Your list is full (100/100) — choose a rank to slot it in' : undefined}
                     >
-                      {inList ? '✓' : isFull ? '—' : '+'}
+                      {inList ? '✓' : '+'}
                     </button>
                   </div>
                 )
