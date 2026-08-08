@@ -118,7 +118,12 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
             {movie.cast && movie.cast.length > 0 && (
               <p className={styles.modalCast}>
                 <span className={styles.castLabel}>Cast: </span>
-                {movie.cast.join(', ')}
+                {/* movie.cast is a plain string[] from enrichMovie's TMDB
+                    pass, but a {id,name,character}[] once useStatsBackfill
+                    (Statistics/Film Frenzy) has patched this same myList
+                    item — normalize both shapes here rather than assuming
+                    one. */}
+                {movie.cast.map((c) => (typeof c === 'string' ? c : c.name)).join(', ')}
               </p>
             )}
 
