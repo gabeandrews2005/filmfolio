@@ -96,7 +96,7 @@
 
 .pickBadge {
   position: absolute;
-  top: 6px;
+  bottom: 6px;
   right: 6px;
   z-index: 3;
   font-size: 0.75rem;
