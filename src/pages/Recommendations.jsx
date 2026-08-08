@@ -96,7 +96,7 @@ function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist, rating
             <div className={filmCardStyles.modalActions}>
               <button
                 className={filmCardStyles.seenBtn}
-                onClick={(e) => { e.stopPropagation(); onSeen(movie.tmdb_id); onClose() }}
+                onClick={(e) => { e.stopPropagation(); onSeen(movie); onClose() }}
               >
                 Seen It
               </button>
@@ -161,7 +161,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge })
             </p>
           )}
           <div className={styles.cardActions}>
-            <button className={styles.seenBtn} onClick={(e) => { e.stopPropagation(); onSeen(movie.tmdb_id) }}>
+            <button className={styles.seenBtn} onClick={(e) => { e.stopPropagation(); onSeen(movie) }}>
               Seen It
             </button>
             <button className={styles.watchlistBtn} onClick={(e) => { e.stopPropagation(); onWatchlist(movie) }}>
@@ -307,9 +307,9 @@ export default function Recommendations() {
     addNotInterested(tmdbId)
   }
 
-  function handleSeen(tmdbId) {
-    setDismissed((prev) => new Set([...prev, tmdbId]))
-    toggleSeen(tmdbId)
+  function handleSeen(movie) {
+    setDismissed((prev) => new Set([...prev, movie.tmdb_id]))
+    toggleSeen(movie)
   }
 
   function handleWatchlist(movie) {

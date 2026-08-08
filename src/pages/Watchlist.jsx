@@ -72,7 +72,7 @@ export default function Watchlist() {
                 key={movie.tmdb_id}
                 movie={movie}
                 seen={seenList.has(movie.tmdb_id)}
-                onToggleSeen={() => toggleSeen(movie.tmdb_id)}
+                onToggleSeen={() => toggleSeen(movie)}
                 onRemove={() => removeFromWatchlist(movie.tmdb_id)}
               />
             ))}

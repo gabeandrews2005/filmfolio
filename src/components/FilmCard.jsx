@@ -116,7 +116,7 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
             <div className={styles.modalActions}>
               <button
                 className={`${styles.seenBtn} ${isSeen ? styles.seenActive : ''}`}
-                onClick={(e) => { e.stopPropagation(); toggleSeen(movie.tmdb_id) }}
+                onClick={(e) => { e.stopPropagation(); toggleSeen(movie) }}
               >
                 {isSeen ? '✓ Seen It' : '○ Mark as Seen'}
               </button>

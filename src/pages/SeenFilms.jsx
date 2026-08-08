@@ -1,10 +1,28 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { PLACEHOLDER_POSTER } from '../api/tmdb'
+import { PLACEHOLDER_POSTER, getMovieDetails, getPosterUrl } from '../api/tmdb'
 import useOmdbRatings from '../hooks/useOmdbRatings'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './SeenFilms.module.css'
+
+async function fetchSeenFilmDataWithRetry(tmdbId, attempt = 0) {
+  const details = await getMovieDetails(tmdbId)
+  if (details) {
+    return {
+      tmdb_id: tmdbId,
+      title: details.title,
+      year: details.release_date?.slice(0, 4) ?? '',
+      posterUrl: getPosterUrl(details.poster_path),
+      overview: details.overview,
+      vote_average: details.vote_average,
+      genres: details.genres?.map((g) => g.name) ?? [],
+    }
+  }
+  if (attempt >= 2) return null
+  await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
+  return fetchSeenFilmDataWithRetry(tmdbId, attempt + 1)
+}
 
 function getFilmListBadges(tmdbId, ctx) {
   const badges = []
@@ -61,7 +79,10 @@ function SeenFilmCard({ movie, badges }) {
 
 export default function SeenFilms() {
   const ctx = useFilm()
-  const { seenList, movies, myList, horrorList, comediesList, animatedList, seasonalList } = ctx
+  const {
+    seenList, seenFilmsData, recordSeenData, movies, myList, quickList, watchlist,
+    horrorList, comediesList, animatedList, seasonalList,
+  } = ctx
 
   // Build a map of all known films from all sources
   const filmMap = useMemo(() => {
@@ -73,17 +94,48 @@ export default function SeenFilms() {
     }
     addFilms(movies)
     addFilms(myList)
+    addFilms(quickList)
+    addFilms(watchlist)
     addFilms(horrorList)
     addFilms(comediesList)
     addFilms(animatedList)
     addFilms(seasonalList)
     return map
-  }, [movies, myList, horrorList, comediesList, animatedList, seasonalList])
+  }, [movies, myList, quickList, watchlist, horrorList, comediesList, animatedList, seasonalList])
 
+  // A film marked seen from somewhere that doesn't keep its own copy (Picks
+  // For You, Explore's TMDB pool, a bare "Mark as Seen" click) wouldn't be
+  // in any of the lists above at all — seenFilmsData is the denormalized
+  // fallback that remembers it regardless of whether it's on a list.
   const seenFilms = useMemo(() => {
     return [...seenList]
-      .map((id) => filmMap.get(id))
+      .map((id) => filmMap.get(id) ?? seenFilmsData[id])
       .filter(Boolean)
+  }, [seenList, filmMap, seenFilmsData])
+
+  // One-time recovery for ids marked seen before seenFilmsData existed —
+  // there's no display data for these anywhere in the app, but the id
+  // itself is enough to fetch it fresh from TMDB and cache it going
+  // forward, so they stop disappearing from this page.
+  useEffect(() => {
+    const missing = [...seenList].filter((id) => !filmMap.has(id) && !seenFilmsData[id])
+    if (missing.length === 0) return
+    let cancelled = false
+    async function backfill() {
+      let index = 0
+      async function run() {
+        while (index < missing.length) {
+          const id = missing[index++]
+          const data = await fetchSeenFilmDataWithRetry(id)
+          if (cancelled) return
+          if (data) recordSeenData(data)
+        }
+      }
+      await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
+    }
+    backfill()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seenList, filmMap])
 
   return (

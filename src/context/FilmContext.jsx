@@ -5,6 +5,7 @@ import { enrichMovie, getMovieDetails, getMovieKeywords, safeSetItem } from '../
 const FilmContext = createContext(null)
 
 const LS_SEEN        = 'ff_seen'
+const LS_SEEN_DATA    = 'ff_seen_data'
 const LS_WATCHLIST   = 'ff_watchlist'
 const LS_NOT_INT     = 'ff_not_interested'
 const LS_USER        = 'ff_user'
@@ -184,6 +185,15 @@ export function FilmProvider({ children }) {
   const [movies, setMovies]       = useState(seedMovies)
   const [loading, setLoading]     = useState(true)
   const [seenList, setSeenList]   = useState(() => new Set(loadLS(LS_SEEN, [])))
+  // seenList is just ids — a film marked seen from somewhere that doesn't
+  // keep its own copy (Picks For You, Explore's TMDB pool, a "Mark as
+  // Seen" click with nothing else recording that film's data) would
+  // otherwise vanish from the Seen Films page the moment nothing else on
+  // the site happens to reference it. This is a denormalized id -> movie
+  // cache, populated wherever a real movie object is available, so Seen
+  // Films can always show what was actually marked seen, not just
+  // whatever happens to also live on another list right now.
+  const [seenFilmsData, setSeenFilmsData] = useState(() => loadLS(LS_SEEN_DATA, {}))
   const [watchlist, setWatchlist] = useState(() => loadLS(LS_WATCHLIST, []))
   const [notInterested, setNotInterested] = useState(() => loadLS(LS_NOT_INT, []))
   const [user, setUserState]      = useState(() => loadLS(LS_USER, null))
@@ -249,7 +259,20 @@ export function FilmProvider({ children }) {
   useSavedQuickListsBackfill(savedQuickLists, setSavedQuickLists)
 
   // ── Seen list ──────────────────────────────────────────────────────────────
-  const toggleSeen = useCallback((tmdbId) => {
+  const recordSeenData = useCallback((item) => {
+    if (!item?.tmdb_id) return
+    setSeenFilmsData((prev) => {
+      const next = { ...prev, [item.tmdb_id]: item }
+      saveLS(LS_SEEN_DATA, next)
+      return next
+    })
+  }, [])
+
+  // Accepts either a full movie object (preferred — lets Seen Films recover
+  // its data later) or a bare tmdb_id (back-compat for any caller that
+  // doesn't have the object handy).
+  const toggleSeen = useCallback((movieOrId) => {
+    const tmdbId = typeof movieOrId === 'object' ? movieOrId.tmdb_id : movieOrId
     setSeenList((prev) => {
       const next = new Set(prev)
       if (next.has(tmdbId)) next.delete(tmdbId)
@@ -257,7 +280,8 @@ export function FilmProvider({ children }) {
       saveLS(LS_SEEN, [...next])
       return next
     })
-  }, [])
+    if (typeof movieOrId === 'object') recordSeenData(movieOrId)
+  }, [recordSeenData])
 
   // ── User profile ───────────────────────────────────────────────────────────
   const setUser = useCallback((userData) => {
@@ -291,9 +315,10 @@ export function FilmProvider({ children }) {
         saveLS(LS_SEEN, [...next])
         return next
       })
+      recordSeenData(item)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [LIST_SETTERS])
+  }, [LIST_SETTERS, recordSeenData])
 
   // Inserts an item at a specific 1-based rank, shifting everything at and
   // below that rank down — including off the end if the list is already at
@@ -319,9 +344,10 @@ export function FilmProvider({ children }) {
         saveLS(LS_SEEN, [...next2])
         return next2
       })
+      recordSeenData(item)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [LIST_SETTERS])
+  }, [LIST_SETTERS, recordSeenData])
 
   const removeFromList = useCallback((listName, id) => {
     const config = LIST_SETTERS[listName]
@@ -439,6 +465,8 @@ export function FilmProvider({ children }) {
       loading,
       // Seen state
       seenList,
+      seenFilmsData,
+      recordSeenData,
       toggleSeen,
       // User profile
       user,
