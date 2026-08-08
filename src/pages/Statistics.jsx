@@ -525,7 +525,7 @@ export default function Statistics() {
                 <h2 className={styles.sectionTitle}>People</h2>
                 {stats.directorFreq.length > 0 && (
                   <>
-                    <h3 className={styles.subTitle}>Favorite Directors</h3>
+                    <h3 className={styles.subTitle}>Frequent Directors</h3>
                     <div className={styles.personList}>
                       {stats.directorFreq.slice(0, 5).map(([name, count], i) => (
                         <div key={name} className={styles.personRow}>
