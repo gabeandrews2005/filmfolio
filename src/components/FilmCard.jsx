@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useFilm } from '../context/FilmContext'
 import { PLACEHOLDER_POSTER } from '../api/tmdb'
+import useOmdbRatings from '../hooks/useOmdbRatings'
 import StarSignal from './StarSignal'
+import RatingDisplay from './RatingDisplay'
 import styles from './FilmCard.module.css'
 
 const SEPARATE_LISTS = [
@@ -11,7 +13,7 @@ const SEPARATE_LISTS = [
   { key: 'seasonalList', label: 'Seasonal', max: 25 },
 ]
 
-function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList }) {
+function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList, ratings }) {
   const {
     seenList, toggleSeen, myList, quickList, addToList, removeFromList,
     watchlist, addToWatchlist, removeFromWatchlist,
@@ -90,10 +92,13 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
               {movie.year && <span>{movie.year}</span>}
               {movie.director && <span>Dir. {movie.director}</span>}
               {movie.runtime && <span>{movie.runtime}m</span>}
-              {movie.vote_average && (
-                <span className={styles.modalRating}>★ {movie.vote_average.toFixed(1)}</span>
-              )}
             </div>
+
+            <RatingDisplay
+              rtScore={ratings?.rtScore}
+              imdbRating={ratings?.imdbRating}
+              tmdbScore={movie.vote_average}
+            />
 
             <StarSignal actors={actorMatches} directors={directorMatches} />
 
@@ -189,6 +194,7 @@ export default function FilmCard({
   const { seenList } = useFilm()
   const isSeen = seenList.has(movie.tmdb_id)
   const hasSignal = actorMatches.length > 0 || directorMatches.length > 0
+  const { ratings } = useOmdbRatings(movie.tmdb_id)
 
   return (
     <>
@@ -211,9 +217,12 @@ export default function FilmCard({
           {/* Hover overlay */}
           <div className={styles.overlay}>
             <div className={styles.overlayContent}>
-              {movie.vote_average && (
-                <span className={styles.overlayRating}>★ {movie.vote_average.toFixed(1)}</span>
-              )}
+              <RatingDisplay
+                compact
+                rtScore={ratings?.rtScore}
+                imdbRating={ratings?.imdbRating}
+                tmdbScore={movie.vote_average}
+              />
               {movie.director && (
                 <span className={styles.overlayDirector}>{movie.director}</span>
               )}
@@ -251,6 +260,7 @@ export default function FilmCard({
           directorMatches={directorMatches}
           onClose={() => setModalOpen(false)}
           showAddToList={showAddToList}
+          ratings={ratings}
         />
       )}
     </>

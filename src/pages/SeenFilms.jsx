@@ -2,6 +2,8 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
 import { PLACEHOLDER_POSTER } from '../api/tmdb'
+import useOmdbRatings from '../hooks/useOmdbRatings'
+import RatingDisplay from '../components/RatingDisplay'
 import styles from './SeenFilms.module.css'
 
 function getFilmListBadges(tmdbId, ctx) {
@@ -20,6 +22,41 @@ function getFilmListBadges(tmdbId, ctx) {
     }
   })
   return badges
+}
+
+function SeenFilmCard({ movie, badges }) {
+  const { ratings } = useOmdbRatings(movie.tmdb_id)
+
+  return (
+    <div className={styles.card}>
+      <div className={styles.posterWrap}>
+        <img
+          src={movie.posterUrl || PLACEHOLDER_POSTER}
+          alt={movie.title}
+          className={styles.poster}
+          loading="lazy"
+        />
+        <div className={styles.seenMark}>✓</div>
+      </div>
+      <div className={styles.info}>
+        <span className={styles.filmTitle}>{movie.title}</span>
+        <span className={styles.filmYear}>{movie.year}</span>
+        <RatingDisplay
+          compact
+          rtScore={ratings?.rtScore}
+          imdbRating={ratings?.imdbRating}
+          tmdbScore={movie.vote_average}
+        />
+        {badges.length > 0 && (
+          <div className={styles.badges}>
+            {badges.map((b) => (
+              <span key={b} className={styles.badge}>{b}</span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 export default function SeenFilms() {
@@ -66,33 +103,13 @@ export default function SeenFilms() {
           </div>
         ) : (
           <div className={styles.grid}>
-            {seenFilms.map((movie) => {
-              const badges = getFilmListBadges(movie.tmdb_id, ctx)
-              return (
-                <div key={movie.tmdb_id} className={styles.card}>
-                  <div className={styles.posterWrap}>
-                    <img
-                      src={movie.posterUrl || PLACEHOLDER_POSTER}
-                      alt={movie.title}
-                      className={styles.poster}
-                      loading="lazy"
-                    />
-                    <div className={styles.seenMark}>✓</div>
-                  </div>
-                  <div className={styles.info}>
-                    <span className={styles.filmTitle}>{movie.title}</span>
-                    <span className={styles.filmYear}>{movie.year}</span>
-                    {badges.length > 0 && (
-                      <div className={styles.badges}>
-                        {badges.map((b) => (
-                          <span key={b} className={styles.badge}>{b}</span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )
-            })}
+            {seenFilms.map((movie) => (
+              <SeenFilmCard
+                key={movie.tmdb_id}
+                movie={movie}
+                badges={getFilmListBadges(movie.tmdb_id, ctx)}
+              />
+            ))}
           </div>
         )}
       </div>

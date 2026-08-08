@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { buildThemeRecommendations, getMovieExternalIds, safeSetItem } from '../api/tmdb'
-import { getOmdbRatings } from '../api/omdb'
+import { buildThemeRecommendations, safeSetItem } from '../api/tmdb'
+import useOmdbRatings from '../hooks/useOmdbRatings'
 import RatingDisplay from '../components/RatingDisplay'
 import styles from './Recommendations.module.css'
 import filmCardStyles from '../components/FilmCard.module.css'
@@ -24,7 +24,7 @@ function loadRecFilters() {
   }
 }
 
-function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist }) {
+function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist, ratings }) {
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
@@ -53,10 +53,13 @@ function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist }) {
 
             <div className={filmCardStyles.modalMeta}>
               {movie.year && <span>{movie.year}</span>}
-              {movie.vote_average > 0 && (
-                <span className={filmCardStyles.modalRating}>★ {movie.vote_average.toFixed(1)}</span>
-              )}
             </div>
+
+            <RatingDisplay
+              rtScore={ratings?.rtScore}
+              imdbRating={ratings?.imdbRating}
+              tmdbScore={movie.vote_average}
+            />
 
             {movie.overview && (
               <p className={filmCardStyles.modalOverview}>{movie.overview}</p>
@@ -118,27 +121,8 @@ function RecModal({ movie, onClose, onNotInterested, onSeen, onWatchlist }) {
 }
 
 function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge }) {
-  const [ratings, setRatings] = useState(null)
-  const [loadingRatings, setLoadingRatings] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    async function load() {
-      const extIds = await getMovieExternalIds(movie.tmdb_id)
-      if (cancelled || !extIds?.imdb_id) {
-        setLoadingRatings(false)
-        return
-      }
-      const r = await getOmdbRatings(extIds.imdb_id)
-      if (!cancelled) {
-        setRatings(r)
-        setLoadingRatings(false)
-      }
-    }
-    load()
-    return () => { cancelled = true }
-  }, [movie.tmdb_id])
+  const { ratings, loading: loadingRatings } = useOmdbRatings(movie.tmdb_id)
 
   return (
     <>
@@ -197,6 +181,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge })
           onNotInterested={onNotInterested}
           onSeen={onSeen}
           onWatchlist={onWatchlist}
+          ratings={ratings}
         />
       )}
     </>

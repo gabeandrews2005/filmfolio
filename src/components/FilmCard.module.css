@@ -57,12 +57,6 @@
   width: 100%;
 }
 
-.overlayRating {
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--accent-gold);
-}
-
 .overlayDirector {
   font-size: 0.75rem;
   color: var(--text-secondary);
@@ -240,11 +234,6 @@
   font-size: 0.85rem;
   color: var(--text-secondary);
   margin-bottom: 4px;
-}
-
-.modalRating {
-  color: var(--accent-gold);
-  font-family: var(--font-mono);
 }
 
 .modalOverview {
