@@ -88,10 +88,12 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
           </div>
 
           <div className={styles.modalInfoCol}>
-            {(isSeen || filmFolioPick) && (
+            {/* Seen status shown only via the Mark as Seen / Seen It toggle
+                button below — no separate badge here, to avoid the same
+                "seen" state showing three different ways at once. */}
+            {filmFolioPick && (
               <div className={styles.modalBadges}>
-                {isSeen && <span className={styles.seenBadgeLg}>✓ Seen</span>}
-                {filmFolioPick && <span className={styles.pickBadgeLg}>★ FilmFolio Pick!</span>}
+                <span className={styles.pickBadgeLg}>★ FilmFolio Pick!</span>
               </div>
             )}
 
@@ -278,9 +280,6 @@ export default function FilmCard({
           {/* Badges */}
           {rankBadge !== null && (
             <span className={styles.rankBadge}>#{rankBadge}</span>
-          )}
-          {isSeen && (
-            <span className={styles.seenBadge}>✓</span>
           )}
           {hasSignal && (
             <StarSignal actors={actorMatches} directors={directorMatches} compact />
