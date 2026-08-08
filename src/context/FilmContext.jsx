@@ -9,6 +9,7 @@ const LS_WATCHLIST   = 'ff_watchlist'
 const LS_NOT_INT     = 'ff_not_interested'
 const LS_USER        = 'ff_user'
 const LS_MYLIST      = 'ff_top100'
+const LS_QUICKLIST   = 'ff_quicklist'
 const LS_ACTORS      = 'ff_actors'
 const LS_SHOWS       = 'ff_shows'
 const LS_DIRECTORS   = 'ff_directors'
@@ -22,6 +23,7 @@ const LS_TOP10_LEGACY = 'ff_top10'
 
 const LIST_MAX = {
   myList:       100,
+  quickList:    10,
   actorsList:   50,
   showsList:    50,
   directorsList:25,
@@ -33,6 +35,7 @@ const LIST_MAX = {
 
 const LIST_LS_KEYS = {
   myList:       LS_MYLIST,
+  quickList:    LS_QUICKLIST,
   actorsList:   LS_ACTORS,
   showsList:    LS_SHOWS,
   directorsList:LS_DIRECTORS,
@@ -55,91 +58,24 @@ function saveLS(key, value) {
   safeSetItem(key, JSON.stringify(value))
 }
 
-function loadMyList() {
-  // Migrate from v1 ff_top10 if ff_top100 is empty
-  const v2 = loadLS(LS_MYLIST, null)
-  if (v2 !== null) return v2
-  const v1 = loadLS(LS_TOP10_LEGACY, [])
-  if (v1.length > 0) {
-    saveLS(LS_MYLIST, v1)
-  }
-  return v1
-}
-
-export function FilmProvider({ children }) {
-  const [movies, setMovies]       = useState(seedMovies)
-  const [loading, setLoading]     = useState(true)
-  const [seenList, setSeenList]   = useState(() => new Set(loadLS(LS_SEEN, [])))
-  const [watchlist, setWatchlist] = useState(() => loadLS(LS_WATCHLIST, []))
-  const [notInterested, setNotInterested] = useState(() => loadLS(LS_NOT_INT, []))
-  const [user, setUserState]      = useState(() => loadLS(LS_USER, null))
-
-  // All ranked lists
-  const [myList,       setMyList]       = useState(() => loadMyList())
-  const [actorsList,   setActorsList]   = useState(() => loadLS(LS_ACTORS, []))
-  const [showsList,    setShowsList]    = useState(() => loadLS(LS_SHOWS, []))
-  const [directorsList,setDirectorsList]= useState(() => loadLS(LS_DIRECTORS, []))
-  const [horrorList,   setHorrorList]   = useState(() => loadLS(LS_HORROR, []))
-  const [seasonalList, setSeasonalList] = useState(() => loadLS(LS_SEASONAL, []))
-  const [comediesList, setComediesList] = useState(() => loadLS(LS_COMEDIES, []))
-  const [animatedList, setAnimatedList] = useState(() => loadLS(LS_ANIMATED, []))
-
-  // myTop10 is a computed view of the first 10 items of myList (backwards compat)
-  const myTop10 = useMemo(() => myList.slice(0, 10), [myList])
-
-  const LIST_SETTERS = useMemo(() => ({
-    myList:       [myList,        setMyList,        LS_MYLIST],
-    actorsList:   [actorsList,    setActorsList,    LS_ACTORS],
-    showsList:    [showsList,     setShowsList,     LS_SHOWS],
-    directorsList:[directorsList, setDirectorsList, LS_DIRECTORS],
-    horrorList:   [horrorList,    setHorrorList,    LS_HORROR],
-    seasonalList: [seasonalList,  setSeasonalList,  LS_SEASONAL],
-    comediesList: [comediesList,  setComediesList,  LS_COMEDIES],
-    animatedList: [animatedList,  setAnimatedList,  LS_ANIMATED],
-  }), [myList, actorsList, showsList, directorsList, horrorList, seasonalList, comediesList, animatedList])
-
-  // Progressive TMDB enrichment on mount
+// Backfills genres + TMDB keywords together on items missing either — films
+// added via a list's own search bar (rather than Explore's "+") historically
+// didn't carry genre data, which silently broke the Horror/Comedies/
+// Animated/Seasonal pages' "auto-derive matches from Top 100" feature;
+// keywords are the "themes" Picks For You weights by rank. Shared by myList
+// and quickList, called once per list from independent effects — each list
+// gets its own effect (they can't cancel each other the way two effects on
+// the *same* list once did: whichever finished first would trigger a state
+// change that cancelled the other mid-flight and restarted it, sometimes
+// for several rounds, stalling a freshly-added film's backfill long enough
+// that it silently never showed up on its genre page). A failed lookup (bad
+// network, momentary rate limit) is retried a couple times before giving up
+// for this pass — and even then left without that field rather than
+// poisoned with an empty one, so it's picked up again next pass instead of
+// stuck forever.
+function useGenreKeywordBackfill(list, setList, saveKey) {
   useEffect(() => {
-    let cancelled = false
-    async function enrich() {
-      const batches = []
-      for (let i = 0; i < seedMovies.length; i += 10) {
-        batches.push(seedMovies.slice(i, i + 10))
-      }
-      const enriched = [...seedMovies]
-      for (const batch of batches) {
-        if (cancelled) break
-        const results = await Promise.all(batch.map((m) => enrichMovie(m)))
-        results.forEach((enrichedMovie) => {
-          const idx = enriched.findIndex((m) => m.rank === enrichedMovie.rank)
-          if (idx !== -1) enriched[idx] = enrichedMovie
-        })
-        if (!cancelled) setMovies([...enriched])
-      }
-      if (!cancelled) setLoading(false)
-    }
-    enrich()
-    return () => { cancelled = true }
-  }, [])
-
-  // Backfill genres + TMDB keywords together on myList items missing either
-  // — films added via My List's own search bar (rather than Explore's "+")
-  // historically didn't carry genre data, which silently broke the Horror/
-  // Comedies/Animated/Seasonal pages' "auto-derive matches from Top 100"
-  // feature for them; keywords are the "themes" Picks For You weights by
-  // rank. These used to be two separate effects, both depending on
-  // [myList] and both calling setMyList on completion — which meant
-  // whichever finished first triggered a myList change that cancelled the
-  // other one mid-flight (its in-progress fetches got discarded once
-  // resolved) and restarted it from scratch, sometimes for several rounds
-  // in a row. That could stall a freshly-added film's genres backfill long
-  // enough that it silently never showed up on its genre page. One effect,
-  // one final write, no self-cancellation. A failed lookup (bad network,
-  // momentary rate limit) is retried a couple times before giving up for
-  // this pass — and even then left without that field rather than poisoned
-  // with an empty one, so it's picked up again next pass instead of stuck.
-  useEffect(() => {
-    const missing = myList.filter((m) => (!m.genres || !m.keywords) && m.tmdb_id)
+    const missing = list.filter((m) => (!m.genres || !m.keywords) && m.tmdb_id)
     if (missing.length === 0) return
     let cancelled = false
     async function fetchGenresWithRetry(tmdbId, attempt = 0) {
@@ -173,7 +109,7 @@ export function FilmProvider({ children }) {
       }
       await Promise.all(Array.from({ length: Math.min(4, missing.length) }, run))
       if (cancelled) return
-      setMyList((prev) => {
+      setList((prev) => {
         const next = prev.map((m) => {
           let patched = m
           if (genresResults.has(m.tmdb_id) && genresResults.get(m.tmdb_id) !== null) {
@@ -184,13 +120,91 @@ export function FilmProvider({ children }) {
           }
           return patched
         })
-        saveLS(LS_MYLIST, next)
+        saveLS(saveKey, next)
         return next
       })
     }
     backfill()
     return () => { cancelled = true }
-  }, [myList])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [list])
+}
+
+function loadMyList() {
+  // Migrate from v1 ff_top10 if ff_top100 is empty
+  const v2 = loadLS(LS_MYLIST, null)
+  if (v2 !== null) return v2
+  const v1 = loadLS(LS_TOP10_LEGACY, [])
+  if (v1.length > 0) {
+    saveLS(LS_MYLIST, v1)
+  }
+  return v1
+}
+
+export function FilmProvider({ children }) {
+  const [movies, setMovies]       = useState(seedMovies)
+  const [loading, setLoading]     = useState(true)
+  const [seenList, setSeenList]   = useState(() => new Set(loadLS(LS_SEEN, [])))
+  const [watchlist, setWatchlist] = useState(() => loadLS(LS_WATCHLIST, []))
+  const [notInterested, setNotInterested] = useState(() => loadLS(LS_NOT_INT, []))
+  const [user, setUserState]      = useState(() => loadLS(LS_USER, null))
+
+  // All ranked lists
+  const [myList,       setMyList]       = useState(() => loadMyList())
+  // Quick List — a scratch list of up to 10 films, separate from the Top
+  // 100, that Picks For You can optionally pull its taste profile from
+  // instead (same rank-weighted theme algorithm, just a smaller/faster-to-
+  // build input than committing to a full ranked Top 100).
+  const [quickList,    setQuickList]    = useState(() => loadLS(LS_QUICKLIST, []))
+  const [actorsList,   setActorsList]   = useState(() => loadLS(LS_ACTORS, []))
+  const [showsList,    setShowsList]    = useState(() => loadLS(LS_SHOWS, []))
+  const [directorsList,setDirectorsList]= useState(() => loadLS(LS_DIRECTORS, []))
+  const [horrorList,   setHorrorList]   = useState(() => loadLS(LS_HORROR, []))
+  const [seasonalList, setSeasonalList] = useState(() => loadLS(LS_SEASONAL, []))
+  const [comediesList, setComediesList] = useState(() => loadLS(LS_COMEDIES, []))
+  const [animatedList, setAnimatedList] = useState(() => loadLS(LS_ANIMATED, []))
+
+  // myTop10 is a computed view of the first 10 items of myList (backwards compat)
+  const myTop10 = useMemo(() => myList.slice(0, 10), [myList])
+
+  const LIST_SETTERS = useMemo(() => ({
+    myList:       [myList,        setMyList,        LS_MYLIST],
+    quickList:    [quickList,     setQuickList,     LS_QUICKLIST],
+    actorsList:   [actorsList,    setActorsList,    LS_ACTORS],
+    showsList:    [showsList,     setShowsList,     LS_SHOWS],
+    directorsList:[directorsList, setDirectorsList, LS_DIRECTORS],
+    horrorList:   [horrorList,    setHorrorList,    LS_HORROR],
+    seasonalList: [seasonalList,  setSeasonalList,  LS_SEASONAL],
+    comediesList: [comediesList,  setComediesList,  LS_COMEDIES],
+    animatedList: [animatedList,  setAnimatedList,  LS_ANIMATED],
+  }), [myList, quickList, actorsList, showsList, directorsList, horrorList, seasonalList, comediesList, animatedList])
+
+  // Progressive TMDB enrichment on mount
+  useEffect(() => {
+    let cancelled = false
+    async function enrich() {
+      const batches = []
+      for (let i = 0; i < seedMovies.length; i += 10) {
+        batches.push(seedMovies.slice(i, i + 10))
+      }
+      const enriched = [...seedMovies]
+      for (const batch of batches) {
+        if (cancelled) break
+        const results = await Promise.all(batch.map((m) => enrichMovie(m)))
+        results.forEach((enrichedMovie) => {
+          const idx = enriched.findIndex((m) => m.rank === enrichedMovie.rank)
+          if (idx !== -1) enriched[idx] = enrichedMovie
+        })
+        if (!cancelled) setMovies([...enriched])
+      }
+      if (!cancelled) setLoading(false)
+    }
+    enrich()
+    return () => { cancelled = true }
+  }, [])
+
+  useGenreKeywordBackfill(myList, setMyList, LS_MYLIST)
+  useGenreKeywordBackfill(quickList, setQuickList, LS_QUICKLIST)
 
   // ── Seen list ──────────────────────────────────────────────────────────────
   const toggleSeen = useCallback((tmdbId) => {
@@ -213,7 +227,7 @@ export function FilmProvider({ children }) {
   const getItemId = (item) => item.tmdb_id ?? item.person_id ?? null
 
   // Movie list names that auto-add to seen on add
-  const MOVIE_LISTS = new Set(['myList', 'horrorList', 'comediesList', 'animatedList', 'seasonalList'])
+  const MOVIE_LISTS = new Set(['myList', 'quickList', 'horrorList', 'comediesList', 'animatedList', 'seasonalList'])
 
   const addToList = useCallback((listName, item) => {
     const config = LIST_SETTERS[listName]
@@ -363,6 +377,7 @@ export function FilmProvider({ children }) {
       // User's ranked lists
       myList,
       myTop10,     // computed slice of myList[0..9]
+      quickList,
       actorsList,
       showsList,
       directorsList,

@@ -33,6 +33,14 @@ export default function Nav() {
             </li>
             <li>
               <NavLink
+                to="/quick-list"
+                className={({ isActive }) => isActive ? styles.active : ''}
+              >
+                Quick List
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
                 to="/recommendations"
                 className={({ isActive }) => isActive ? styles.active : ''}
               >

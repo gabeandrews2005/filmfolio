@@ -13,9 +13,9 @@ const LS_REC_FILTERS = 'ff_rec_filters'
 function loadRecFilters() {
   try {
     const saved = JSON.parse(localStorage.getItem(LS_REC_FILTERS) || '{}')
-    return { actors: !!saved.actors, directors: !!saved.directors, genre: saved.genre ?? null }
+    return { actors: !!saved.actors, directors: !!saved.directors, genre: saved.genre ?? null, quickList: !!saved.quickList }
   } catch {
-    return { actors: false, directors: false, genre: null }
+    return { actors: false, directors: false, genre: null, quickList: false }
   }
 }
 
@@ -200,7 +200,7 @@ function RecCard({ movie, onNotInterested, onSeen, onWatchlist, showStarBadge })
 
 export default function Recommendations() {
   const {
-    myList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
+    myList, quickList, movies, seenList, watchlist, notInterested, toggleSeen, addNotInterested,
     actorsList, directorsList, addToWatchlist,
   } = useFilm()
   const [allRecs, setAllRecs] = useState([])
@@ -212,18 +212,26 @@ export default function Recommendations() {
   const [includeActors, setIncludeActors] = useState(() => loadRecFilters().actors)
   const [includeDirectors, setIncludeDirectors] = useState(() => loadRecFilters().directors)
   const [selectedGenre, setSelectedGenre] = useState(() => loadRecFilters().genre)
+  const [useQuickList, setUseQuickList] = useState(() => loadRecFilters().quickList)
 
   useEffect(() => {
-    safeSetItem(LS_REC_FILTERS, JSON.stringify({ actors: includeActors, directors: includeDirectors, genre: selectedGenre }))
-  }, [includeActors, includeDirectors, selectedGenre])
+    safeSetItem(LS_REC_FILTERS, JSON.stringify({
+      actors: includeActors, directors: includeDirectors, genre: selectedGenre, quickList: useQuickList,
+    }))
+  }, [includeActors, includeDirectors, selectedGenre, useQuickList])
 
-  // Genres actually present on the user's Top 100 — no point offering a tab
-  // for a genre they don't have anything ranked in.
+  // Picks For You can build its taste profile from the full ranked Top 100
+  // or, if toggled on, the smaller Quick List instead — same algorithm,
+  // smaller/faster-to-build input.
+  const themeSourceList = useQuickList ? quickList : myList
+
+  // Genres actually present on whichever list is currently feeding the
+  // algorithm — no point offering a tab for a genre nothing on that list has.
   const availableGenres = useMemo(() => {
     const set = new Set()
-    myList.forEach((m) => (m.genres ?? []).forEach((g) => set.add(g)))
+    themeSourceList.forEach((m) => (m.genres ?? []).forEach((g) => set.add(g)))
     return [...set].sort()
-  }, [myList])
+  }, [themeSourceList])
 
   // A genre the user had selected can disappear from the Top 100 (film
   // removed/reordered out) — fall back to "All" rather than silently
@@ -235,22 +243,24 @@ export default function Recommendations() {
   }, [selectedGenre, availableGenres])
 
   useEffect(() => {
-    if (myList.length === 0) return
+    if (themeSourceList.length === 0) return
     let cancelled = false
     async function load() {
       setLoading(true)
       setError(null)
       try {
         // Never worth recommending: already ranked, already on Gabe's
-        // curated Top 100, already seen/watchlisted, or dismissed before.
+        // curated Top 100, already on the Quick List, already seen/
+        // watchlisted, or dismissed before.
         const excludeIds = new Set([
           ...myList.map((m) => m.tmdb_id),
+          ...quickList.map((m) => m.tmdb_id),
           ...movies.map((m) => m.tmdb_id),
           ...seenList,
           ...watchlist.map((m) => m.tmdb_id),
           ...notInterested,
         ])
-        const recs = await buildThemeRecommendations(myList, excludeIds, {
+        const recs = await buildThemeRecommendations(themeSourceList, excludeIds, {
           actorsList, directorsList, includeActors, includeDirectors,
         }, selectedGenre)
         if (!cancelled) {
@@ -266,7 +276,7 @@ export default function Recommendations() {
     load()
     return () => { cancelled = true }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [myList, movies, includeActors, includeDirectors, selectedGenre])
+  }, [themeSourceList, movies, includeActors, includeDirectors, selectedGenre])
 
   const remainingRecs = allRecs.filter((m) => !dismissed.has(m.tmdb_id))
   const visibleRecs = remainingRecs.slice(batchOffset, batchOffset + RESULTS_CAP)
@@ -299,16 +309,20 @@ export default function Recommendations() {
     addToWatchlist(movie)
   }
 
-  if (myList.length === 0) {
+  if (myList.length === 0 && quickList.length === 0) {
     return (
       <div className={styles.page}>
         <div className="container">
           <div className={styles.empty}>
             <h2 className={styles.emptyTitle}>No list yet</h2>
             <p className={styles.emptyText}>
-              Build your film list first and we'll find films you'll love.
+              Build your film list first and we'll find films you'll love — or throw together
+              a Quick List of 10 if you don't want to commit to a full ranking yet.
             </p>
-            <Link to="/my-list" className={styles.buildBtn}>Build My List</Link>
+            <div className={styles.emptyActions}>
+              <Link to="/my-list" className={styles.buildBtn}>Build My List</Link>
+              <Link to="/quick-list" className={styles.buildBtn}>Build Quick List</Link>
+            </div>
           </div>
         </div>
       </div>
@@ -337,6 +351,18 @@ export default function Recommendations() {
                 title={hasMoreBatches ? 'Load a new batch of recommendations' : 'No more recommendations to cycle through right now'}
               >
                 ↻ Refresh
+              </button>
+              <button
+                className={`${styles.refreshBtn} ${useQuickList ? styles.filterOptionActive : ''}`}
+                onClick={() => setUseQuickList((v) => !v)}
+                disabled={quickList.length === 0}
+                title={quickList.length === 0
+                  ? 'Build a Quick List first'
+                  : useQuickList
+                    ? 'Switch back to your full Top 100'
+                    : 'Pull the taste profile from your Quick List instead of your Top 100'}
+              >
+                {useQuickList ? '✓ Use Quick List' : 'Use Quick List'}
               </button>
             </div>
             {filtersOpen && (
@@ -390,7 +416,8 @@ export default function Recommendations() {
           <div className={styles.loading}>
             <div className={styles.spinner} />
             <p>
-              Analyzing your taste from {myList.length} film{myList.length === 1 ? '' : 's'}
+              Analyzing your taste from {themeSourceList.length} film{themeSourceList.length === 1 ? '' : 's'}
+              {useQuickList ? ' (Quick List)' : ''}
               {selectedGenre ? ` (${selectedGenre} only)` : ''}…
             </p>
           </div>

@@ -4,6 +4,7 @@ import Nav from './components/Nav'
 import Home from './pages/Home'
 import Explore from './pages/Explore'
 import MyList from './pages/MyList'
+import QuickList from './pages/QuickList'
 import Recommendations from './pages/Recommendations'
 import Universe from './pages/Universe'
 import Friends from './pages/Friends'
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Route path="/explore" element={<Explore />} />
         <Route path="/movies" element={<Navigate to="/explore" replace />} />
         <Route path="/my-list" element={<MyList />} />
+        <Route path="/quick-list" element={<QuickList />} />
         <Route path="/recommendations" element={<Recommendations />} />
         <Route path="/universe" element={<Universe />} />
         <Route path="/friends" element={<Friends />} />

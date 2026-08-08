@@ -367,10 +367,14 @@ async function getCreditsWithRetry(tmdbId, attempt = 0) {
   return getCreditsWithRetry(tmdbId, attempt + 1);
 }
 
-// Builds a per-keyword "taste profile" from the user's ranked Top 100 —
-// rank 1 contributes 100 points to each of its TMDB keywords, rank 2
-// contributes 99, ... rank 100 contributes 1 — then discovers and ranks new
-// films by how much they overlap with that weighted profile.
+// Builds a per-keyword "taste profile" from the user's ranked input list —
+// rank 1 contributes list-length points to each of its TMDB keywords, rank
+// 2 contributes one less, ... the last rank contributes 1 — then discovers
+// and ranks new films by how much they overlap with that weighted profile.
+// The weight scale is relative to whatever list is passed in (100 down to 1
+// for a full ranked Top 100, 10 down to 1 for a 10-film Quick List) so a
+// smaller input still spans a meaningful weight range instead of every rank
+// clustering near the top of a scale sized for 100 items.
 //
 // `personFilters` is the opt-in actor/director layer. When enabled it
 // doesn't just add a bonus on top of the usual keyword-discovered pool —
@@ -395,7 +399,7 @@ export async function buildThemeRecommendations(userList, excludeIds, personFilt
   const themeScores = new Map(); // keywordId -> { name, score, occurrences, sources }
   userList.forEach((movie, i) => {
     if (genreFilter && !movie.genres?.includes(genreFilter)) return;
-    const weight = 101 - (i + 1);
+    const weight = userList.length - i;
     (movie.keywords ?? []).forEach((kw) => {
       const name = kw.name?.toLowerCase();
       if (!name || GENERIC_KEYWORD_STOPLIST.has(name)) return;
