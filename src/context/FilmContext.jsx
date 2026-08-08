@@ -368,6 +368,32 @@ export function FilmProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [LIST_SETTERS])
 
+  // Merges per-id field patches into a list via React's functional setState
+  // form — unlike reorderList (a deliberate whole-array replacement, correct
+  // for user-driven drag-to-reorder), this is for background backfills that
+  // may run concurrently with OTHER backfills touching the same list (e.g.
+  // Statistics' stats backfill alongside the always-on genres/keywords
+  // backfill). A plain `setter(closureSnapshot)` from either one would race:
+  // whichever finishes last overwrites the whole array from its own stale
+  // snapshot, silently discarding whatever fields the other one had just
+  // written. The functional form applies against whatever the state
+  // actually is when React processes it, not a stale closure, so concurrent
+  // patches merge instead of clobbering each other.
+  const patchListItems = useCallback((listName, patchesById) => {
+    const config = LIST_SETTERS[listName]
+    if (!config) return
+    const [, setter, lsKey] = config
+    setter((prev) => {
+      const next = prev.map((item) => {
+        const patch = patchesById.get(getItemId(item))
+        return patch ? { ...item, ...patch } : item
+      })
+      saveLS(lsKey, next)
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [LIST_SETTERS])
+
   // ── Backwards-compat wrappers (myTop10 / myList) ─────────────────────────
   const addToTop10 = useCallback((movie) => {
     // Enforces max 10 for the "top 10 only" builder mode
@@ -491,6 +517,7 @@ export function FilmProvider({ children }) {
       insertAtRank,
       removeFromList,
       reorderList,
+      patchListItems,
       // Backwards-compat top-10 operations (used by TopTenBuilder)
       addToTop10,
       removeFromTop10,

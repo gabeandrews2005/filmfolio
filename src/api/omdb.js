@@ -23,6 +23,36 @@ function setCache(key, data) {
   safeSetItem(key, JSON.stringify({ data, ts: Date.now() }));
 }
 
+// OMDb's Awards field is unstructured free text (e.g. "Won 2 Oscars. 145
+// wins & 216 nominations." or "Nominated for 3 Oscars. 12 wins & 45
+// nominations." or just "1 win." or "N/A") — this is best-effort regex
+// scraping, not a structured API, and won't be 100% reliable for every
+// phrasing OMDb uses. The four clauses are matched independently (not one
+// combined pattern) since each is optional and can appear without the
+// others. totalWins/totalNominations already include the Oscar-specific
+// subset per OMDb's own phrasing — callers should not add oscarWins to
+// totalWins, that would double-count.
+function parseAwards(text) {
+  if (!text || text === 'N/A') return null;
+  const oscarWinMatch = text.match(/Won (\d+) Oscars?/i);
+  const oscarNomMatch = text.match(/Nominated for (\d+) Oscars?/i);
+  const totalWinMatch = text.match(/(\d+) wins?/i);
+  const totalNomMatch = text.match(/(\d+) nominations?/i);
+  return {
+    oscarWins: oscarWinMatch ? parseInt(oscarWinMatch[1], 10) : 0,
+    oscarNominations: oscarNomMatch ? parseInt(oscarNomMatch[1], 10) : 0,
+    totalWins: totalWinMatch ? parseInt(totalWinMatch[1], 10) : 0,
+    totalNominations: totalNomMatch ? parseInt(totalNomMatch[1], 10) : 0,
+  };
+}
+
+// "$28,341,469" -> 28341469; "N/A" or missing -> null.
+function parseBoxOffice(text) {
+  if (!text || text === 'N/A') return null;
+  const n = parseInt(text.replace(/[$,]/g, ''), 10);
+  return Number.isNaN(n) ? null : n;
+}
+
 // Returns null on any failure that's worth retrying (network error, non-OK
 // response — e.g. rate limited) so the caller can tell that apart from a
 // genuine "OMDb has nothing for this id," which is cached below instead of
@@ -39,7 +69,7 @@ export async function getOmdbRatings(imdbId) {
     if (!res.ok) return null;
     const data = await res.json();
     if (data.Response === 'False') {
-      const empty = { imdbRating: null, rtScore: null };
+      const empty = { imdbRating: null, rtScore: null, boxOffice: null, awards: null };
       setCache(cacheKey, empty);
       return empty;
     }
@@ -48,6 +78,8 @@ export async function getOmdbRatings(imdbId) {
     const result = {
       imdbRating: data.imdbRating !== 'N/A' ? data.imdbRating : null,
       rtScore: rtRating ? parseInt(rtRating.Value) : null,
+      boxOffice: parseBoxOffice(data.BoxOffice),
+      awards: parseAwards(data.Awards),
     };
     setCache(cacheKey, result);
     return result;

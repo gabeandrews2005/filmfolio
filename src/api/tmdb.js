@@ -311,6 +311,33 @@ const GENERIC_KEYWORD_STOPLIST = new Set([
   'imax', '3d', 'cgi', 'blockbuster',
 ]);
 
+// Statistics page "percent of your list that's a remake / based on a book"
+// — same .some(kw => kw.name...includes(term)) matching style as
+// HOLIDAY_KEYWORD_TERMS below, deliberately NOT reusing
+// GENERIC_KEYWORD_STOPLIST above: that list exists to exclude these exact
+// kinds of terms from taste-profile scoring, the opposite purpose of
+// wanting to specifically detect and count them here.
+export const BOOK_ADAPTATION_KEYWORD_TERMS = ['based on novel or book', 'based on novel', 'based on short story'];
+export const REMAKE_KEYWORD_TERMS = ['remake', 'live action remake'];
+
+// Statistics page "major studio vs. indie" split. A film's
+// production_companies often lists a distributor alongside the actual
+// studio (e.g. both "Marvel Studios" and "Walt Disney Pictures" on the same
+// MCU film), so this only needs to catch whichever name TMDB happens to
+// surface. Deliberately limited to the traditional "Big 5/6" + their
+// well-known animation/genre sub-labels — A24, Focus Features, Netflix, and
+// Amazon are prestige-indie/streamers, not traditional major studios, and
+// including them would make the "major vs indie" split meaningless.
+export const MAJOR_STUDIOS = new Set([
+  'Walt Disney Pictures', 'Walt Disney Animation Studios', 'Pixar', 'Marvel Studios', 'Lucasfilm',
+  '20th Century Fox', '20th Century Studios',
+  'Warner Bros. Pictures', 'Warner Bros. Animation', 'New Line Cinema',
+  'Universal Pictures', 'DreamWorks Pictures', 'DreamWorks Animation', 'Illumination',
+  'Paramount Pictures', 'Paramount Animation',
+  'Sony Pictures', 'Columbia Pictures', 'Sony Pictures Animation', 'TriStar Pictures',
+  'Metro-Goldwyn-Mayer',
+]);
+
 // A repeat occurrence of the same keyword across the Top 100 is still a real
 // signal (it should score higher than a one-off), but each additional hit
 // counts for less. Without this, a small cluster of similar films (e.g. 6

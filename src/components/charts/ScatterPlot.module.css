@@ -1,0 +1,41 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.svg {
+  width: 100%;
+  height: auto;
+  max-height: 300px;
+}
+
+.axisLine {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  fill: var(--text-muted);
+}
+
+.point {
+  fill: var(--accent-gold);
+  fill-opacity: 0.75;
+  transition: r 150ms ease, fill-opacity 150ms ease;
+}
+
+.point:hover {
+  r: 6;
+  fill-opacity: 1;
+}
+
+.axisNames {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
