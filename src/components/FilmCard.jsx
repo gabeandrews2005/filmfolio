@@ -13,7 +13,7 @@ const SEPARATE_LISTS = [
   { key: 'seasonalList', label: 'Seasonal', max: 25 },
 ]
 
-function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList, ratings }) {
+function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToList, ratings, filmFolioPick }) {
   const {
     seenList, toggleSeen, myList, quickList, addToList, removeFromList,
     watchlist, addToWatchlist, removeFromWatchlist,
@@ -80,9 +80,10 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
           </div>
 
           <div className={styles.modalInfoCol}>
-            {isSeen && (
+            {(isSeen || filmFolioPick) && (
               <div className={styles.modalBadges}>
-                <span className={styles.seenBadgeLg}>✓ Seen</span>
+                {isSeen && <span className={styles.seenBadgeLg}>✓ Seen</span>}
+                {filmFolioPick && <span className={styles.pickBadgeLg}>★ FilmFolio Pick!</span>}
               </div>
             )}
 
@@ -189,6 +190,7 @@ export default function FilmCard({
   showAddToList = true,
   actorMatches = [],
   directorMatches = [],
+  filmFolioPick = false,
 }) {
   const [modalOpen, setModalOpen] = useState(false)
   const { seenList } = useFilm()
@@ -245,6 +247,9 @@ export default function FilmCard({
           {hasSignal && (
             <StarSignal actors={actorMatches} directors={directorMatches} compact />
           )}
+          {!hasSignal && filmFolioPick && (
+            <span className={styles.pickBadge} title="FilmFolio Pick! — recommended by the algorithm, now on one of your lists">★</span>
+          )}
         </div>
 
         <div className={styles.info}>
@@ -261,6 +266,7 @@ export default function FilmCard({
           onClose={() => setModalOpen(false)}
           showAddToList={showAddToList}
           ratings={ratings}
+          filmFolioPick={filmFolioPick}
         />
       )}
     </>

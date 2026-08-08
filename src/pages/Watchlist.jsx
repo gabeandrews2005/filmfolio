@@ -1,54 +1,20 @@
 import { Link } from 'react-router-dom'
 import { useFilm } from '../context/FilmContext'
-import { PLACEHOLDER_POSTER } from '../api/tmdb'
-import useOmdbRatings from '../hooks/useOmdbRatings'
-import RatingDisplay from '../components/RatingDisplay'
+import FilmCard from '../components/FilmCard'
 import styles from './Watchlist.module.css'
 
-function WatchlistCard({ movie, seen, onToggleSeen, onRemove }) {
-  const { ratings } = useOmdbRatings(movie.tmdb_id)
-
-  return (
-    <div className={`${styles.card} ${seen ? styles.seen : ''}`}>
-      <div className={styles.posterWrap}>
-        <img
-          src={movie.posterUrl || PLACEHOLDER_POSTER}
-          alt={movie.title}
-          className={styles.poster}
-          loading="lazy"
-        />
-        {seen && <div className={styles.seenOverlay}>✓ Seen</div>}
-      </div>
-      <div className={styles.info}>
-        <span className={styles.filmTitle}>{movie.title}</span>
-        <span className={styles.filmYear}>{movie.year}</span>
-        <RatingDisplay
-          compact
-          rtScore={ratings?.rtScore}
-          imdbRating={ratings?.imdbRating}
-          tmdbScore={movie.vote_average}
-        />
-      </div>
-      <div className={styles.actions}>
-        <button
-          className={`${styles.seenBtn} ${seen ? styles.seenBtnActive : ''}`}
-          onClick={onToggleSeen}
-        >
-          {seen ? '✓ Seen' : 'Mark Seen'}
-        </button>
-        <button
-          className={styles.removeBtn}
-          onClick={onRemove}
-        >
-          Remove
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function Watchlist() {
-  const { watchlist, removeFromWatchlist, toggleSeen, seenList } = useFilm()
+  const { watchlist, myList, quickList, horrorList, comediesList, animatedList, seasonalList } = useFilm()
+
+  // A watchlist film only earns the "FilmFolio Pick!" badge once it was
+  // added from Picks For You (fromRecommendations) AND has since made its
+  // way onto one of the user's own lists — proof the algorithm's pick
+  // actually panned out, not just a recommendation sitting unused.
+  const userListPools = [myList, quickList, horrorList, comediesList, animatedList, seasonalList]
+  function isFilmFolioPick(movie) {
+    if (!movie.fromRecommendations) return false
+    return userListPools.some((list) => list.some((m) => m.tmdb_id === movie.tmdb_id))
+  }
 
   return (
     <div className={styles.page}>
@@ -68,12 +34,11 @@ export default function Watchlist() {
         ) : (
           <div className={styles.grid}>
             {watchlist.map((movie) => (
-              <WatchlistCard
+              <FilmCard
                 key={movie.tmdb_id}
                 movie={movie}
-                seen={seenList.has(movie.tmdb_id)}
-                onToggleSeen={() => toggleSeen(movie)}
-                onRemove={() => removeFromWatchlist(movie.tmdb_id)}
+                showAddToList
+                filmFolioPick={isFilmFolioPick(movie)}
               />
             ))}
           </div>

@@ -314,7 +314,10 @@ export default function Recommendations() {
 
   function handleWatchlist(movie) {
     setDismissed((prev) => new Set([...prev, movie.tmdb_id]))
-    addToWatchlist(movie)
+    // Tagged so Watchlist can show a "FilmFolio Pick!" badge if this film
+    // later also lands on one of the user's own lists — a sign the
+    // algorithm's pick actually panned out.
+    addToWatchlist({ ...movie, fromRecommendations: true })
   }
 
   if (myList.length === 0 && quickList.length === 0) {
