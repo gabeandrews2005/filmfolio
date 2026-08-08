@@ -140,12 +140,14 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
                 </button>
               )}
 
-              <button
-                className={`${styles.watchlistBtn} ${inWatchlist ? styles.inWatchlist : ''}`}
-                onClick={handleWatchlist}
-              >
-                {inWatchlist ? '✓ In Watchlist' : '+ Watchlist'}
-              </button>
+              {!isSeen && (
+                <button
+                  className={`${styles.watchlistBtn} ${inWatchlist ? styles.inWatchlist : ''}`}
+                  onClick={handleWatchlist}
+                >
+                  {inWatchlist ? '✓ In Watchlist' : '+ Watchlist'}
+                </button>
+              )}
 
               <button
                 className={`${styles.separateListBtn} ${showSeparateBar ? styles.separateListBtnOpen : ''}`}
