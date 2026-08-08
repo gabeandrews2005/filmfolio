@@ -30,6 +30,7 @@ async function fetchStatsFieldsWithRetry(tmdbId, attempt = 0) {
 
   return {
     runtime: details.runtime || null,
+    popularity: details.popularity ?? null,
     budget: details.budget || null,
     revenue: details.revenue || null,
     productionCompanies: details.production_companies?.map((c) => c.name) ?? [],

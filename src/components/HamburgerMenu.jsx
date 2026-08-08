@@ -17,6 +17,7 @@ const OVERFLOW_LINKS = [
   { to: '/universe',        label: 'Universe' },
   { to: '/friends',         label: 'Friends' },
   { to: '/statistics',      label: 'Statistics' },
+  { to: '/film-frenzy',     label: 'Film Frenzy' },
   { to: '/about',           label: 'About' },
 ]
 

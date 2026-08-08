@@ -15,6 +15,7 @@ import SeenFilms from './pages/SeenFilms'
 import Watchlist from './pages/Watchlist'
 import SavedQuickLists from './pages/SavedQuickLists'
 import Statistics from './pages/Statistics'
+import FilmFrenzy from './pages/FilmFrenzy'
 import GenreList from './pages/lists/GenreList'
 import PersonList from './pages/lists/PersonList'
 import ShowsList from './pages/lists/ShowsList'
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route path="/watchlist" element={<Watchlist />} />
         <Route path="/quick-lists" element={<SavedQuickLists />} />
         <Route path="/statistics" element={<Statistics />} />
+        <Route path="/film-frenzy" element={<FilmFrenzy />} />
         <Route
           path="/lists/horror"
           element={<GenreList key="horror" listType="horror" title="Horror" maxItems={50} />}
