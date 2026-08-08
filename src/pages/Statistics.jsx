@@ -62,18 +62,65 @@ function formatRuntime(minutes) {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-function derivePersonality(genreFreq, directorFreq) {
-  const topGenre = genreFreq[0]?.[0] ?? ''
+// Returns { name, description } — the description cites the actual numbers
+// that produced the classification (top genre's count, director count,
+// etc.) rather than a generic blurb per personality, so it reads as "here's
+// why," not just a label.
+function derivePersonality(genreFreq, directorFreq, totalFilms) {
+  const topGenre = genreFreq[0]
+  const topGenreName = topGenre?.[0] ?? ''
+  const topGenreCount = topGenre?.[1] ?? 0
+  const filmWord = (n) => `${n} film${n !== 1 ? 's' : ''}`
   const uniqueDirectors = directorFreq.length
 
-  if (uniqueDirectors >= 8) return 'The Auteur Chaser'
-  if (topGenre === 'Drama') return 'The Cinephile'
-  if (topGenre === 'Horror' || topGenre === 'Thriller') return 'The Genre Diehard'
-  if (topGenre === 'Comedy') return 'The Crowd Pleaser'
-  if (topGenre === 'Animation') return 'The Animation Devotee'
-  if (topGenre === 'Action' || topGenre === 'Adventure') return 'The Blockbuster Hunter'
-  if (topGenre === 'Romance') return 'The Romantic'
-  return 'The Film Explorer'
+  if (uniqueDirectors >= 8) {
+    return {
+      name: 'The Auteur Chaser',
+      description: `${uniqueDirectors} different directors show up across your list — you follow filmmakers, not just films.`,
+    }
+  }
+  if (topGenreName === 'Drama') {
+    return {
+      name: 'The Cinephile',
+      description: `Drama leads your list with ${filmWord(topGenreCount)} — you're drawn to stories that hit hard.`,
+    }
+  }
+  if (topGenreName === 'Horror' || topGenreName === 'Thriller') {
+    return {
+      name: 'The Genre Diehard',
+      description: `${topGenreName} tops your list with ${filmWord(topGenreCount)} — you keep coming back for the tension.`,
+    }
+  }
+  if (topGenreName === 'Comedy') {
+    return {
+      name: 'The Crowd Pleaser',
+      description: `Comedy leads with ${filmWord(topGenreCount)} — you rank what makes you laugh.`,
+    }
+  }
+  if (topGenreName === 'Animation') {
+    return {
+      name: 'The Animation Devotee',
+      description: `Animation tops your list with ${filmWord(topGenreCount)} — the medium matters as much as the story.`,
+    }
+  }
+  if (topGenreName === 'Action' || topGenreName === 'Adventure') {
+    return {
+      name: 'The Blockbuster Hunter',
+      description: `${topGenreName} leads your list with ${filmWord(topGenreCount)} — you rank the big swings.`,
+    }
+  }
+  if (topGenreName === 'Romance') {
+    return {
+      name: 'The Romantic',
+      description: `Romance tops your list with ${filmWord(topGenreCount)} — you rank the ones that make you feel something.`,
+    }
+  }
+  return {
+    name: 'The Film Explorer',
+    description: topGenreName
+      ? `Your ${filmWord(totalFilms)} spread across too many genres to pin down one favorite — that's the point.`
+      : 'Start ranking films to find out what your taste says about you.',
+  }
 }
 
 export default function Statistics() {
@@ -290,7 +337,7 @@ export default function Statistics() {
     })
     if (sixDegreesHub && sixDegreesHub.count === 0) sixDegreesHub = null
 
-    const personality = derivePersonality(genreFreq, directorFreq)
+    const personality = derivePersonality(genreFreq, directorFreq, myList.length)
 
     return {
       totalRanked: myList.length,
@@ -342,7 +389,10 @@ export default function Statistics() {
           <div className={styles.auraOverlay} />
           <div className={styles.auraContent}>
             <p className={styles.auraEyebrow}>Your Film Aura</p>
-            <h1 className={styles.auraPersonality}>{stats ? stats.personality : 'Film Explorer'}</h1>
+            <h1 className={styles.auraPersonality}>{stats ? stats.personality.name : 'Film Explorer'}</h1>
+            {stats && (
+              <p className={styles.auraDescription}>{stats.personality.description}</p>
+            )}
             {topFilm && (
               <p className={styles.auraTop}>
                 #1 Film: <strong>{topFilm.title}</strong> ({topFilm.year})

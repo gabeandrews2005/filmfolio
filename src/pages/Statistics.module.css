@@ -47,6 +47,14 @@
   margin-bottom: 10px;
 }
 
+.auraDescription {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  max-width: 480px;
+  margin-bottom: 12px;
+}
+
 .auraTop {
   font-size: 0.9rem;
   color: var(--text-secondary);
