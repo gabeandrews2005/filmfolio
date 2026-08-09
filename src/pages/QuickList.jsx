@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -12,7 +12,7 @@ import styles from './MyList.module.css'
 import modalStyles from '../components/ConfirmModal.module.css'
 import qlStyles from './QuickList.module.css'
 
-function SaveQuickListModal({ defaultName, onSave, onCancel }) {
+function SaveQuickListModal({ defaultName, editing, onSave, onCancel }) {
   const [name, setName] = useState(defaultName)
 
   function handleSubmit(e) {
@@ -24,8 +24,10 @@ function SaveQuickListModal({ defaultName, onSave, onCancel }) {
   return (
     <div className={modalStyles.overlay} onClick={(e) => { if (e.target === e.currentTarget) onCancel() }}>
       <form className={modalStyles.box} onSubmit={handleSubmit}>
-        <h2 className={modalStyles.title}>Save Quick List</h2>
-        <p className={modalStyles.text}>Give this batch of films a name so you can find it later.</p>
+        <h2 className={modalStyles.title}>{editing ? 'Save Changes' : 'Save Quick List'}</h2>
+        <p className={modalStyles.text}>
+          {editing ? 'Keep the name or rename it — either way, this replaces the saved version.' : 'Give this batch of films a name so you can find it later.'}
+        </p>
         <input
           type="text"
           className={qlStyles.saveNameInput}
@@ -74,8 +76,11 @@ function SortablePoster({ movie, index, onRemove }) {
 }
 
 export default function QuickList() {
-  const { quickList, savedQuickLists, addToList, removeFromList, reorderList, insertAtRank, saveQuickList, clearQuickList } = useFilm()
+  const { quickList, savedQuickLists, addToList, removeFromList, reorderList, insertAtRank, saveQuickList, updateSavedQuickList, clearQuickList } = useFilm()
   const navigate = useNavigate()
+  const location = useLocation()
+  const editingSavedListId = location.state?.editingSavedListId ?? null
+  const editingSavedListName = location.state?.editingSavedListName ?? null
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -168,7 +173,11 @@ export default function QuickList() {
   }
 
   function handleSaveConfirm(name) {
-    saveQuickList(name)
+    if (editingSavedListId) {
+      updateSavedQuickList(editingSavedListId, { name, films: quickList })
+    } else {
+      saveQuickList(name)
+    }
     setShowSaveModal(false)
     navigate('/quick-lists')
   }
@@ -182,7 +191,8 @@ export default function QuickList() {
     <div className={styles.page}>
       {showSaveModal && (
         <SaveQuickListModal
-          defaultName={`Quick List ${savedQuickLists.length + 1}`}
+          defaultName={editingSavedListName ?? `Quick List ${savedQuickLists.length + 1}`}
+          editing={!!editingSavedListId}
           onSave={handleSaveConfirm}
           onCancel={() => setShowSaveModal(false)}
         />
@@ -213,6 +223,13 @@ export default function QuickList() {
       )}
 
       <div className="container">
+        {editingSavedListId && (
+          <div className={qlStyles.editingBanner}>
+            Editing <strong>{editingSavedListName}</strong> — changes only apply once you save.
+            <Link to="/quick-lists" className={qlStyles.editingBannerLink}>Done</Link>
+          </div>
+        )}
+
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Quick List</h1>
@@ -230,7 +247,7 @@ export default function QuickList() {
                 disabled={quickList.length === 0}
                 title={quickList.length === 0 ? 'Add films to your Quick List first' : undefined}
               >
-                Save Quick List
+                {editingSavedListId ? 'Save Changes' : 'Save Quick List'}
               </button>
               <button
                 className={qlStyles.clearBtn}

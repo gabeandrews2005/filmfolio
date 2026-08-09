@@ -1,3 +1,32 @@
+.editingBanner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(201,168,76,0.1);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-top: 20px;
+}
+
+.editingBanner strong {
+  color: var(--accent-gold);
+}
+
+.editingBannerLink {
+  margin-left: auto;
+  color: var(--accent-gold);
+  font-weight: 600;
+  font-size: 0.82rem;
+  transition: opacity var(--transition);
+}
+
+.editingBannerLink:hover {
+  opacity: 0.8;
+}
+
 .headerActions {
   display: flex;
   flex-direction: column;

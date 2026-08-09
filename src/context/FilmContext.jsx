@@ -510,6 +510,26 @@ export function FilmProvider({ children }) {
     })
   }, [])
 
+  // Edits a saved snapshot in place (name and/or films) — distinct from
+  // saveQuickList, which always creates a new entry.
+  const updateSavedQuickList = useCallback((id, patch) => {
+    setSavedQuickLists((prev) => {
+      const next = prev.map((l) => (l.id === id ? { ...l, ...patch } : l))
+      saveLS(LS_SAVED_QUICKLISTS, next)
+      return next
+    })
+  }, [])
+
+  // Replaces the *working* Quick List wholesale — used when a saved list is
+  // opened for editing, so the existing Quick List page's full toolkit
+  // (search-add, drag-reorder, remove) can be reused instead of building a
+  // second, separate editor.
+  const loadQuickList = useCallback((films) => {
+    const capped = films.slice(0, LIST_MAX.quickList)
+    setQuickList(capped)
+    saveLS(LS_QUICKLIST, capped)
+  }, [])
+
   // ── Not Interested ─────────────────────────────────────────────────────────
   const addNotInterested = useCallback((tmdbId) => {
     setNotInterested((prev) => {
@@ -694,8 +714,10 @@ export function FilmProvider({ children }) {
       myTop10,     // computed slice of myList[0..9]
       quickList,
       clearQuickList,
+      loadQuickList,
       savedQuickLists,
       saveQuickList,
+      updateSavedQuickList,
       deleteSavedQuickList,
       actorsList,
       showsList,

@@ -69,6 +69,22 @@
   color: var(--text-muted);
 }
 
+.listBlockActions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.editBtn {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  transition: color var(--transition);
+}
+
+.editBtn:hover {
+  color: var(--accent-gold);
+}
+
 .deleteBtn {
   font-size: 0.78rem;
   color: var(--text-muted);
