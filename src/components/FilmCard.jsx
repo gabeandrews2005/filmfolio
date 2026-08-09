@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useFilm } from '../context/FilmContext'
+import { useAuth } from '../context/AuthContext'
 import { PLACEHOLDER_POSTER } from '../api/tmdb'
 import useOmdbRatings from '../hooks/useOmdbRatings'
 import StarSignal from './StarSignal'
@@ -20,6 +21,8 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
     watchlist, addToWatchlist, removeFromWatchlist,
     horrorList, comediesList, animatedList, seasonalList,
   } = useFilm()
+  const { session, updateProfile } = useAuth()
+  const [pfpStatus, setPfpStatus] = useState('idle') // 'idle' | 'saving' | 'done'
   const isSeen = seenList.has(movie.tmdb_id)
   const inList = myList.some((m) => m.tmdb_id === movie.tmdb_id)
   const listFull = myList.length >= 100
@@ -73,6 +76,15 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
     addToList(key, movie)
   }
 
+  async function handleMakeProfilePicture(e) {
+    e.stopPropagation()
+    if (pfpStatus === 'saving') return
+    setPfpStatus('saving')
+    const result = await updateProfile({ avatarUrl: movie.posterUrl })
+    setPfpStatus(result.ok ? 'done' : 'idle')
+    if (result.ok) setTimeout(() => setPfpStatus('idle'), 2000)
+  }
+
   return (
     <div className={styles.modalBackdrop} onClick={handleBackdrop}>
       <div className={styles.modal}>
@@ -85,6 +97,15 @@ function FilmModal({ movie, actorMatches, directorMatches, onClose, showAddToLis
               alt={movie.title}
               className={styles.modalPoster}
             />
+            {session && movie.posterUrl && (
+              <button
+                className={styles.makeProfilePicBtn}
+                onClick={handleMakeProfilePicture}
+                disabled={pfpStatus === 'saving'}
+              >
+                {pfpStatus === 'done' ? '✓ Profile Picture Set' : pfpStatus === 'saving' ? 'Saving…' : '★ Make Profile Picture'}
+              </button>
+            )}
           </div>
 
           <div className={styles.modalInfoCol}>

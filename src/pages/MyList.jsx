@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -7,6 +8,7 @@ import { searchMovies, getPosterUrl, PLACEHOLDER_POSTER, TMDB_GENRE_MAP } from '
 import FilmCard from '../components/FilmCard'
 import RankPickerModal from '../components/RankPickerModal'
 import styles from './MyList.module.css'
+import qlStyles from './QuickList.module.css'
 
 function SortablePoster({ movie, index, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -38,6 +40,8 @@ function SortablePoster({ movie, index, onRemove }) {
 
 export default function MyList() {
   const { myList, addToList, removeFromList, reorderList, insertAtRank } = useFilm()
+  const location = useLocation()
+  const pickingProfilePicture = !!location.state?.pickingProfilePicture
   const [query, setQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
@@ -143,6 +147,13 @@ export default function MyList() {
       )}
 
       <div className="container">
+        {pickingProfilePicture && (
+          <div className={qlStyles.editingBanner}>
+            Click a film below, then tap <strong>Make Profile Picture</strong> in its details.
+            <Link to="/account" className={qlStyles.editingBannerLink}>Done</Link>
+          </div>
+        )}
+
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>My Film List</h1>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { checkUsernameAvailable } from '../api/supabase'
 import styles from './Account.module.css'
@@ -10,7 +11,6 @@ function SignedOutView() {
   const [password, setPassword] = useState('')
   const [username, setUsername] = useState('')
   const [phone, setPhone] = useState('')
-  const [avatar, setAvatar] = useState(null)
   const [usernameStatus, setUsernameStatus] = useState(null) // null | 'checking' | 'available' | 'taken'
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -28,14 +28,6 @@ function SignedOutView() {
     }, 400)
     return () => clearTimeout(debounceRef.current)
   }, [username, mode])
-
-  function handleAvatarChange(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setAvatar(ev.target.result)
-    reader.readAsDataURL(file)
-  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -122,21 +114,6 @@ function SignedOutView() {
 
       <form onSubmit={handleSubmit} className={styles.form}>
         {mode === 'signup' && (
-          <div className={styles.avatarSection}>
-            <div className={styles.avatarPreview}>
-              {avatar
-                ? <img src={avatar} alt="Avatar preview" />
-                : <span className={styles.avatarPlaceholder}>?</span>
-              }
-            </div>
-            <label className={styles.avatarLabel}>
-              <input type="file" accept="image/*" onChange={handleAvatarChange} className={styles.fileInput} />
-              {avatar ? 'Change photo' : 'Add photo (optional)'}
-            </label>
-          </div>
-        )}
-
-        {mode === 'signup' && (
           <div className={styles.field}>
             <label className={styles.label} htmlFor="username">Username</label>
             <input
@@ -218,19 +195,11 @@ function SignedOutView() {
 
 function SignedInView() {
   const { profile, session, signOut, updateProfile, updatePhone } = useAuth()
+  const navigate = useNavigate()
   const [username, setUsername] = useState(profile?.username ?? '')
-  const [avatar, setAvatar] = useState(profile?.avatar_url ?? null)
   const [phone, setPhone] = useState(session?.user?.user_metadata?.phone ?? '')
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
-
-  function handleAvatarChange(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setAvatar(ev.target.result)
-    reader.readAsDataURL(file)
-  }
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -239,7 +208,7 @@ function SignedInView() {
     if (trimmed.length < 2) { setError('Username must be at least 2 characters.'); return }
     if (!/^[a-zA-Z0-9_]+$/.test(trimmed)) { setError('Letters, numbers, and underscores only.'); return }
 
-    const result = await updateProfile({ username: trimmed, avatarDataUri: avatar })
+    const result = await updateProfile({ username: trimmed })
     if (!result.ok) { setError(result.error); return }
     if (phone.trim() !== (session?.user?.user_metadata?.phone ?? '')) {
       await updatePhone(phone.trim())
@@ -261,20 +230,23 @@ function SignedInView() {
         <p className={styles.subtitle}>Update your profile.</p>
       </div>
 
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <div className={styles.avatarSection}>
-          <div className={styles.avatarPreview}>
-            {avatar
-              ? <img src={avatar} alt="Avatar preview" />
-              : <span className={styles.avatarPlaceholder}>?</span>
-            }
-          </div>
-          <label className={styles.avatarLabel}>
-            <input type="file" accept="image/*" onChange={handleAvatarChange} className={styles.fileInput} />
-            {avatar ? 'Change photo' : 'Add photo'}
-          </label>
+      <div className={styles.avatarSection}>
+        <div className={styles.avatarPreview}>
+          {profile?.avatar_url
+            ? <img src={profile.avatar_url} alt="Profile" />
+            : <span className={styles.avatarPlaceholder}>?</span>
+          }
         </div>
+        <button
+          type="button"
+          className={styles.avatarLabel}
+          onClick={() => navigate('/my-list', { state: { pickingProfilePicture: true } })}
+        >
+          Select Film
+        </button>
+      </div>
 
+      <form onSubmit={handleSubmit} className={styles.form}>
         <div className={styles.field}>
           <label className={styles.label} htmlFor="edit-username">Username</label>
           <input

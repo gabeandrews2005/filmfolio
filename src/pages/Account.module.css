@@ -122,10 +122,6 @@
   font-family: var(--font-display);
 }
 
-.fileInput {
-  display: none;
-}
-
 .avatarLabel {
   font-size: 0.85rem;
   color: var(--accent-gold);

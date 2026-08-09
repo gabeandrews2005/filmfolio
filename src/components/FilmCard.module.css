@@ -198,6 +198,28 @@
   display: block;
 }
 
+.makeProfilePicBtn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(201,168,76,0.4);
+  background: transparent;
+  color: var(--accent-gold);
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: background var(--transition), opacity var(--transition);
+}
+
+.makeProfilePicBtn:hover:not(:disabled) {
+  background: rgba(201,168,76,0.1);
+}
+
+.makeProfilePicBtn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
 .modalInfoCol {
   flex: 1;
   padding: 28px 28px 28px 28px;

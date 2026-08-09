@@ -75,7 +75,10 @@ export function AuthProvider({ children }) {
     window.location.href = '/'
   }, [])
 
-  const updateProfile = useCallback(async ({ username, avatarDataUri }) => {
+  // avatarUrl can be a real TMDB poster URL (set via "Make Profile Picture"
+  // on a film's detail page) or a base64 data URI (legacy uploads) — the
+  // profiles table just stores whatever string it's given.
+  const updateProfile = useCallback(async ({ username, avatarUrl }) => {
     if (!session) return { ok: false, error: 'Not signed in.' }
     if (username !== undefined && username !== profile?.username) {
       const available = await checkUsernameAvailable(username)
@@ -83,7 +86,7 @@ export function AuthProvider({ children }) {
     }
     const patch = {}
     if (username !== undefined) patch.username = username
-    if (avatarDataUri !== undefined) patch.avatar_url = avatarDataUri
+    if (avatarUrl !== undefined) patch.avatar_url = avatarUrl
     const result = await updateOwnProfile(session.user.id, patch)
     if (result.ok) setProfile((prev) => ({ ...prev, ...patch }))
     return result
