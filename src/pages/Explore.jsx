@@ -26,19 +26,6 @@ async function resolveMovieWithRetry(title, attempt = 0) {
   return resolveMovieWithRetry(title, attempt + 1)
 }
 
-async function mapWithConcurrency(items, limit, worker) {
-  const results = new Array(items.length)
-  let index = 0
-  async function run() {
-    while (index < items.length) {
-      const current = index++
-      results[current] = await worker(items[current])
-    }
-  }
-  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run))
-  return results
-}
-
 function SkeletonCard() {
   return (
     <div className={styles.skeleton}>
@@ -88,24 +75,57 @@ export default function Explore() {
   const myListFull = myList.length >= 100
 
   // Resolve the curated Explore list against TMDB, in the exact given order.
-  // This is the entire base pool and it never shuffles or reorders.
+  // This is the entire base pool and it never shuffles or reorders — 500
+  // titles is a lot of individual /search/movie round trips (TMDB has no
+  // batch-by-title lookup), so instead of waiting for every single one to
+  // land before showing anything, reveal movies as soon as the longest
+  // *contiguous* run from the start resolves. Order stays exactly as
+  // curated; the page just stops making the user stare at 20 skeletons for
+  // the entire batch when most of the list is usually ready far sooner.
   useEffect(() => {
     setPoolLoading(true)
+    setPoolMovies([])
     let cancelled = false
-    mapWithConcurrency(EXPLORE_MOVIES, 6, (title) => resolveMovieWithRetry(title))
-      .then((responses) => {
-        if (cancelled) return
-        const seen = new Set()
-        const movies = []
-        for (const results of responses) {
-          const match = results?.[0]
-          if (!match || seen.has(match.id)) continue
+    const results = new Array(EXPLORE_MOVIES.length)
+    const done = new Array(EXPLORE_MOVIES.length).fill(false)
+    const seen = new Set()
+    let revealedCount = 0
+
+    function revealAvailablePrefix() {
+      let i = revealedCount
+      while (i < done.length && done[i]) i++
+      if (i === revealedCount) return
+      const newMovies = []
+      for (let j = revealedCount; j < i; j++) {
+        const match = results[j]
+        if (match && !seen.has(match.id)) {
           seen.add(match.id)
-          movies.push(normalizePoolMovie(match))
+          newMovies.push(normalizePoolMovie(match))
         }
-        setPoolMovies(movies)
-        setPoolLoading(false)
-      })
+      }
+      revealedCount = i
+      if (newMovies.length > 0) setPoolMovies((prev) => [...prev, ...newMovies])
+    }
+
+    let index = 0
+    async function worker() {
+      while (index < EXPLORE_MOVIES.length) {
+        const i = index++
+        const searchResults = await resolveMovieWithRetry(EXPLORE_MOVIES[i])
+        if (cancelled) return
+        results[i] = searchResults?.[0] ?? null
+        done[i] = true
+        revealAvailablePrefix()
+      }
+    }
+
+    // Bumped from 6 — TMDB's rate limit has headroom for this, and the
+    // existing empty-result retry-with-backoff already self-heals any
+    // occasional 429 (fetchTMDB treats a failed request as an empty result,
+    // which resolveMovieWithRetry already retries).
+    Promise.all(Array.from({ length: 10 }, worker)).then(() => {
+      if (!cancelled) setPoolLoading(false)
+    })
     return () => { cancelled = true }
   }, [])
 
