@@ -150,7 +150,36 @@
   font-size: 0.95rem;
   color: var(--text-secondary);
   line-height: 1.75;
-  margin-bottom: 16px;
+  margin-bottom: 0;
+}
+
+.howToStep {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 22px;
+}
+
+.howToStep:last-child {
+  margin-bottom: 0;
+}
+
+.howToNum {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  padding-top: 3px;
+}
+
+.introLink {
+  color: var(--accent-gold);
+  font-weight: 600;
+  transition: opacity var(--transition);
+}
+
+.introLink:hover {
+  opacity: 0.8;
 }
 
 .stats {

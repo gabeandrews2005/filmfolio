@@ -166,12 +166,64 @@ export default function Home() {
         <div className="container">
           <div className={styles.introGrid}>
             <div className={styles.introCopy}>
-              <h2 className={styles.introHeading}>The FilmFolio Experience</h2>
-              <p className={styles.introText}>
-                FilmFolio is your personal film universe. Rank your favorite movies, build lists across
-                every genre, discover films tailored to your taste, and track everything you've seen.
-                Your lists. Your rankings. Your cinema.
-              </p>
+              <h2 className={styles.introHeading}>How to Use FilmFolio</h2>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>01</span>
+                <p className={styles.introText}>
+                  Start on the <Link to="/explore" className={styles.introLink}>Explore</Link> page,
+                  where you can scroll through a feed of films to discover new titles. Add any film
+                  you like straight to your list with a single tap.
+                </p>
+              </div>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>02</span>
+                <p className={styles.introText}>
+                  Once you're on <Link to="/my-list" className={styles.introLink}>My List</Link>, drag
+                  and drop movies into any order or section you want — arrange them however makes
+                  sense to you, whether that's by rank, mood, or category.
+                </p>
+              </div>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>03</span>
+                <p className={styles.introText}>
+                  As you build out your list, FilmFolio uses it to generate{' '}
+                  <Link to="/recommendations" className={styles.introLink}>Recommendations</Link> —
+                  personalized movie suggestions based on what you've already added, so the more you
+                  list, the better your suggestions get.
+                </p>
+              </div>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>04</span>
+                <p className={styles.introText}>
+                  Want more focused collections? Create{' '}
+                  <Link to="/universe" className={styles.introLink}>Specialty Lists</Link> — themed
+                  lists like your favorite actors or animated films. Build these using movies already
+                  on your main list, or add new films independently, just for that list.
+                </p>
+              </div>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>05</span>
+                <p className={styles.introText}>
+                  Need something faster? Use{' '}
+                  <Link to="/quick-list" className={styles.introLink}>Quick Lists</Link> for
+                  on-the-fly collections you want to save without the extra setup of a full specialty
+                  list.
+                </p>
+              </div>
+
+              <div className={styles.howToStep}>
+                <span className={styles.howToNum}>06</span>
+                <p className={styles.introText}>
+                  Finally, add <Link to="/friends" className={styles.introLink}>Friends</Link> to
+                  compare profiles side by side — see how your taste in film stacks up and find
+                  common ground (or fun differences) in what you each love.
+                </p>
+              </div>
             </div>
             <div className={styles.stats}>
               <div className={styles.stat}>
