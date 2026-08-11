@@ -22,12 +22,14 @@ function SelfProfile() {
   const {
     myList, actorsList, directorsList, horrorList,
     comediesList, animatedList, showsList, seasonalList, seenList,
+    savedQuickLists,
   } = useFilm()
   const lists = { myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList }
 
   const sections = SECTIONS
     .map((s) => ({ ...s, items: lists[s.key] }))
     .filter((s) => s.items.length > 0)
+  const hasAnything = sections.length > 0 || savedQuickLists.length > 0
 
   return (
     <div className={styles.page}>
@@ -52,10 +54,13 @@ function SelfProfile() {
         </div>
       </div>
 
-      {sections.length > 0 ? (
+      {hasAnything ? (
         <div className={styles.sections}>
           {sections.map(({ key, label, items, editPath, type }) => (
             <UniverseSection key={key} title={label} items={items} editPath={editPath} type={type} />
+          ))}
+          {savedQuickLists.map((list) => (
+            <UniverseSection key={list.id} title={list.name} items={list.films} editPath="/quick-lists" type="movie" />
           ))}
         </div>
       ) : (
@@ -112,6 +117,8 @@ function OtherProfile({ username }) {
   const sections = SECTIONS
     .map((s) => ({ ...s, items: data[s.key] ?? [] }))
     .filter((s) => s.items.length > 0)
+  const savedQuickLists = data.savedQuickLists ?? []
+  const hasAnything = sections.length > 0 || savedQuickLists.length > 0
   const myListCount = data.myList?.length ?? 0
   const seenCount = data.seenList?.length ?? 0
 
@@ -138,10 +145,13 @@ function OtherProfile({ username }) {
         </div>
       </div>
 
-      {sections.length > 0 ? (
+      {hasAnything ? (
         <div className={styles.sections}>
           {sections.map(({ key, label, items, type }) => (
             <UniverseSection key={key} title={label} items={items} type={type} />
+          ))}
+          {savedQuickLists.map((list) => (
+            <UniverseSection key={list.id} title={list.name} items={list.films} type="movie" />
           ))}
         </div>
       ) : (
