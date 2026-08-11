@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useFilm } from '../context/FilmContext'
 import { checkUsernameAvailable } from '../api/supabase'
 import styles from './Account.module.css'
 
@@ -194,7 +195,8 @@ function SignedOutView() {
 }
 
 function SignedInView() {
-  const { profile, session, signOut, updateProfile, updatePhone } = useAuth()
+  const { profile, session, updateProfile, updatePhone } = useAuth()
+  const { signOutAndClearLocalData } = useFilm()
   const navigate = useNavigate()
   const [username, setUsername] = useState(profile?.username ?? '')
   const [phone, setPhone] = useState(session?.user?.user_metadata?.phone ?? '')
@@ -218,8 +220,8 @@ function SignedInView() {
   }
 
   function handleSignOut() {
-    if (window.confirm('Sign out? Your lists stay saved to your account and on this device.')) {
-      signOut()
+    if (window.confirm('Sign out? Your lists stay saved to your account, but this device will be cleared.')) {
+      signOutAndClearLocalData()
     }
   }
 

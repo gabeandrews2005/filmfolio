@@ -40,11 +40,12 @@ function SortableSection({ id, section }) {
 }
 
 function SelfProfile() {
-  const { profile, session, signOut, updatePhone } = useAuth()
+  const { profile, session, updatePhone } = useAuth()
   const {
     myList, actorsList, directorsList, horrorList,
     comediesList, animatedList, showsList, seasonalList, seenList,
     savedQuickLists, profileSectionOrder, reorderProfileSections,
+    signOutAndClearLocalData,
   } = useFilm()
   const lists = { myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList }
 
@@ -65,8 +66,8 @@ function SelfProfile() {
   }
 
   function handleSignOut() {
-    if (window.confirm('Sign out? Your lists stay saved to your account and on this device.')) {
-      signOut()
+    if (window.confirm('Sign out? Your lists stay saved to your account, but this device will be cleared.')) {
+      signOutAndClearLocalData()
     }
   }
 

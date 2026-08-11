@@ -560,7 +560,7 @@ export function FilmProvider({ children }) {
   // This section is a purely additive layer on top: once a session is
   // active, hydrate all of the above from the cloud, then keep pushing
   // changes back up. Guest mode (no session) never calls Supabase at all.
-  const { session } = useAuth()
+  const { session, signOut: authSignOut } = useAuth()
   const [hydrated, setHydrated] = useState(false)
   const [migrationPrompt, setMigrationPrompt] = useState(false)
   const [syncStatus, setSyncStatus] = useState('idle') // 'idle' | 'saving' | 'saved' | 'error'
@@ -660,6 +660,25 @@ export function FilmProvider({ children }) {
     setHydrated(true) // the push effect below takes it from here
   }
 
+  // Signing out should leave the device with no trace of this account's
+  // data — otherwise the next visitor on this browser (or this same person
+  // browsing signed out) would still see the previous account's lists,
+  // which defeats the point of signing out. Flushes the latest state to
+  // the cloud first (a real edit made just inside the ~800ms debounce
+  // window shouldn't be lost just because sign-out happened to land before
+  // the timer fired), then wipes every ff_-prefixed key — a plain prefix
+  // scan rather than a hardcoded list, so it can't drift out of sync with
+  // LIST_LS_KEYS/assembleUserDataBlob as new synced fields get added.
+  async function signOutAndClearLocalData() {
+    if (session && supabase) {
+      try { await upsertUserData(session.user.id, assembleUserDataBlob()) } catch { /* best-effort */ }
+    }
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith('ff_'))
+      .forEach((k) => localStorage.removeItem(k))
+    await authSignOut()
+  }
+
   // Debounced push — gated on `hydrated` so this can never fire against a
   // stale pre-hydration snapshot and clobber real cloud data. Also flushes
   // immediately (non-debounced, keepalive) when the tab is about to be
@@ -726,6 +745,7 @@ export function FilmProvider({ children }) {
       syncStatus,
       migrationPrompt,
       resolveMigration,
+      signOutAndClearLocalData,
       // User's ranked lists
       myList,
       myTop10,     // computed slice of myList[0..9]
