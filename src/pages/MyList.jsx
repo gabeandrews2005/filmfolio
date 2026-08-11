@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../context/FilmContext'
@@ -117,14 +117,20 @@ export default function MyList() {
     return () => document.removeEventListener('keydown', onEscape)
   }, [])
 
+  // Mouse keeps the old immediate distance-based drag (no scroll conflict
+  // on desktop, so no reason to add a hold delay there). Touch is handled
+  // by its own TouchSensor, not a shared PointerSensor — dnd-kit's own
+  // docs call this out specifically: Pointer Events can't reliably
+  // preventDefault() once a mobile browser's native scroll gesture has
+  // claimed the touch, so a delay-based PointerSensor can end up never
+  // activating on a real phone even though it works in a mouse-driven or
+  // scripted test. TouchSensor's raw touchstart/touchmove handling doesn't
+  // have that failure mode. Tolerance is a bit looser than the mouse
+  // version (8px vs a click's usual few px) since a real thumb holding
+  // still on glass drifts more than a mouse does.
   const sensors = useSensors(
-    // Distance-based activation fires a drag on the very first few px of
-    // movement — indistinguishable from the start of a scroll swipe on
-    // touch, so scrolling this grid on a phone kept getting hijacked into
-    // reordering films instead. A delay (press-and-hold) + small tolerance
-    // is dnd-kit's documented fix: quick swipes stay scrolls, only a
-    // deliberate hold-then-drag starts a reorder.
-    useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 

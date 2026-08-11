@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
-import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
@@ -456,9 +456,11 @@ export default function GenreList({ listType, title, maxItems = 50 }) {
     commitManualReorder(newManual)
   }
 
+  // See MyList.jsx for why touch gets its own TouchSensor instead of a
+  // shared PointerSensor.
   const sensors = useSensors(
-    // See MyList.jsx for why this is delay-based rather than distance-based.
-    useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 
