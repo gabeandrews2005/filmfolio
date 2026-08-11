@@ -44,8 +44,10 @@ const SITE_DIRECTORY = [
   { to: '/lists/seasonal',  icon: '❄️', label: 'Seasonal',      desc: 'Holiday and seasonal films for the right moment' },
   { to: '/seen',            icon: '✓',  label: 'Seen Films',    desc: 'Every film you\'ve watched, tracked automatically' },
   { to: '/watchlist',       icon: '🔖', label: 'Watchlist',     desc: 'Films saved to watch next' },
+  { to: '/quick-lists',     icon: '📋', label: 'Saved Quick Lists', desc: 'Every Quick List batch you\'ve saved, one row per list' },
   { to: '/friends',         icon: '👥', label: 'Friends',       desc: 'See what others are watching and ranking' },
   { to: '/statistics',      icon: '📊', label: 'Statistics',    desc: 'Your film personality — data driven and beautiful' },
+  { to: '/film-frenzy',     icon: '🎲', label: 'Film Frenzy',   desc: 'Jeopardy-style trivia generated from your own Top 100' },
   { to: '/about',           icon: 'ℹ', label: 'About',         desc: 'The story behind FilmFolio' },
 ]
 
