@@ -33,6 +33,7 @@ async function mapWithConcurrency(items, limit, worker) {
 const SITE_DIRECTORY = [
   { to: '/explore',         icon: '🎬', label: 'Explore',       desc: 'Browse thousands of films across all genres and eras' },
   { to: '/my-list',         icon: '🏆', label: 'My List',       desc: 'Build and rank your personal top films list' },
+  { to: '/quick-list',      icon: '⚡', label: 'Quick List',    desc: 'Throw together 10 films fast, no full ranking required' },
   { to: '/recommendations', icon: '✨', label: 'Picks For You', desc: 'AI-powered recommendations based on your taste' },
   { to: '/lists/actors',    icon: '🎭', label: 'Actors',        desc: 'Curate your favorite actors and track their films' },
   { to: '/lists/directors', icon: '🎥', label: 'Directors',     desc: 'Track the auteurs whose work you love most' },
