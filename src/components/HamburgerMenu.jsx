@@ -84,15 +84,6 @@ export default function HamburgerMenu({ isOpen, onClose }) {
         )}
 
         <nav className={styles.links}>
-          {profile && (
-            <NavLink
-              to="/account"
-              className={({ isActive }) => `${styles.link} ${isActive ? styles.linkActive : ''}`}
-              onClick={onClose}
-            >
-              Account
-            </NavLink>
-          )}
           {OVERFLOW_LINKS.map(({ to, label }) => (
             <NavLink
               key={to}

@@ -40,13 +40,35 @@ function SortableSection({ id, section }) {
 }
 
 function SelfProfile() {
-  const { profile } = useAuth()
+  const { profile, session, signOut, updatePhone } = useAuth()
   const {
     myList, actorsList, directorsList, horrorList,
     comediesList, animatedList, showsList, seasonalList, seenList,
     savedQuickLists, profileSectionOrder, reorderProfileSections,
   } = useFilm()
   const lists = { myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList }
+
+  const hasPhone = !!session?.user?.user_metadata?.phone
+  const [addingPhone, setAddingPhone] = useState(false)
+  const [phoneInput, setPhoneInput] = useState('')
+  const [phoneSaving, setPhoneSaving] = useState(false)
+
+  async function handleAddPhone(e) {
+    e.preventDefault()
+    const trimmed = phoneInput.trim()
+    if (!trimmed) return
+    setPhoneSaving(true)
+    await updatePhone(trimmed)
+    setPhoneSaving(false)
+    setAddingPhone(false)
+    setPhoneInput('')
+  }
+
+  function handleSignOut() {
+    if (window.confirm('Sign out? Your lists stay saved to your account and on this device.')) {
+      signOut()
+    }
+  }
 
   const pinnedSection = SECTIONS.find((s) => s.key === 'myList')
   const pinnedItems = lists[pinnedSection.key]
@@ -111,6 +133,40 @@ function SelfProfile() {
                 <span>·</span>
                 <span>{seenList.size} seen</span>
               </div>
+            </div>
+
+            <div className={styles.headerActions}>
+              {!hasPhone && (
+                addingPhone ? (
+                  <form className={styles.phoneForm} onSubmit={handleAddPhone}>
+                    <input
+                      type="tel"
+                      className={styles.phoneInput}
+                      value={phoneInput}
+                      onChange={(e) => setPhoneInput(e.target.value)}
+                      placeholder="Phone number"
+                      autoFocus
+                    />
+                    <button type="submit" className={styles.phoneSaveBtn} disabled={phoneSaving}>
+                      {phoneSaving ? '…' : 'Save'}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.phoneCancelBtn}
+                      onClick={() => { setAddingPhone(false); setPhoneInput('') }}
+                    >
+                      Cancel
+                    </button>
+                  </form>
+                ) : (
+                  <button type="button" className={styles.addPhoneBtn} onClick={() => setAddingPhone(true)}>
+                    + Phone Number
+                  </button>
+                )
+              )}
+              <button type="button" className={styles.signOutBtn} onClick={handleSignOut}>
+                Sign out
+              </button>
             </div>
           </div>
         </div>

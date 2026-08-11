@@ -18,6 +18,13 @@
   flex-wrap: wrap;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
 .avatar {
   width: 80px;
   height: 80px;
@@ -59,6 +66,93 @@
   font-size: 0.85rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+}
+
+.signOutBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.signOutBtn:hover {
+  border-color: var(--accent-red);
+  color: var(--accent-red);
+}
+
+.addPhoneBtn {
+  background: none;
+  border: 1px dashed var(--accent-gold);
+  color: var(--accent-gold);
+  font-size: 0.8rem;
+  padding: 7px 14px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.addPhoneBtn:hover {
+  background: rgba(201, 168, 76, 0.1);
+}
+
+.phoneForm {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.phoneInput {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  padding: 7px 10px;
+  border-radius: 4px;
+  width: 150px;
+}
+
+.phoneInput:focus {
+  outline: none;
+  border-color: var(--accent-gold);
+}
+
+.phoneSaveBtn {
+  background: var(--accent-gold);
+  color: var(--bg-primary);
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 7px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.phoneCancelBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  cursor: pointer;
+  padding: 7px 4px;
+}
+
+.phoneCancelBtn:hover {
+  color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+  .headerActions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .sections {
