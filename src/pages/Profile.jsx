@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, Navigate } from 'react-router-dom'
+import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
+import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useAuth } from '../context/AuthContext'
 import { useFilm } from '../context/FilmContext'
 import { getProfileByUsername, getUserData } from '../api/supabase'
@@ -17,19 +20,78 @@ const SECTIONS = [
   { key: 'seasonalList',  label: 'Seasonal',   editPath: '/lists/seasonal',  type: 'movie' },
 ]
 
+// Everything except "Top Films" (myList) can be dragged into any order the
+// user wants — myList always renders first, outside this sortable group.
+function SortableSection({ id, section }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
+  const style = { transform: CSS.Transform.toString(transform), transition }
+  return (
+    <div ref={setNodeRef} style={style}>
+      <UniverseSection
+        title={section.label}
+        items={section.items}
+        editPath={section.editPath}
+        type={section.type}
+        dragHandleProps={{ ...attributes, ...listeners }}
+        isDragging={isDragging}
+      />
+    </div>
+  )
+}
+
 function SelfProfile() {
   const { profile } = useAuth()
   const {
     myList, actorsList, directorsList, horrorList,
     comediesList, animatedList, showsList, seasonalList, seenList,
-    savedQuickLists,
+    savedQuickLists, profileSectionOrder, reorderProfileSections,
   } = useFilm()
   const lists = { myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList }
 
-  const sections = SECTIONS
-    .map((s) => ({ ...s, items: lists[s.key] }))
-    .filter((s) => s.items.length > 0)
-  const hasAnything = sections.length > 0 || savedQuickLists.length > 0
+  const pinnedSection = SECTIONS.find((s) => s.key === 'myList')
+  const pinnedItems = lists[pinnedSection.key]
+
+  const orderableSections = [
+    ...SECTIONS
+      .filter((s) => s.key !== 'myList')
+      .map((s) => ({ id: s.key, label: s.label, editPath: s.editPath, type: s.type, items: lists[s.key] })),
+    ...savedQuickLists.map((list) => ({
+      id: list.id, label: list.name, editPath: '/quick-lists', type: 'movie', items: list.films,
+    })),
+  ].filter((s) => s.items.length > 0)
+
+  // Apply the user's stored order; anything not yet positioned (a newly
+  // filled list, a freshly saved Quick List) is appended at the end rather
+  // than dropped, and a stale id (e.g. a deleted saved list) is just skipped.
+  const byId = new Map(orderableSections.map((s) => [s.id, s]))
+  const orderedSections = []
+  const placed = new Set()
+  for (const id of profileSectionOrder) {
+    const s = byId.get(id)
+    if (s) { orderedSections.push(s); placed.add(id) }
+  }
+  for (const s of orderableSections) {
+    if (!placed.has(s.id)) orderedSections.push(s)
+  }
+
+  // See MyList.jsx for why touch gets its own TouchSensor instead of a
+  // shared PointerSensor.
+  const sensors = useSensors(
+    useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  function handleDragEnd(event) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const oldIndex = orderedSections.findIndex((s) => s.id === active.id)
+    const newIndex = orderedSections.findIndex((s) => s.id === over.id)
+    if (oldIndex === -1 || newIndex === -1) return
+    reorderProfileSections(arrayMove(orderedSections, oldIndex, newIndex).map((s) => s.id))
+  }
+
+  const hasAnything = pinnedItems.length > 0 || orderedSections.length > 0
 
   return (
     <div className={styles.page}>
@@ -56,12 +118,19 @@ function SelfProfile() {
 
       {hasAnything ? (
         <div className={styles.sections}>
-          {sections.map(({ key, label, items, editPath, type }) => (
-            <UniverseSection key={key} title={label} items={items} editPath={editPath} type={type} />
-          ))}
-          {savedQuickLists.map((list) => (
-            <UniverseSection key={list.id} title={list.name} items={list.films} editPath="/quick-lists" type="movie" />
-          ))}
+          {pinnedItems.length > 0 && (
+            <UniverseSection title={pinnedSection.label} items={pinnedItems} editPath={pinnedSection.editPath} type={pinnedSection.type} />
+          )}
+
+          {orderedSections.length > 0 && (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={orderedSections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+                {orderedSections.map((section) => (
+                  <SortableSection key={section.id} id={section.id} section={section} />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
       ) : (
         <div className="container">

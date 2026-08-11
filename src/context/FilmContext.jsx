@@ -16,6 +16,7 @@ const LS_LAST_SYNCED = 'ff_last_synced_at'
 const LS_MYLIST      = 'ff_top100'
 const LS_QUICKLIST   = 'ff_quicklist'
 const LS_SAVED_QUICKLISTS = 'ff_saved_quicklists'
+const LS_PROFILE_ORDER = 'ff_profile_order'
 const LS_ACTORS      = 'ff_actors'
 const LS_SHOWS       = 'ff_shows'
 const LS_DIRECTORS   = 'ff_directors'
@@ -243,6 +244,14 @@ export function FilmProvider({ children }) {
   const [quickList,    setQuickList]    = useState(() => loadLS(LS_QUICKLIST, []))
   // Named snapshots of the Quick List, saved off to their own archive page.
   const [savedQuickLists, setSavedQuickLists] = useState(() => loadLS(LS_SAVED_QUICKLISTS, []))
+  // User's preferred order for the non-pinned sections on their own Profile
+  // page (myList/"Top Films" always renders first and isn't part of this).
+  // Holds a mix of list keys ('actorsList', 'horrorList', ...) and saved
+  // Quick List ids — Profile.jsx merges this against whatever sections
+  // actually exist right now, so a stale id (a deleted saved list) or a
+  // section with no stored position yet (added after the user last
+  // reordered) are both handled gracefully rather than erroring.
+  const [profileSectionOrder, setProfileSectionOrder] = useState(() => loadLS(LS_PROFILE_ORDER, []))
   const [actorsList,   setActorsList]   = useState(() => loadLS(LS_ACTORS, []))
   const [showsList,    setShowsList]    = useState(() => loadLS(LS_SHOWS, []))
   const [directorsList,setDirectorsList]= useState(() => loadLS(LS_DIRECTORS, []))
@@ -530,6 +539,11 @@ export function FilmProvider({ children }) {
     saveLS(LS_QUICKLIST, capped)
   }, [])
 
+  const reorderProfileSections = useCallback((newOrder) => {
+    setProfileSectionOrder(newOrder)
+    saveLS(LS_PROFILE_ORDER, newOrder)
+  }, [])
+
   // ── Not Interested ─────────────────────────────────────────────────────────
   const addNotInterested = useCallback((tmdbId) => {
     setNotInterested((prev) => {
@@ -563,6 +577,7 @@ export function FilmProvider({ children }) {
       horrorList, seasonalList, comediesList, animatedList,
       watchlist, seenList: [...seenList], seenFilmsData,
       recommendationPicks: [...recommendationPicks], notInterested,
+      profileSectionOrder,
     }
   }
 
@@ -582,6 +597,7 @@ export function FilmProvider({ children }) {
     if (blob.seenFilmsData !== undefined) { setSeenFilmsData(blob.seenFilmsData); saveLS(LS_SEEN_DATA, blob.seenFilmsData) }
     if (blob.recommendationPicks !== undefined) { setRecommendationPicks(new Set(blob.recommendationPicks)); saveLS(LS_RECOMMENDATION_PICKS, blob.recommendationPicks) }
     if (blob.notInterested !== undefined) { setNotInterested(blob.notInterested); saveLS(LS_NOT_INT, blob.notInterested) }
+    if (blob.profileSectionOrder !== undefined) { setProfileSectionOrder(blob.profileSectionOrder); saveLS(LS_PROFILE_ORDER, blob.profileSectionOrder) }
   }
 
   function isLocalStateNonEmpty() {
@@ -693,7 +709,8 @@ export function FilmProvider({ children }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated, session, myList, quickList, savedQuickLists, actorsList, showsList,
       directorsList, horrorList, seasonalList, comediesList, animatedList,
-      watchlist, seenList, seenFilmsData, recommendationPicks, notInterested])
+      watchlist, seenList, seenFilmsData, recommendationPicks, notInterested,
+      profileSectionOrder])
 
   return (
     <FilmContext.Provider value={{
@@ -719,6 +736,8 @@ export function FilmProvider({ children }) {
       saveQuickList,
       updateSavedQuickList,
       deleteSavedQuickList,
+      profileSectionOrder,
+      reorderProfileSections,
       actorsList,
       showsList,
       directorsList,

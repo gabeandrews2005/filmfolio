@@ -43,13 +43,29 @@ function UniverseCard({ item, rank, type }) {
   )
 }
 
-export default function UniverseSection({ title, items, editPath, type = 'movie' }) {
+// dragHandleProps/isDragging are optional — only Profile's self-view (where
+// section order is user-customizable) passes them; every other caller
+// (Universe strips elsewhere, Saved Quick Lists, a friend's read-only
+// profile) renders exactly as before with no handle at all.
+export default function UniverseSection({ title, items, editPath, type = 'movie', dragHandleProps, isDragging }) {
   if (!items || items.length === 0) return null
 
   return (
-    <section className={styles.section}>
+    <section className={`${styles.section} ${isDragging ? styles.sectionDragging : ''}`}>
       <div className={styles.header}>
-        <h2 className={styles.title}>{title}</h2>
+        <div className={styles.headerLeft}>
+          {dragHandleProps && (
+            <button
+              type="button"
+              className={styles.dragHandle}
+              aria-label={`Reorder ${title}`}
+              {...dragHandleProps}
+            >
+              ⠿
+            </button>
+          )}
+          <h2 className={styles.title}>{title}</h2>
+        </div>
         {editPath && (
           <Link to={editPath} className={styles.editLink}>
             Edit →

@@ -2,6 +2,10 @@
   margin-bottom: 48px;
 }
 
+.sectionDragging {
+  opacity: 0.7;
+}
+
 .header {
   display: flex;
   align-items: baseline;
@@ -9,6 +13,37 @@
   gap: 16px;
   margin-bottom: 16px;
   padding: 0 32px;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+
+.dragHandle {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: grab;
+  /* Unlike a poster grid tile (which users scroll straight through, so it
+     needs to stay scrollable until a drag actually activates), this handle
+     is a small dedicated target nobody scrolls via — 'none' hands touch
+     handling to TouchSensor immediately and unambiguously, rather than
+     leaving room for the browser to treat it as a tap on a <button>. */
+  touch-action: none;
+  transition: color var(--transition);
+  align-self: center;
+}
+
+.dragHandle:hover {
+  color: var(--accent-gold);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .title {
