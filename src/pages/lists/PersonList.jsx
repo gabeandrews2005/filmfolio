@@ -281,11 +281,16 @@ export default function PersonList({ listType, title, maxItems = 50 }) {
     if (!value.trim()) { setSearchResults([]); return }
     const timer = setTimeout(async () => {
       setSearching(true)
+      // Directors search used to hard-filter to known_for_department ===
+      // 'Directing', but TMDB assigns that field by whichever department
+      // has the most popular credits overall — plenty of well-known
+      // directors (writer-directors like Cameron Crowe, James Gunn) get
+      // classified under Writing or Acting instead and were silently
+      // excluded, even though they're clearly directors. No department
+      // filter now, same as Actors search — the department still shows as
+      // a label on each result for context, it just doesn't gate results.
       const results = await searchPerson(value)
-      const filtered = isActors
-        ? results
-        : results.filter((r) => r.known_for_department === 'Directing')
-      setSearchResults(filtered.slice(0, 8))
+      setSearchResults(results.slice(0, 8))
       setSearching(false)
     }, 350)
     setDebounceTimer(timer)
