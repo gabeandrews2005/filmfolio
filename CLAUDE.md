@@ -2,7 +2,7 @@
 
 ## What This Is
 
-**FilmFolio** is Gabe's personal movie curator web app. It showcases his curated Top 100 film list, lets visitors mark what they've seen, build their own ranked list (up to 100 films), and receive TMDB-powered recommendations enhanced by favorite actor and director signals. A full "Universe" dashboard lets users build and manage their own genre lists, person lists, and show lists alongside Gabe's picks.
+**FilmFolio** is Gabe's personal movie curator web app. It showcases his curated Top 100 film list, lets visitors mark what they've seen, build their own ranked list (up to 100 films), and receive TMDB-powered recommendations enhanced by favorite actor and director signals. Users build and manage their own genre lists, person lists, and show lists alongside Gabe's picks — all of it shown together on their Profile page.
 
 **Status:** Phase 2 complete; Phase 3 accounts + Friends complete (see Phase 3 below). Fully built, deployed, and live on Vercel. GitHub repo: `jmandrews1975/filmfolio`.
 
@@ -179,7 +179,6 @@ filmfolio/
 │   │   ├── Explore.jsx + Explore.module.css      # hybrid pool: Gabe's 100 + TMDB popular
 │   │   ├── MyList.jsx + MyList.module.css        # drag-to-rank, up to 100 films
 │   │   ├── Recommendations.jsx + Recommendations.module.css
-│   │   ├── Universe.jsx + Universe.module.css    # user dashboard, filled lists
 │   │   ├── Friends.jsx + Friends.module.css      # real search/request/accept via Supabase
 │   │   ├── Profile.jsx + Profile.module.css      # self or any :username, avatar + stats
 │   │   ├── Account.jsx + Account.module.css      # real sign up/log in/out (Supabase Auth)
@@ -217,14 +216,13 @@ Two view modes — **grid** (DragDropContext poster grid, drag-to-reorder) and *
 ### `/recommendations` — Picks For You
 Calls `buildRecommendationsEnhanced` with actor/director person IDs from context. Displays 20 at a time, full queue behind them. Star signal badge above each card when bonus actors/directors match. "Not Interested" pops next from queue without re-fetching.
 
-### `/universe` — My Universe
-Personal dashboard: stats strip (total films ranked, people, shows, seen count). Horizontal scroll strips for each list that has at least 1 item. Empty state with links to start building. Links to individual list edit pages.
-
 ### `/friends` — Friends
 Real accounts now (Supabase — see State & Persistence below). Debounced username search against `profiles`; Add/Pending/Friends state per result; incoming requests with Accept/Decline; accepted friends list linking to `/profile/:username`. Requires being signed in — shows a "Sign In / Sign Up" prompt otherwise.
 
 ### `/profile` and `/profile/:username` — Profile
 `/profile` (no username) redirects to `/profile/:yourUsername` once known. `:username` matching the signed-in user renders the live self-view (editable elsewhere, via `/my-list` etc.); any other username fetches that user's `profiles` + `user_data` rows read-only and renders the same `UniverseSection` strips with no edit links. Requires being signed in (redirects to `/account` otherwise) — `user_data` is readable by any authenticated user, not just accepted friends.
+
+**`/universe` was retired** — it showed the same per-list `UniverseSection` strips Profile now shows, so it was redundant. The route still exists as a `<Navigate to="/profile" replace />` redirect for old links/bookmarks; there is no `Universe.jsx` anymore.
 
 ### `/account` — Account
 Real sign-up/log-in (email + password via Supabase Auth), not just a local profile form. Sign-up also takes a username (live-checked for availability against `profiles`) and an optional phone number (stored in Supabase Auth's `user_metadata`, never exposed to other users) and avatar. If the device already has local guest data at signup time, a modal asks whether to import it into the new account or start fresh — either way nothing on-device gets deleted. Signed-in view edits username/avatar/phone and has "Sign out" (a hard reload, not an in-place state clear — see State & Persistence). Linked from the hamburger menu.
@@ -327,10 +325,10 @@ Unified card used across Explore, My List grid, and genre list grids. Props: `mo
 Props: `actors, directors, compact`. `compact=true` → small gold ★ badge (tooltip on hover). `compact=false` → gold bar "★ Directed by X · Features Y". Returns null if both empty.
 
 ### `HamburgerMenu`
-Slide-out drawer from right. Overflow links: Actors, Directors, Shows, Animated, Horror, Comedies, Seasonal, Seen Films, Watchlist, Universe, Friends, Statistics, About — plus "Account" prepended when signed in (`useAuth()`'s `profile`). Header shows profile avatar/username linking to `/profile/:username` if signed in, otherwise a "Sign In / Sign Up" CTA linking to `/account`. Locks body scroll, closes on Escape key.
+Slide-out drawer from right. Overflow links: Actors, Directors, Shows, Animated, Horror, Comedies, Seasonal, Seen Films, Watchlist, Saved Quick Lists, Friends, Statistics, Film Frenzy, About — plus "Account" prepended when signed in (`useAuth()`'s `profile`). Header shows profile avatar/username linking to `/profile/:username` if signed in, otherwise a "Sign In / Sign Up" CTA linking to `/account`. Locks body scroll, closes on Escape key.
 
 ### `UniverseSection`
-Horizontal scroll strip with CSS snap. Shows rank badge + title + year per card. Used in Universe and Profile pages.
+Horizontal scroll strip with CSS snap. Shows rank badge + title + year per card. Used on Profile and Saved Quick Lists (the standalone Universe page it was originally built for has been retired).
 
 ---
 

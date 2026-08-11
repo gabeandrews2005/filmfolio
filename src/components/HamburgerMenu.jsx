@@ -14,7 +14,6 @@ const OVERFLOW_LINKS = [
   { to: '/seen',            label: 'Seen Films' },
   { to: '/watchlist',       label: 'Watchlist' },
   { to: '/quick-lists',     label: 'Saved Quick Lists' },
-  { to: '/universe',        label: 'Universe' },
   { to: '/friends',         label: 'Friends' },
   { to: '/statistics',      label: 'Statistics' },
   { to: '/film-frenzy',     label: 'Film Frenzy' },

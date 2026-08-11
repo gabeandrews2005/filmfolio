@@ -41,7 +41,6 @@ const SITE_DIRECTORY = [
   { to: '/lists/horror',    icon: '🩸', label: 'Horror',        desc: 'Your definitive horror rankings' },
   { to: '/lists/comedies',  icon: '😄', label: 'Comedies',      desc: 'The films that made you laugh the hardest' },
   { to: '/lists/seasonal',  icon: '❄️', label: 'Seasonal',      desc: 'Holiday and seasonal films for the right moment' },
-  { to: '/universe',        icon: '🌌', label: 'Universe',      desc: 'Your complete film identity in one dashboard' },
   { to: '/seen',            icon: '✓',  label: 'Seen Films',    desc: 'Every film you\'ve watched, tracked automatically' },
   { to: '/watchlist',       icon: '🔖', label: 'Watchlist',     desc: 'Films saved to watch next' },
   { to: '/friends',         icon: '👥', label: 'Friends',       desc: 'See what others are watching and ranking' },
@@ -200,7 +199,7 @@ export default function Home() {
                 <span className={styles.howToNum}>04</span>
                 <p className={styles.introText}>
                   Want more focused collections? Create{' '}
-                  <Link to="/universe" className={styles.introLink}>Specialty Lists</Link> — themed
+                  <Link to="/profile" className={styles.introLink}>Specialty Lists</Link> — themed
                   lists like your favorite actors or animated films. Build these using movies already
                   on your main list, or add new films independently, just for that list.
                 </p>

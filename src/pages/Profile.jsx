@@ -47,9 +47,6 @@ function SelfProfile() {
                 <span>·</span>
                 <span>{seenList.size} seen</span>
               </div>
-              <Link to="/universe" className={styles.universeLink}>
-                View Universe →
-              </Link>
             </div>
           </div>
         </div>

@@ -7,7 +7,6 @@ import Explore from './pages/Explore'
 import MyList from './pages/MyList'
 import QuickList from './pages/QuickList'
 import Recommendations from './pages/Recommendations'
-import Universe from './pages/Universe'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import Account from './pages/Account'
@@ -32,7 +31,8 @@ function AppRoutes() {
         <Route path="/my-list" element={<MyList />} />
         <Route path="/quick-list" element={<QuickList />} />
         <Route path="/recommendations" element={<Recommendations />} />
-        <Route path="/universe" element={<Universe />} />
+        {/* Universe page was retired — everything it showed now lives on Profile. */}
+        <Route path="/universe" element={<Navigate to="/profile" replace />} />
         <Route path="/friends" element={<Friends />} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
