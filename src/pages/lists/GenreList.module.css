@@ -649,7 +649,10 @@
 }
 
 .sortableItem {
-  touch-action: none;
+  /* See MyList.module.css's .gridItem — 'manipulation' instead of 'none'
+     so dnd-kit's delay-based activation gets a chance to lose to a scroll
+     swipe instead of the browser blocking scrolling outright. */
+  touch-action: manipulation;
 }
 
 .gridDragging {

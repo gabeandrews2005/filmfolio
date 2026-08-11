@@ -118,7 +118,13 @@ export default function MyList() {
   }, [])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    // Distance-based activation fires a drag on the very first few px of
+    // movement — indistinguishable from the start of a scroll swipe on
+    // touch, so scrolling this grid on a phone kept getting hijacked into
+    // reordering films instead. A delay (press-and-hold) + small tolerance
+    // is dnd-kit's documented fix: quick swipes stay scrolls, only a
+    // deliberate hold-then-drag starts a reorder.
+    useSensor(PointerSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   )
 

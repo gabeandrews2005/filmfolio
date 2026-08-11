@@ -208,7 +208,13 @@
 .gridItem {
   position: relative;
   user-select: none;
-  touch-action: none;
+  /* Not 'none' — that disables the browser's native touch scrolling for
+     the whole gesture from the moment a finger lands, before dnd-kit's
+     delay-based activation constraint (see the sensor config in the page
+     component) ever gets a chance to decide "this is a scroll, not a
+     drag." 'manipulation' still blocks double-tap-zoom but leaves
+     scrolling/panning alone until a drag is deliberately activated. */
+  touch-action: manipulation;
 }
 
 .gridDragging {
