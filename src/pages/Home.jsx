@@ -10,11 +10,16 @@ const BACKDROP_CANDIDATE_COUNT = 16 // pull extra in case some lack a backdrop i
 
 // Curated-title lookups are throttled — firing them all at once triggers
 // TMDB rate-limiting — and empty responses are retried with backoff.
-async function resolveMovieWithRetry(title, attempt = 0) {
-  const results = await searchMovies(title)
+// Entries are usually a plain title string, but same-titled remakes/reboots
+// are stored as { title, year } instead so the TMDB search can be pinned to
+// the correct release (see exploreMovies.json).
+async function resolveMovieWithRetry(entry, attempt = 0) {
+  const title = typeof entry === 'string' ? entry : entry.title
+  const year = typeof entry === 'string' ? undefined : entry.year
+  const results = await searchMovies(title, year)
   if (results.length > 0 || attempt >= 2) return results
   await new Promise((resolve) => setTimeout(resolve, 500 * (attempt + 1)))
-  return resolveMovieWithRetry(title, attempt + 1)
+  return resolveMovieWithRetry(entry, attempt + 1)
 }
 
 async function mapWithConcurrency(items, limit, worker) {

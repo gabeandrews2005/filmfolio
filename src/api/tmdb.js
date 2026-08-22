@@ -100,13 +100,17 @@ export async function getMovieCredits(tmdbId) {
   return data;
 }
 
-export async function searchMovies(query) {
+// `year` disambiguates same-titled films (remakes, reboots) by TMDB primary
+// release year — e.g. "Road House" 1989 vs. the 2024 remake.
+export async function searchMovies(query, year) {
   const trimmed = query.trim();
   if (!trimmed) return [];
-  const key = `ff_tmdb_smovie_${trimmed.toLowerCase()}`;
+  const key = `ff_tmdb_smovie_${trimmed.toLowerCase()}${year ? `_${year}` : ''}`;
   const cached = getCached(key);
   if (cached) return cached;
-  const data = await fetchTMDB('/search/movie', { query: trimmed, page: 1 });
+  const params = { query: trimmed, page: 1 };
+  if (year) params.primary_release_year = year;
+  const data = await fetchTMDB('/search/movie', params);
   const results = data?.results ?? [];
   if (results.length) setCache(key, results);
   return results;
