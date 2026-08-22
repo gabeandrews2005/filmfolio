@@ -233,7 +233,7 @@
   "Charlie and the Chocolate Factory",
   "Wonka",
   "8 Mile",
-  "Friday",
+  { "title": "Friday", "year": 1995 },
   "A Complete Unknown",
   "Thor: Ragnarok",
   "Black Panther",
