@@ -71,6 +71,10 @@
   scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
   scroll-snap-type: x mandatory;
+  /* Without this, the mandatory snap treats padding-left as scrollable
+     slack and rests at scrollLeft: 32 instead of 0 on load, silently
+     eating the padding so the first card sits flush against the edge. */
+  scroll-padding-left: 32px;
 }
 
 .strip::-webkit-scrollbar {
@@ -144,5 +148,9 @@
   .strip {
     padding-left: 16px;
     padding-right: 16px;
+  }
+
+  .strip {
+    scroll-padding-left: 16px;
   }
 }
