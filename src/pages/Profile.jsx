@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useParams, Link, Navigate } from 'react-router-dom'
+import { useParams, useNavigate, Link, Navigate } from 'react-router-dom'
 import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, useSortable, arrayMove, verticalListSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -7,6 +7,7 @@ import { useAuth } from '../context/AuthContext'
 import { useFilm } from '../context/FilmContext'
 import { getProfileByUsername, getUserData } from '../api/supabase'
 import UniverseSection from '../components/UniverseSection'
+import ConfirmModal from '../components/ConfirmModal'
 import styles from './Profile.module.css'
 
 const SECTIONS = [
@@ -31,6 +32,7 @@ function SortableSection({ id, section }) {
         title={section.label}
         items={section.items}
         editPath={section.editPath}
+        onEdit={section.onEdit}
         type={section.type}
         dragHandleProps={{ ...attributes, ...listeners }}
         isDragging={isDragging}
@@ -45,9 +47,24 @@ function SelfProfile() {
     myList, actorsList, directorsList, horrorList,
     comediesList, animatedList, showsList, seasonalList, seenList,
     savedQuickLists, profileSectionOrder, reorderProfileSections,
-    signOutAndClearLocalData,
+    signOutAndClearLocalData, quickList, loadQuickList,
   } = useFilm()
+  const navigate = useNavigate()
   const lists = { myList, actorsList, directorsList, horrorList, comediesList, animatedList, showsList, seasonalList }
+  const [pendingEditList, setPendingEditList] = useState(null)
+
+  function openSavedListForEditing(list) {
+    loadQuickList(list.films)
+    navigate('/quick-list', { state: { editingSavedListId: list.id, editingSavedListName: list.name } })
+  }
+
+  // The working Quick List is a separate scratch space — jumping straight
+  // into editing a saved list loads its films into it, which would silently
+  // wipe out whatever was already being built there if it's non-empty.
+  function handleEditSavedList(list) {
+    if (quickList.length > 0) setPendingEditList(list)
+    else openSavedListForEditing(list)
+  }
 
   const hasPhone = !!session?.user?.user_metadata?.phone
   const [addingPhone, setAddingPhone] = useState(false)
@@ -79,7 +96,7 @@ function SelfProfile() {
       .filter((s) => s.key !== 'myList')
       .map((s) => ({ id: s.key, label: s.label, editPath: s.editPath, type: s.type, items: lists[s.key] })),
     ...savedQuickLists.map((list) => ({
-      id: list.id, label: list.name, editPath: '/quick-lists', type: 'movie', items: list.films,
+      id: list.id, label: list.name, onEdit: () => handleEditSavedList(list), type: 'movie', items: list.films,
     })),
   ].filter((s) => s.items.length > 0)
 
@@ -196,6 +213,17 @@ function SelfProfile() {
             <Link to="/my-list" className={styles.emptyLink}>Start with your Top 10 →</Link>
           </div>
         </div>
+      )}
+
+      {pendingEditList && (
+        <ConfirmModal
+          title="Replace your working Quick List?"
+          message={`Editing "${pendingEditList.name}" will load its films into your working Quick List, replacing what's there now. Save or clear your current Quick List first if you want to keep it.`}
+          confirmLabel="Continue Editing"
+          destructive
+          onConfirm={() => { openSavedListForEditing(pendingEditList); setPendingEditList(null) }}
+          onCancel={() => setPendingEditList(null)}
+        />
       )}
     </div>
   )

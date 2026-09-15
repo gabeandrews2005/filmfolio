@@ -47,7 +47,7 @@ function UniverseCard({ item, rank, type }) {
 // section order is user-customizable) passes them; every other caller
 // (Universe strips elsewhere, Saved Quick Lists, a friend's read-only
 // profile) renders exactly as before with no handle at all.
-export default function UniverseSection({ title, items, editPath, type = 'movie', dragHandleProps, isDragging }) {
+export default function UniverseSection({ title, items, editPath, onEdit, type = 'movie', dragHandleProps, isDragging }) {
   if (!items || items.length === 0) return null
 
   return (
@@ -66,11 +66,18 @@ export default function UniverseSection({ title, items, editPath, type = 'movie'
           )}
           <h2 className={styles.title}>{title}</h2>
         </div>
-        {editPath && (
+        {/* onEdit takes a saved Quick List straight to its editable state on
+            /quick-list — a plain editPath Link would only land on the
+            read-only Saved Quick Lists page, forcing a second Edit click. */}
+        {onEdit ? (
+          <button type="button" className={styles.editLink} onClick={onEdit}>
+            Edit →
+          </button>
+        ) : editPath ? (
           <Link to={editPath} className={styles.editLink}>
             Edit →
           </Link>
-        )}
+        ) : null}
       </div>
 
       <div className={styles.strip}>
