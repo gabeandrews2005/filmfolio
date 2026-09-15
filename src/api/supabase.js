@@ -64,7 +64,10 @@ export async function checkUsernameAvailable(username) {
     .select('id')
     .ilike('username', username)
     .maybeSingle()
-  if (error) { console.error('checkUsernameAvailable failed', error); return false }
+  // A signed-out visitor can't read profiles under RLS, so this always
+  // errors during signup — don't block on that; the DB's unique index on
+  // username is the real backstop, enforced (and reworded) in signUp().
+  if (error) { console.error('checkUsernameAvailable failed', error); return true }
   return !data
 }
 
