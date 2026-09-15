@@ -10,6 +10,7 @@ import Recommendations from './pages/Recommendations'
 import Friends from './pages/Friends'
 import Profile from './pages/Profile'
 import Account from './pages/Account'
+import ForgotPassword from './pages/ForgotPassword'
 import About from './pages/About'
 import SeenFilms from './pages/SeenFilms'
 import Watchlist from './pages/Watchlist'
@@ -37,6 +38,7 @@ function AppRoutes() {
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/about" element={<About />} />
         <Route path="/seen" element={<SeenFilms />} />
         <Route path="/watchlist" element={<Watchlist />} />

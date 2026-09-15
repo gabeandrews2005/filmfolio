@@ -6,7 +6,8 @@ import { checkUsernameAvailable } from '../api/supabase'
 import styles from './Account.module.css'
 
 function SignedOutView() {
-  const { signUp, signIn, resetPassword, isConfigured } = useAuth()
+  const { signUp, signIn, isConfigured } = useAuth()
+  const navigate = useNavigate()
   const [mode, setMode] = useState('signup') // 'signup' | 'login'
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -16,7 +17,6 @@ function SignedOutView() {
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [needsConfirmation, setNeedsConfirmation] = useState(false)
-  const [resetSent, setResetSent] = useState(false)
   const debounceRef = useRef(null)
 
   useEffect(() => {
@@ -55,12 +55,8 @@ function SignedOutView() {
     }
   }
 
-  async function handleForgotPassword() {
-    setError('')
-    if (!email.trim()) { setError('Enter your email above first.'); return }
-    const result = await resetPassword(email.trim())
-    if (result.ok) setResetSent(true)
-    else setError(result.error)
+  function handleForgotPassword() {
+    navigate('/forgot-password', { state: { email: email.trim() } })
   }
 
   if (!isConfigured) {
@@ -172,7 +168,6 @@ function SignedOutView() {
         )}
 
         {error && <span className={styles.error}>{error}</span>}
-        {resetSent && <span className={styles.hintOk}>Password reset email sent.</span>}
 
         <div className={styles.actions}>
           <button

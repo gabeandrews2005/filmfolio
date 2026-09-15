@@ -109,10 +109,30 @@ export function AuthProvider({ children }) {
     return { ok: true }
   }, [])
 
+  // Second step of the forgot-password flow: the 6-digit code from the
+  // reset email exchanges for a real recovery session, which updateUser()
+  // below then uses to set the new password.
+  const verifyRecoveryOtp = useCallback(async (email, token) => {
+    if (!supabase) return { ok: false, error: 'Accounts aren’t set up yet.' }
+    const { data, error } = await supabase.auth.verifyOtp({ email, token, type: 'recovery' })
+    if (error) return { ok: false, error: error.message }
+    setSession(data.session)
+    if (data.session) setProfile(await getProfileById(data.session.user.id))
+    return { ok: true }
+  }, [])
+
+  const updatePassword = useCallback(async (password) => {
+    if (!supabase) return { ok: false, error: 'Accounts aren’t set up yet.' }
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) return { ok: false, error: error.message }
+    return { ok: true }
+  }, [])
+
   return (
     <AuthContext.Provider value={{
       session, profile, authLoading, isConfigured: !!supabase,
       signUp, signIn, signOut, updateProfile, updatePhone, resetPassword,
+      verifyRecoveryOtp, updatePassword,
     }}>
       {children}
     </AuthContext.Provider>
