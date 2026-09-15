@@ -3,7 +3,9 @@ import { DndContext, MouseSensor, TouchSensor, KeyboardSensor, closestCenter, us
 import { SortableContext, useSortable, arrayMove, rectSortingStrategy, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useFilm } from '../../context/FilmContext'
-import { searchTV, getPosterUrl, PLACEHOLDER_POSTER } from '../../api/tmdb'
+import { searchTV, getPosterUrl, PLACEHOLDER_POSTER, enrichShow } from '../../api/tmdb'
+import useOmdbRatings from '../../hooks/useOmdbRatings'
+import RatingDisplay from '../../components/RatingDisplay'
 import RECOMMENDED_SHOWS from '../../data/recommendedShows.json'
 import RankPickerModal from '../../components/RankPickerModal'
 import styles from './ShowsList.module.css'
@@ -94,15 +96,33 @@ function SortableShowCard({ show, index, onSelect, onRemove }) {
 }
 
 function ShowModal({ show, onClose }) {
+  // Search results, pool items, and list items only ever carry the light
+  // normalizeShow() shape (title/year/poster/overview) — cast, creator, and
+  // TMDB's own vote average are fetched lazily here rather than stored on
+  // every show everywhere, the same way a movie's cast/director only ever
+  // gets attached once its modal actually needs them.
+  const [enriched, setEnriched] = useState(null)
+  const { ratings } = useOmdbRatings(show.tmdb_id, 'tv')
+
   useEffect(() => {
     const handler = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [onClose])
 
+  useEffect(() => {
+    let cancelled = false
+    setEnriched(null)
+    enrichShow(show).then((result) => { if (!cancelled) setEnriched(result) })
+    return () => { cancelled = true }
+  }, [show.tmdb_id])
+
   function handleBackdrop(e) {
     if (e.target === e.currentTarget) onClose()
   }
+
+  const overview = enriched?.overview || show.overview
+  const cast = enriched?.cast ?? []
 
   return (
     <div className={styles.modalBackdrop} onClick={handleBackdrop}>
@@ -118,8 +138,26 @@ function ShowModal({ show, onClose }) {
           </div>
           <div className={styles.modalInfoCol}>
             <h2 className={styles.modalName}>{show.title}</h2>
-            {show.year && <p className={styles.modalYear}>{show.year}</p>}
-            {show.overview && <p className={styles.modalBio}>{show.overview}</p>}
+
+            <div className={styles.modalMeta}>
+              {show.year && <span>{show.year}</span>}
+              {enriched?.creator && <span>{enriched.creatorRole}: {enriched.creator}</span>}
+            </div>
+
+            <RatingDisplay
+              rtScore={ratings?.rtScore}
+              imdbRating={ratings?.imdbRating}
+              tmdbScore={enriched?.vote_average}
+            />
+
+            {overview && <p className={styles.modalBio}>{overview}</p>}
+
+            {cast.length > 0 && (
+              <p className={styles.modalCast}>
+                <span className={styles.castLabel}>Cast: </span>
+                {cast.join(', ')}
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getMovieExternalIds } from '../api/tmdb'
+import { getMovieExternalIds, getTVExternalIds } from '../api/tmdb'
 import { getOmdbRatingsWithRetry } from '../api/omdb'
 
 // One shared queue for every card anywhere in the app, not per-component —
@@ -29,11 +29,12 @@ function pump() {
   }
 }
 
-// Fetches Rotten Tomatoes + IMDb ratings for a TMDB movie id — resolves the
-// IMDb id via TMDB's external_ids, then looks it up on OMDb, throttled and
-// retried. Returns { ratings, loading } where ratings is null while loading
-// or if nothing could be found (RatingDisplay handles that gracefully).
-export default function useOmdbRatings(tmdbId) {
+// Fetches Rotten Tomatoes + IMDb ratings for a TMDB movie (or, with
+// type: 'tv', show) id — resolves the IMDb id via TMDB's external_ids, then
+// looks it up on OMDb, throttled and retried. Returns { ratings, loading }
+// where ratings is null while loading or if nothing could be found
+// (RatingDisplay handles that gracefully).
+export default function useOmdbRatings(tmdbId, type = 'movie') {
   const [ratings, setRatings] = useState(null)
   const [loading, setLoading] = useState(!!tmdbId)
 
@@ -46,7 +47,7 @@ export default function useOmdbRatings(tmdbId) {
     setLoading(true)
     setRatings(null)
     schedule(async () => {
-      const extIds = await getMovieExternalIds(tmdbId)
+      const extIds = type === 'tv' ? await getTVExternalIds(tmdbId) : await getMovieExternalIds(tmdbId)
       if (cancelled || !extIds?.imdb_id) return null
       return getOmdbRatingsWithRetry(extIds.imdb_id)
     }).then((result) => {
@@ -56,7 +57,7 @@ export default function useOmdbRatings(tmdbId) {
       }
     })
     return () => { cancelled = true }
-  }, [tmdbId])
+  }, [tmdbId, type])
 
   return { ratings, loading }
 }

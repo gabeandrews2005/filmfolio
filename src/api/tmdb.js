@@ -134,6 +134,75 @@ export async function searchTV(query) {
   return data?.results ?? [];
 }
 
+export async function getTVDetails(tvId) {
+  const key = `ff_tmdb_tvd_${tvId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/tv/${tvId}`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+// aggregate_credits (not /tv/{id}/credits) pools cast/crew across every
+// season instead of just the currently-airing one, and is the only TV
+// endpoint that reports how many episodes each crew job covers.
+export async function getTVCredits(tvId) {
+  const key = `ff_tmdb_tvc_${tvId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/tv/${tvId}/aggregate_credits`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+export async function getTVExternalIds(tvId) {
+  const key = `ff_tmdb_tvext_${tvId}`;
+  const cached = getCached(key);
+  if (cached) return cached;
+  const data = await fetchTMDB(`/tv/${tvId}/external_ids`);
+  if (data) setCache(key, data);
+  return data;
+}
+
+// Unlike a film's single director, a season of TV usually rotates
+// directors episode to episode, so the meaningful creative-head credit is
+// whoever created the show — TMDB's own `created_by` field. Procedurals,
+// talk shows, and other creator-less formats often leave that empty, so
+// this falls back to whichever aggregate_credits crew member logged the
+// most episodes as "Head Writer" (a `jobs` array of {job, episode_count},
+// unlike /credits' single `job` string, since aggregate_credits pools
+// crew across every season).
+function findHeadWriter(credits) {
+  const candidates = (credits?.crew ?? [])
+    .filter((p) => p.jobs?.some((j) => j.job === 'Head Writer'))
+    .sort((a, b) => (b.total_episode_count ?? 0) - (a.total_episode_count ?? 0));
+  return candidates[0]?.name ?? null;
+}
+
+export async function enrichShow(baseShow) {
+  const [details, credits] = await Promise.all([
+    getTVDetails(baseShow.tmdb_id),
+    getTVCredits(baseShow.tmdb_id),
+  ]);
+
+  const createdBy = details?.created_by?.length
+    ? details.created_by.map((c) => c.name).join(', ')
+    : null;
+  const headWriter = createdBy ? null : findHeadWriter(credits);
+
+  const cast = credits?.cast?.slice(0, 5).map((p) => p.name) ?? [];
+
+  return {
+    ...baseShow,
+    overview: details?.overview || baseShow.overview || '',
+    vote_average: details?.vote_average ?? null,
+    creator: createdBy ?? headWriter,
+    creatorRole: createdBy ? 'Creator' : headWriter ? 'Head Writer' : null,
+    cast,
+    enriched: !!details,
+  };
+}
+
 export async function getPopularMovies(page = 1) {
   const key = `ff_tmdb_pop_${page}`;
   const cached = getCached(key);

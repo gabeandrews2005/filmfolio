@@ -453,17 +453,32 @@
   margin-bottom: 14px;
 }
 
-.modalYear {
+.modalMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .modalBio {
   font-size: 0.85rem;
   color: var(--text-secondary);
   line-height: 1.65;
+}
+
+.modalCast {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 10px;
+  line-height: 1.5;
+}
+
+.castLabel {
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
